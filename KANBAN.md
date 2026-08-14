@@ -1,33 +1,31 @@
-# 📋 Quadro Kanban: MCP Visual Server & Frontend Engine v2.0
+# 📋 Quadro Kanban: MCP Visual Server v2.0
 
-> WIP Limit: 1 (Foco em entrega contínua com validação de gates)
-
----
-
-## 🟢 Concluído (Done)
-
-- [x] **TASK-001 (Spike #0):** Validação técnica das 3 camadas de estilização (themeVariables + CSS Variables + SVG DOM Post-Processor).
-- [x] **TASK-002 (Contrato de Metadados):** Criação da especificação e gerador de `meta.json` com nomenclatura híbrida (`slug-shortid`).
-- [x] **TASK-003 (Backend MCP - Tool OrgChart):** Implementação de `generate_orgchart` com validação de hierarquia, detecção de ciclos por DFS e estilização por níveis.
-- [x] **TASK-004 (Backend MCP - Refatoração das Tools):** Atualização de `generate_mindmap`, `generate_architecture_diagram`, `generate_flowchart` e `export_diagram` com suporte ao manifesto de metadados.
-- [x] **TASK-005 (Servidor SSE & REST):** Implementação de servidor Express embutido na porta 3001 com endpoints `/events` (SSE em tempo real) e `/api/diagrams`.
-- [x] **TASK-006 (Frontend - Estrutura e Temas):** Setup Vite + Alpine.js com motor de 4 temas (Educacional, Corporativo, Minimalista e Dark Mode).
-- [x] **TASK-007 (Frontend - Pós-Processamento e Exportação):** Implementação do pós-processador DOM SVG e exportador client-side PNG (2x retina) / SVG.
-- [x] **TASK-008 (Frontend - Interface Reativa):** Navegação por 4 abas, busca instantânea, miniaturas de cards, modal de visualização e controles de zoom/pan.
-- [x] **TASK-009 (Testes e Documentação):** Suíte de testes `test-v2.ts` automatizada, `README.md` e `docs/API.md`.
+> WIP Limit: 1 tarefa ativa por vez.
 
 ---
 
-## 🟡 Em Progresso (WIP: 0)
-
-*Nenhuma tarefa em andamento no momento (todas as tarefas do MVP concluídas).*
+## 📥 Backlog
+*(Vazio no momento. Todos os itens do MVP v2.0 foram concluídos e validados).*
 
 ---
 
-## 🔵 Próximo na Fila (Backlog - Fase 2 e 3)
+## ⏳ Em Progresso (WIP: 0/1)
+*(Nenhuma tarefa ativa. Todas as tarefas concluídas).*
 
-1. **TASK-010 (Fase 2):** Implementar ferramenta MCP `apply_style_system` para re-estilizar diagramas existentes programaticamente.
-2. **TASK-011 (Fase 2):** Adicionar filtros avançados no dashboard (por data, quantidade de nós e tags).
-3. **TASK-012 (Fase 3):** Implementar ferramenta `generate_dependency_graph` com parser AST para análise estática de código TypeScript/Python.
-4. **TASK-013 (Fase 3):** Adicionar ferramenta `generate_infographic` com layout Bento Grid.
-5. **TASK-014 (Fase 3):** Exportação multi-página para PDF e PPTX.
+---
+
+## ✅ Concluído (Done)
+
+- [x] **TASK-001**: Leitura e diagnóstico técnico completo do documento de requisitos (`Prompt MCP Ferramentas Gratuitas.docx`).
+- [x] **TASK-002**: Realização do alinhamento técnico `/grill-me` com definição de 5 decisões arquiteturais.
+- [x] **TASK-003**: Implementação da ferramenta `generate_orgchart` com algoritmo DFS para detecção de ciclos hierárquicos e estilização por níveis.
+- [x] **TASK-004**: Criação do padrão de manifesto de metadados `.meta.json` com telemetria e sanitização anti-path traversal.
+- [x] **TASK-005**: Refatoração das ferramentas existentes (`mindmap`, `architecture`, `flowchart`, `export`) para emissão de `.meta.json`.
+- [x] **TASK-006**: Implementação do servidor Express integrado com streaming Server-Sent Events (SSE) `/events` e API REST `/api/diagrams`.
+- [x] **TASK-007**: Construção do frontend SPA reativo em Vite + Alpine.js com 4 abas, 4 temas e controles de zoom/pan.
+- [x] **TASK-008**: Criação do pipeline de estilização em 3 camadas e pós-processamento SVG no DOM.
+- [x] **TASK-009**: Implementação e execução da suíte de testes unitários (TDD) com 100% de aprovação.
+- [x] **TASK-010**: Implementação e execução da suíte de observabilidade (ODD) com validação de telemetria e integridade da API REST.
+- [x] **TASK-011**: Implementação e execução da suíte de Pentest de segurança (8 vetores OWASP) com bloqueio anti-traversal e anti-injeção.
+- [x] **TASK-012**: Geração dos 4 diagramas visuais do próprio projeto (Dogfooding) integrados à documentação (`README.md` e `docs/ARCHITECTURE.md`).
+- [x] **TASK-013**: Sincronização, commit semântico e `git push` para o repositório remoto GitHub (`origin main`).
