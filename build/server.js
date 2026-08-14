@@ -4,6 +4,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema, ErrorCode, McpError, } f
 import { executeMindmap } from './tools/mindmap.js';
 import { executeArchitecture } from './tools/architecture.js';
 import { executeFlowchart } from './tools/flowchart.js';
+import { executeExport } from './tools/export.js';
 class VisualServer {
     server;
     constructor() {
@@ -111,6 +112,20 @@ class VisualServer {
                         },
                         required: ["title", "steps"]
                     }
+                },
+                {
+                    name: "export_diagram",
+                    description: "Exporta diagramas (markdown/mermaid) para SVG ou PNG usando o Mermaid CLI.",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            source_path: { type: "string" },
+                            target_format: { type: "string", enum: ["svg", "png", "pdf"] },
+                            target_path: { type: "string" },
+                            options: { type: "object" }
+                        },
+                        required: ["source_path", "target_format"]
+                    }
                 }
             ],
         }));
@@ -125,6 +140,9 @@ class VisualServer {
                 }
                 else if (request.params.name === "generate_flowchart") {
                     result = executeFlowchart(request.params.arguments);
+                }
+                else if (request.params.name === "export_diagram") {
+                    result = await executeExport(request.params.arguments);
                 }
                 else {
                     throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${request.params.name}`);
