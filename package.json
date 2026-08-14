@@ -1,7 +1,11 @@
 {
-  "name": "mcp-visual-server",
+  "name": "archview",
   "version": "2.0.0",
-  "description": "MCP Visual Server & Frontend Engine v2.0 - Servidor MCP local para diagramação arquitetural, mapas mentais e organogramas",
+  "description": "ArchView: Servidor Model Context Protocol (MCP) local e reativo para diagramação arquitetural, mapas mentais e organogramas",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/70gurupia/archview.git"
+  },
   "main": "build/server.js",
   "scripts": {
     "test": "npm run test:all",

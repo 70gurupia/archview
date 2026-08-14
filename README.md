@@ -1,4 +1,4 @@
-# 📐 MCP Visual Server & Frontend Engine v2.0
+# 📐 ArchView: MCP Visual Server & Frontend Engine v2.0
 
 > Servidor **Model Context Protocol (MCP)** 100% local e gratuito para geração, estilização e visualização de mapas mentais, organogramas, diagramas de arquitetura (C4 Model) e fluxogramas com IA.
 
