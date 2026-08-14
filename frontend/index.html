@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP Visual Server v2.0 - Galeria e Estúdio de Diagramas</title>
+  <link rel="stylesheet" href="./src/styles.css">
+</head>
+<body x-data="visualApp">
+
+  <!-- Header Principal -->
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-icon">📐</span>
+      <div>
+        <h1 class="brand-title">MCP Visual Server</h1>
+        <p class="brand-subtitle">Estúdio de Visualização Arquitetural e Diagramação Local v2.0</p>
+      </div>
+    </div>
+
+    <div class="header-status">
+      <!-- Status SSE -->
+      <div class="sse-badge" :class="sseStatus">
+        <span class="status-dot"></span>
+        <span x-text="sseStatus === 'connected' ? 'SSE Conectado' : (sseStatus === 'connecting' ? 'Conectando SSE...' : 'SSE Offline')"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Container Principal -->
+  <main class="main-container">
+    
+    <!-- Barra de Controles e Filtros -->
+    <div class="controls-bar">
+      <!-- Abas de Navegação -->
+      <nav class="nav-tabs" aria-label="Filtro por tipo de diagrama">
+        <button class="tab-btn" :class="{ 'active': activeTab === 'all' }" @click="setTab('all')">
+          📁 Todos (<span x-text="diagrams.length"></span>)
+        </button>
+        <button class="tab-btn" :class="{ 'active': activeTab === 'mindmap' }" @click="setTab('mindmap')">
+          🧠 Mapas Mentais (<span x-text="diagrams.filter(d => d.type === 'mindmap').length"></span>)
+        </button>
+        <button class="tab-btn" :class="{ 'active': activeTab === 'orgchart' }" @click="setTab('orgchart')">
+          🏢 Organogramas (<span x-text="diagrams.filter(d => d.type === 'orgchart').length"></span>)
+        </button>
+        <button class="tab-btn" :class="{ 'active': activeTab === 'architecture' }" @click="setTab('architecture')">
+          📐 Arquitetura C4 (<span x-text="diagrams.filter(d => d.type === 'architecture').length"></span>)
+        </button>
+        <button class="tab-btn" :class="{ 'active': activeTab === 'flowchart' }" @click="setTab('flowchart')">
+          🔄 Fluxogramas (<span x-text="diagrams.filter(d => d.type === 'flowchart').length"></span>)
+        </button>
+      </nav>
+
+      <!-- Campo de Busca -->
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="Buscar por título ou descrição..." 
+          x-model="searchQuery"
+        >
+      </div>
+    </div>
+
+    <!-- Grid de Diagramas -->
+    <section class="diagrams-grid">
+      
+      <!-- Template de Card -->
+      <template x-for="diag in filteredDiagrams" :key="diag.id">
+        <article class="diagram-card" @click="selectDiagram(diag)">
+          <div class="card-header">
+            <span class="card-type-tag" x-text="getTabEmoji(diag.type) + ' ' + diag.type"></span>
+            <span class="card-date" x-text="formatDate(diag.created_at)"></span>
+          </div>
+
+          <h2 class="card-title" x-text="diag.title"></h2>
+          <p class="card-desc" x-text="diag.description || 'Sem descrição informada.'"></p>
+
+          <!-- Preview em Thumbnail -->
+          <div class="card-preview" :id="'thumb-' + diag.id">
+            <span style="font-size:0.8rem;color:var(--text-muted);">Carregando miniatura...</span>
+          </div>
+
+          <div class="card-footer">
+            <div class="card-stats">
+              <span title="Contagem de nós">🔘 <span x-text="diag.stats?.node_count || '-'"></span> nós</span>
+              <span x-show="diag.stats?.max_depth" title="Profundidade máxima">🌲 Nível <span x-text="diag.stats?.max_depth"></span></span>
+            </div>
+            <span style="font-size: 0.75rem; color: var(--accent-color); font-weight: 500;">Clique para abrir ↗</span>
+          </div>
+        </article>
+      </template>
+
+      <!-- Estado Vazio -->
+      <div class="empty-state" x-show="filteredDiagrams.length === 0">
+        <div class="empty-icon">📊</div>
+        <h3 class="empty-title">Nenhum diagrama encontrado</h3>
+        <p class="empty-text">
+          Gere um novo diagrama chamando as ferramentas do MCP Server (generate_mindmap, generate_orgchart, generate_architecture_diagram ou generate_flowchart) via IA.
+        </p>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Modal / Estúdio de Visualização Completo -->
+  <div class="modal-backdrop" x-show="selectedDiagram" x-transition.opacity @click.self="closeModal()">
+    <div class="modal-content" x-show="selectedDiagram" x-transition.scale.95>
+      
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2 x-text="selectedDiagram ? selectedDiagram.title : ''"></h2>
+          <p x-text="selectedDiagram ? (selectedDiagram.description || 'Visualização interativa de diagrama') : ''"></p>
+        </div>
+
+        <div class="modal-toolbar">
+          <!-- Seletor de Temas (Camada 1 + 2) -->
+          <div class="theme-selector">
+            <button 
+              class="theme-btn" 
+              :class="{ 'active': activeTheme === 'educational' }" 
+              @click="setTheme('educational')"
+              title="Tema Educacional"
+            >
+              Educacional
+            </button>
+            <button 
+              class="theme-btn" 
+              :class="{ 'active': activeTheme === 'corporate' }" 
+              @click="setTheme('corporate')"
+              title="Tema Corporativo"
+            >
+              Corporativo
+            </button>
+            <button 
+              class="theme-btn" 
+              :class="{ 'active': activeTheme === 'minimal' }" 
+              @click="setTheme('minimal')"
+              title="Tema Minimalista"
+            >
+              Minimal
+            </button>
+            <button 
+              class="theme-btn" 
+              :class="{ 'active': activeTheme === 'dark' }" 
+              @click="setTheme('dark')"
+              title="Dark Mode"
+            >
+              Dark
+            </button>
+          </div>
+
+          <!-- Ações de Exportação e Cópia -->
+          <button class="action-btn" @click="handleCopyMarkdown()" title="Copiar código Mermaid">
+            📋 Copiar Markdown
+          </button>
+          <button class="action-btn" @click="handleExportSvg()" title="Baixar arquivo vetorial SVG">
+            ⬇️ SVG
+          </button>
+          <button class="action-btn primary" @click="handleExportPng()" title="Baixar imagem PNG de alta resolução">
+            📸 PNG (2x)
+          </button>
+
+          <!-- Botão Fechar -->
+          <button class="close-btn" @click="closeModal()" title="Fechar visualizador">✕</button>
+        </div>
+      </div>
+
+      <!-- Modal Body (Área de Renderização com Zoom/Pan) -->
+      <div class="modal-body">
+        <div class="canvas-container">
+          <div 
+            id="modal-render-target" 
+            :style="'transform: scale(' + zoom + '); transform-origin: center center; transition: transform 120ms ease;'"
+          >
+            <!-- O SVG do Mermaid será injetado aqui -->
+          </div>
+        </div>
+
+        <!-- Controles de Zoom Flutuantes -->
+        <div class="zoom-controls">
+          <button class="zoom-btn" @click="zoomOut()" title="Diminuir Zoom">-</button>
+          <button class="zoom-btn" @click="zoomReset()" x-text="Math.round(zoom * 100) + '%'"></button>
+          <button class="zoom-btn" @click="zoomIn()" title="Aumentar Zoom">+</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Notificação Toast -->
+  <div class="toast" x-show="toastMessage" x-transition.opacity>
+    <span>🔔</span>
+    <span x-text="toastMessage"></span>
+  </div>
+
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>

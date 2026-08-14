@@ -1,0 +1,39 @@
+graph TD
+  core["<b>VisualServer Core</b><br/>Orquestrador Central MCP"]
+  tools["<b>Camada de Tools</b><br/>Geradores Especializados"]
+  infra["<b>Infra & Streaming</b><br/>Express + SSE (3001)"]
+  frontend["<b>Frontend Web Studio</b><br/>Vite + Alpine.js (5173)"]
+  t_mind["<b>Mindmap Tool</b><br/>Gerador de Mapas Mentais<br/><i>Tools</i>"]
+  t_org["<b>Orgchart Tool</b><br/>Validador DFS & Árvore<br/><i>Tools</i>"]
+  t_arch["<b>Architecture Tool</b><br/>Modelo C4 (C1-C3)<br/><i>Tools</i>"]
+  t_flow["<b>Flowchart Tool</b><br/>Processos e Decisões<br/><i>Tools</i>"]
+  t_exp["<b>Export Tool</b><br/>Cli Mermaid (SVG/PNG)<br/><i>Tools</i>"]
+  themes["<b>Motor de 4 Temas</b><br/>Camada 1 (Mermaid) & 2 (CSS)<br/><i>UI</i>"]
+  post_proc["<b>Pós-Processador SVG</b><br/>Camada 3 (DOM SVG)<br/><i>UI</i>"]
+  core --> tools
+  core --> infra
+  infra --> frontend
+  tools --> t_mind
+  tools --> t_org
+  tools --> t_arch
+  tools --> t_flow
+  tools --> t_exp
+  frontend --> themes
+  themes --> post_proc
+
+  classDef default fill:#F8FAFC,stroke:#64748B,stroke-width:1.5px,color:#1E293B,rx:6px,ry:6px;
+  classDef lvl0 fill:#1E40AF,stroke:#1D4ED8,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef lvl1 fill:#2563EB,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:6px,ry:6px;
+  classDef lvl2 fill:#DBEAFE,stroke:#60A5FA,stroke-width:1.5px,color:#1E40AF,rx:6px,ry:6px;
+  classDef lvl3 fill:#F1F5F9,stroke:#94A3B8,stroke-width:1.5px,color:#334155,rx:4px,ry:4px;
+  class core lvl0;
+  class tools lvl1;
+  class infra lvl1;
+  class frontend lvl1;
+  class t_mind lvl2;
+  class t_org lvl2;
+  class t_arch lvl2;
+  class t_flow lvl2;
+  class t_exp lvl2;
+  class themes lvl2;
+  class post_proc lvl3;

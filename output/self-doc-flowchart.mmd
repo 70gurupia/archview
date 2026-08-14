@@ -1,0 +1,24 @@
+flowchart TB
+  req_in(["IA invoca Tool MCP (ex: generate_orgchart)"])
+  sec_check["Validação de Segurança (Anti-Path Traversal & Zod)"]
+  valid_eval{"Input Válido & Seguro?"}
+  err_resp["Retorna Erro Estruturado (McpErrorPayload)"]
+  end_fail(["Execução Interrompida com Erro"])
+  build_syntax["Gera Sintaxe Mermaid Pura (.mmd) e Valida Ciclos"]
+  save_disk["Grava slug-id.mmd e slug-id.meta.json no output/"]
+  sse_broadcast["Dispara Evento SSE (diagram.created)"]
+  resp_mcp["Retorna JSON de Sucesso para a IA"]
+  fe_receive["Frontend Alpine.js recebe notificação via EventSource"]
+  render_layers["Aplica 3 Camadas: themeVariables -> CSS Vars -> SVG DOM"]
+  end_success(["Diagrama Renderizado e Pronto para Interação/Exportação"])
+  req_in --> sec_check
+  sec_check --> valid_eval
+  valid_eval -- "Sim" --> build_syntax
+  valid_eval -- "Não" --> err_resp
+  err_resp --> end_fail
+  build_syntax --> save_disk
+  save_disk --> sse_broadcast
+  sse_broadcast --> resp_mcp
+  resp_mcp --> fe_receive
+  fe_receive --> render_layers
+  render_layers --> end_success

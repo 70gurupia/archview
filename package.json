@@ -1,22 +1,42 @@
 {
   "name": "mcp-visual-server",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "2.0.0",
+  "description": "MCP Visual Server & Frontend Engine v2.0 - Servidor MCP local para diagramação arquitetural, mapas mentais e organogramas",
+  "main": "build/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc",
-    "start": "node build/server.js"
+    "test": "npm run test:all",
+    "test:tdd": "npx tsx tests/tdd-unit.test.ts",
+    "test:odd": "npx tsx tests/odd-observability.test.ts",
+    "test:pentest": "npx tsx tests/pentest-security.test.ts",
+    "test:all": "npx tsx tests/tdd-unit.test.ts && npx tsx tests/odd-observability.test.ts && npx tsx tests/pentest-security.test.ts && npx tsx test-v2.ts",
+    "build:server": "tsc",
+    "build:frontend": "npm run build --prefix frontend",
+    "build": "tsc && npm run build --prefix frontend",
+    "start": "node build/server.js",
+    "dev:frontend": "npm run dev --prefix frontend"
   },
-  "keywords": [],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mermaid",
+    "diagrams",
+    "mindmap",
+    "orgchart",
+    "architecture-c4"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0"
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/node": "^26.2.0",
-    "typescript": "^7.0.2"
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
   },
   "type": "module"
 }

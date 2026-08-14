@@ -1,0 +1,14 @@
+C4Container
+  title Arquitetura MCP Visual Server v2.0
+  Person(ai_client, "IA / Usuário", "Claude Desktop, Cursor, Antigravity")
+  Container(mcp_server, "MCP Server Daemon", "TypeScript / Node.js 20", "Executa tools e gerencia estado")
+  Container(sse_server, "Express SSE & REST", "Express 5 / Porta 3001", "Serviço de streaming e listagem de diagramas")
+  ContainerDb(storage, "Diretório output/", "JSON / MMD Files", "Armazenamento local de diagramas e metadados")
+  Container(web_studio, "Web Studio SPA", "Alpine.js / Vite / Vanilla CSS", "Galeria e estúdio de visualização com 4 temas")
+  Person(browser_user, "Desenvolvedor / Usuário", "Navega nas abas, troca temas e exporta imagens")
+  Rel(ai_client, mcp_server, "Envia requisições MCP", "JSON-RPC (stdio)")
+  Rel(mcp_server, sse_server, "Inicia em background", "In-process")
+  Rel(mcp_server, storage, "Persiste .mmd e .meta.json", "Filesystem")
+  Rel(sse_server, storage, "Lê arquivos gerados", "fs.readdirSync")
+  Rel(sse_server, web_studio, "Transmite eventos /events", "SSE Stream")
+  Rel(web_studio, browser_user, "Renderiza interface interativa", "HTML5 / SVG DOM")

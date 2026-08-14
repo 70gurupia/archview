@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import { ToolExecutionResult } from '../types/index.js';
+import { saveDiagramWithMeta } from '../utils/meta.js';
 
 export interface C4Relationship {
   target: string;
@@ -19,14 +19,14 @@ export interface C4Element {
 export interface ArchitectureInput {
   c4_level: 'C1-context' | 'C2-container' | 'C3-component' | 'C4-code';
   system_name: string;
-  description: string;
+  description?: string;
   elements: C4Element[];
   style?: {
     notation?: string;
     show_technology?: boolean;
     direction?: string;
+    palette?: 'educational' | 'corporate' | 'minimal' | 'dark';
   };
-  output_format?: string;
   output_path?: string;
 }
 
@@ -35,11 +35,11 @@ export function generateArchitectureMermaid(input: ArchitectureInput): string {
   if (input.c4_level === 'C2-container') mermaid = `C4Container\n`;
   if (input.c4_level === 'C3-component') mermaid = `C4Component\n`;
 
-  mermaid += `  title System Architecture: ${input.system_name}\n`;
+  mermaid += `  title ${input.system_name}\n`;
 
   // Elements
   input.elements.forEach(el => {
-    switch(el.type) {
+    switch (el.type) {
       case 'person':
         mermaid += `  Person(${el.id}, "${el.name}", "${el.description}")\n`;
         break;
@@ -47,10 +47,10 @@ export function generateArchitectureMermaid(input: ArchitectureInput): string {
         mermaid += `  System(${el.id}, "${el.name}", "${el.description}")\n`;
         break;
       case 'container':
-        mermaid += `  Container(${el.id}, "${el.name}", "${el.technology || 'Technology'}", "${el.description}")\n`;
+        mermaid += `  Container(${el.id}, "${el.name}", "${el.technology || 'Container'}", "${el.description}")\n`;
         break;
       case 'component':
-        mermaid += `  Component(${el.id}, "${el.name}", "${el.technology || 'Technology'}", "${el.description}")\n`;
+        mermaid += `  Component(${el.id}, "${el.name}", "${el.technology || 'Component'}", "${el.description}")\n`;
         break;
       case 'database':
         mermaid += `  ContainerDb(${el.id}, "${el.name}", "${el.technology || 'Database'}", "${el.description}")\n`;
@@ -66,7 +66,7 @@ export function generateArchitectureMermaid(input: ArchitectureInput): string {
 
   // Relationships
   input.elements.forEach(el => {
-    if (el.relationships) {
+    if (el.relationships && el.relationships.length > 0) {
       el.relationships.forEach(rel => {
         if (rel.technology && input.style?.show_technology !== false) {
           mermaid += `  Rel(${el.id}, ${rel.target}, "${rel.description}", "${rel.technology}")\n`;
@@ -77,32 +77,27 @@ export function generateArchitectureMermaid(input: ArchitectureInput): string {
     }
   });
 
-  mermaid += `  UpdateElementStyle(person, $bgColor="#08427b", $fontColor="#ffffff", $borderColor="#052e56")\n`;
-  
   return mermaid;
 }
 
-export function executeArchitecture(input: ArchitectureInput): { file_path: string, format: string, markdown: string } {
+export function executeArchitecture(input: ArchitectureInput): ToolExecutionResult {
+  const startTime = Date.now();
+
+  if (!input.c4_level || !input.system_name || !input.elements || input.elements.length === 0) {
+    throw new Error('Validação: "c4_level", "system_name" e ao menos um elemento são obrigatórios.');
+  }
+
   const mermaidSyntax = generateArchitectureMermaid(input);
-  const markdown = `\`\`\`mermaid\n${mermaidSyntax}\n\`\`\``;
-  
-  let outPath = input.output_path || 'architecture.md';
-  const outDir = path.join(process.cwd(), 'output');
-  
-  const resolvedPath = path.resolve(outDir, outPath);
-  if (!resolvedPath.startsWith(outDir)) {
-    throw new Error('Path traversal detected. Output must be within the output directory.');
-  }
-  
-  if (!fs.existsSync(outDir)) {
-    fs.mkdirSync(outDir, { recursive: true });
-  }
 
-  fs.writeFileSync(resolvedPath, markdown, 'utf8');
-
-  return {
-    file_path: resolvedPath,
-    format: 'markdown',
-    markdown: markdown
-  };
+  return saveDiagramWithMeta({
+    type: 'architecture',
+    title: input.system_name,
+    description: input.description,
+    mermaidSyntax,
+    suggestedTheme: input.style?.palette || 'corporate',
+    nodeCount: input.elements.length,
+    startTime,
+    tags: ['c4-model', input.c4_level, 'arquitetura', 'software'],
+    outputPath: input.output_path
+  });
 }

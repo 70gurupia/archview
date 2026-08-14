@@ -1,5 +1,4 @@
-import fs from 'fs';
-import path from 'path';
+import { saveDiagramWithMeta } from '../utils/meta.js';
 export function generateFlowchartMermaid(input) {
     const direction = input.style?.direction || 'TD';
     let mermaid = `flowchart ${direction}\n`;
@@ -19,12 +18,16 @@ export function generateFlowchartMermaid(input) {
                 break;
             case 'input':
             case 'output':
-                shapeOpen = '(/';
-                shapeClose = '/)';
+                shapeOpen = '([/';
+                shapeClose = '/])';
                 break;
             case 'subprocess':
                 shapeOpen = '[[';
                 shapeClose = ']]';
+                break;
+            default:
+                shapeOpen = '[';
+                shapeClose = ']';
                 break;
         }
         mermaid += `  ${step.id}${shapeOpen}"${step.label}"${shapeClose}\n`;
@@ -36,7 +39,7 @@ export function generateFlowchartMermaid(input) {
                 if (typeof n === 'string') {
                     mermaid += `  ${step.id} --> ${n}\n`;
                 }
-                else {
+                else if (n && n.id) {
                     mermaid += `  ${step.id} -- "${n.label}" --> ${n.id}\n`;
                 }
             });
@@ -45,21 +48,20 @@ export function generateFlowchartMermaid(input) {
     return mermaid;
 }
 export function executeFlowchart(input) {
+    const startTime = Date.now();
+    if (!input.title || !input.steps || input.steps.length === 0) {
+        throw new Error('Validação: "title" e ao menos um passo em "steps" são obrigatórios.');
+    }
     const mermaidSyntax = generateFlowchartMermaid(input);
-    const markdown = `\`\`\`mermaid\n${mermaidSyntax}\n\`\`\``;
-    let outPath = input.output_path || 'flowchart.md';
-    const outDir = path.join(process.cwd(), 'output');
-    const resolvedPath = path.resolve(outDir, outPath);
-    if (!resolvedPath.startsWith(outDir)) {
-        throw new Error('Path traversal detected. Output must be within the output directory.');
-    }
-    if (!fs.existsSync(outDir)) {
-        fs.mkdirSync(outDir, { recursive: true });
-    }
-    fs.writeFileSync(resolvedPath, markdown, 'utf8');
-    return {
-        file_path: resolvedPath,
-        format: 'markdown',
-        markdown: markdown
-    };
+    return saveDiagramWithMeta({
+        type: 'flowchart',
+        title: input.title,
+        description: input.description,
+        mermaidSyntax,
+        suggestedTheme: input.style?.palette || 'educational',
+        nodeCount: input.steps.length,
+        startTime,
+        tags: ['fluxograma', 'processo', 'algoritmo'],
+        outputPath: input.output_path
+    });
 }
