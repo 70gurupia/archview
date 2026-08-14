@@ -18,7 +18,8 @@
     "build:frontend": "npm run build --prefix frontend",
     "build": "tsc && npm run build --prefix frontend",
     "start": "node build/server.js",
-    "dev:frontend": "npm run dev --prefix frontend"
+    "dev:frontend": "npm run dev --prefix frontend",
+    "jules:dispatch": "cat JULES_PROMPT.md | jules new --repo 70gurupia/archview"
   },
   "keywords": [
     "mcp",
