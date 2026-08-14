@@ -4,24 +4,50 @@
 
 ---
 
-## 🏛️ Visão da Arquitetura do Sistema (Modelo C4)
+## 🏛️ Visão da Arquitetura do Sistema
 
 ```mermaid
-C4Container
-  title Arquitetura do ArchView v2.0
-  Person(ai_client, "IA / Desenvolvedor", "Claude Desktop, Cursor, Antigravity ou Terminal")
-  Container(mcp_server, "ArchView MCP Daemon", "TypeScript / Node.js 20", "Executa tools de diagramação e gerencia estado")
-  Container(sse_server, "Express SSE & REST", "Express 5 / Porta 3001", "Transmissão de eventos em tempo real e API REST")
-  ContainerDb(storage, "Armazenamento output/", "Local Disk / JSON", "Diretório local com sintaxes Mermaid e manifestos JSON")
-  Container(web_studio, "Web Studio SPA (Low-CPU)", "Alpine.js (~15KB) / Vite / CSS GPU", "Galeria reativa com Editor Split-View, Playground e 4 Temas")
-  Person(browser_user, "Usuário no Navegador", "Edita diagramas, usa o playground e exporta em até 4K")
-  Rel(ai_client, mcp_server, "Envia requisições MCP", "JSON-RPC (stdio)")
-  Rel(mcp_server, sse_server, "Inicia em background", "In-process")
-  Rel(mcp_server, storage, "Persiste .mmd e .meta.json", "Filesystem")
-  Rel(sse_server, storage, "Lê e grava arquivos editados", "fs / assertSafePath")
-  Rel(sse_server, web_studio, "Transmite stream /events", "Server-Sent Events")
-  Rel(web_studio, browser_user, "Renderiza interface com 0% CPU em repouso", "HTML5 / SVG DOM")
-  Rel(web_studio, sse_server, "Salva edições ao vivo (PUT /api/diagrams/:id)", "REST JSON")
+flowchart TD
+  subgraph Clients[" 💻 Clientes & Interfaces "]
+    ai["🤖 <b>IA / LLM</b><br/>Claude Desktop, Cursor, Antigravity"]
+    browser["🌐 <b>Navegador Web</b><br/>Usuário no Web Studio"]
+  end
+
+  subgraph Core[" ⚡ ArchView Core (Processo Único • Porta 3001) "]
+    mcp["⚙️ <b>MCP Server Daemon</b><br/>JSON-RPC (stdio) • TypeScript"]
+    sse["📡 <b>Express SSE & REST Hub</b><br/>Streaming de Eventos em Tempo Real"]
+    engine["🔍 <b>Engine de Diagramação</b><br/>Mindmap, OrgChart (DFS), C4, Flow"]
+  end
+
+  subgraph Storage[" 💾 Armazenamento Local "]
+    disk[("📁 <b>Diretório output/</b><br/>.mmd (Mermaid) + .meta.json")]
+  end
+
+  subgraph Studio[" 🎨 Web Studio SPA (Low-CPU) "]
+    spa["🖥️ <b>Interface Reativa</b><br/>Alpine.js (~15KB) • 4 Temas"]
+    editor["✏️ <b>Editor Split-View</b><br/>Live Preview + Validação"]
+    play["🧪 <b>Playground MCP</b><br/>Gerador de Prompts & JSON"]
+  end
+
+  ai -->|"JSON-RPC (stdio)"| mcp
+  mcp -->|"Executa & Valida"| engine
+  engine -->|"Grava Arquivos"| disk
+  mcp -->|"Notifica Evento"| sse
+  sse -->|"Stream SSE (/events)"| spa
+  spa -->|"Lê e Salva Edições"| sse
+  browser <-->|"Interage & Exporta 4K"| spa
+  spa --- editor
+  spa --- play
+
+  classDef clientBox fill:#1E293B,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef coreBox fill:#1E40AF,stroke:#60A5FA,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef storeBox fill:#0F766E,stroke:#14B8A6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef studioBox fill:#3730A3,stroke:#818CF8,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+
+  class ai,browser clientBox;
+  class mcp,sse,engine coreBox;
+  class disk storeBox;
+  class spa,editor,play studioBox;
 ```
 
 ---
