@@ -1,9 +1,11 @@
 import express, { Request, Response } from 'express';
+import bodyParser from 'body-parser';
 import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { Server } from 'http';
 import { DiagramMeta } from '../types/index.js';
+import { assertSafePath } from './meta.js';
 
 interface SseClient {
   id: number;
@@ -114,6 +116,46 @@ export function createSseApp(): express.Express {
       const content = fs.existsSync(mmdPath) ? fs.readFileSync(mmdPath, 'utf-8') : '';
 
       res.json({ ...meta, content });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+
+  // Parse JSON bodies
+  app.use(bodyParser.json());
+
+  // REST: Save diagram edits
+  app.put('/api/diagrams/:id', (req: Request, res: Response) => {
+    try {
+      const id = String(req.params.id);
+      const { content } = req.body;
+
+      if (!fs.existsSync(outDir)) {
+        return res.status(404).json({ error: 'Diagram not found' });
+      }
+
+      const files = fs.readdirSync(outDir);
+      const metaFile = files.find(f => f.startsWith(`${id}.meta.json`) || f.includes(id));
+      if (!metaFile) {
+        return res.status(404).json({ error: 'Diagram not found' });
+      }
+
+      const metaRaw = fs.readFileSync(path.join(outDir, metaFile), 'utf-8');
+      const meta: DiagramMeta = JSON.parse(metaRaw);
+
+      const mmdFilename = meta.files.mermaid;
+      const mmdPath = path.join(outDir, mmdFilename);
+      assertSafePath(mmdFilename, outDir);
+
+      // Update modification time
+      meta.updated_at = new Date().toISOString();
+      fs.writeFileSync(path.join(outDir, metaFile), JSON.stringify(meta, null, 2), 'utf-8');
+
+      // Save content
+      fs.writeFileSync(mmdPath, content, 'utf-8');
+
+      res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

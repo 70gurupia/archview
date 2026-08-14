@@ -1,0 +1,29 @@
+{
+  "schema_version": "2.0",
+  "id": "flowchart-pipeline-de-validacao-e-deploy-ca7326",
+  "type": "flowchart",
+  "title": "Pipeline de Validação e Deploy",
+  "description": "Fluxo automatizado de CI/CD",
+  "source": "claude-mcp",
+  "created_at": "2026-08-14T22:10:19.854Z",
+  "updated_at": "2026-08-14T22:10:19.854Z",
+  "files": {
+    "mermaid": "flowchart-pipeline-de-validacao-e-deploy-ca7326.mmd",
+    "meta": "flowchart-pipeline-de-validacao-e-deploy-ca7326.meta.json",
+    "svg": null,
+    "png": null
+  },
+  "style": {
+    "suggested_theme": "educational",
+    "applied_theme": null
+  },
+  "stats": {
+    "node_count": 9,
+    "generation_time_ms": 0
+  },
+  "tags": [
+    "fluxograma",
+    "processo",
+    "algoritmo"
+  ]
+}

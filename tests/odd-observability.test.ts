@@ -56,8 +56,18 @@ async function runOddSuite() {
   });
   assert(isSortedDesc, 'API /api/diagrams retorna diagramas ordenados decrescente por created_at');
 
-  // 5. Teste de Consulta Individual por ID
+  // 5. Teste de Endpoint de Atualização Local
   const firstId = list[0].id;
+
+  const putRes = await fetch(`http://localhost:3002/api/diagrams/${firstId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content: 'graph TD\n A-->B' })
+  });
+  const putData = await putRes.json();
+  assert(putData.success === true, 'API PUT /api/diagrams/:id permite salvar edições no disco');
+
+  // 6. Teste de Consulta Individual por ID
   const singleRes = await fetch(`http://localhost:3002/api/diagrams/${firstId}`);
   const single = await singleRes.json();
   assert(single.id === firstId, 'API /api/diagrams/:id recupera metadados exatos do diagrama solicitado');

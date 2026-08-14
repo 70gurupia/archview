@@ -1,0 +1,30 @@
+{
+  "schema_version": "2.0",
+  "id": "architecture-plataforma-de-pagamentos-a533b2",
+  "type": "architecture",
+  "title": "Plataforma de Pagamentos",
+  "description": "Containers e serviços da arquitetura de checkout",
+  "source": "claude-mcp",
+  "created_at": "2026-08-14T22:10:19.854Z",
+  "updated_at": "2026-08-14T22:10:19.854Z",
+  "files": {
+    "mermaid": "architecture-plataforma-de-pagamentos-a533b2.mmd",
+    "meta": "architecture-plataforma-de-pagamentos-a533b2.meta.json",
+    "svg": null,
+    "png": null
+  },
+  "style": {
+    "suggested_theme": "corporate",
+    "applied_theme": null
+  },
+  "stats": {
+    "node_count": 6,
+    "generation_time_ms": 1
+  },
+  "tags": [
+    "c4-model",
+    "C2-container",
+    "arquitetura",
+    "software"
+  ]
+}

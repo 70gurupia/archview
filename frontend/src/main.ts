@@ -44,10 +44,36 @@ document.addEventListener('alpine:init', () => {
     sseStatus: 'connecting' as 'connected' | 'connecting' | 'disconnected',
     isRendering: false,
 
+    // New states
+    showOnboarding: false,
+    neverShowOnboarding: false,
+    playgroundTool: 'mindmap',
+    playgroundTitle: '',
+    playgroundDesc: '',
+    editorMode: false,
+    editorContent: '',
+    syntaxError: false,
+    exportTransparent: false,
+
+    // Pan & Zoom
+    panX: 0,
+    panY: 0,
+    isPanning: false,
+    startX: 0,
+    startY: 0,
+
+    // Inspector
+    inspectedNode: null as { id: string, label: string, metadata?: string } | null,
+
     async init() {
       applyCssTheme(this.activeTheme);
       await this.loadDiagrams();
       this.initSse();
+
+      const tourSeen = localStorage.getItem('archview_tour_seen');
+      if (!tourSeen) {
+        this.showOnboarding = true;
+      }
     },
 
     async loadDiagrams() {
@@ -162,18 +188,76 @@ document.addEventListener('alpine:init', () => {
       });
     },
 
-    closeModal() {
+    closeModals() {
       this.selectedDiagram = null;
       this.zoom = 1.0;
+      this.panX = 0;
+      this.panY = 0;
+      this.editorMode = false;
     },
 
-    async renderSelectedDiagram() {
-      if (!this.selectedDiagram || !this.selectedDiagram.content) return;
+    closeOnboarding() {
+      this.showOnboarding = false;
+      if (this.neverShowOnboarding) {
+        localStorage.setItem('archview_tour_seen', 'true');
+      }
+    },
+
+    cycleTheme() {
+      const themes = ['educational', 'corporate', 'minimal', 'dark'];
+      const idx = themes.indexOf(this.activeTheme);
+      this.setTheme(themes[(idx + 1) % themes.length]);
+    },
+
+    toggleEditorMode() {
+      this.editorMode = !this.editorMode;
+      if (this.editorMode && this.selectedDiagram) {
+        this.editorContent = this.selectedDiagram.content;
+      }
+    },
+
+    insertTab(e: Event) {
+      const target = e.target as HTMLTextAreaElement;
+      const start = target.selectionStart;
+      const end = target.selectionEnd;
+      this.editorContent = this.editorContent.substring(0, start) + "  " + this.editorContent.substring(end);
+      this.$nextTick(() => {
+        target.selectionStart = target.selectionEnd = start + 2;
+      });
+    },
+
+    async saveEditedDiagram() {
+      if (!this.selectedDiagram) return;
+      try {
+        const res = await fetch(`/api/diagrams/${this.selectedDiagram.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: this.editorContent })
+        });
+
+        if (res.ok) {
+          this.selectedDiagram.content = this.editorContent;
+          this.showToast('Alterações salvas localmente!');
+          await this.loadDiagrams();
+        } else {
+          this.showToast('Erro ao salvar no servidor.');
+        }
+      } catch (err) {
+        this.showToast('Erro na conexão ao salvar.');
+      }
+    },
+
+
+    async renderSelectedDiagram(fromEditor = false) {
+      const contentToRender = fromEditor ? this.editorContent : (this.selectedDiagram?.content || '');
+      if (!contentToRender) return;
       const targetEl = document.getElementById('modal-render-target');
       if (!targetEl) return;
 
       this.isRendering = true;
-      targetEl.innerHTML = '<div style="color:var(--text-muted);padding:2rem;">Renderizando diagrama...</div>';
+      if (!fromEditor) {
+        targetEl.innerHTML = '<div style="color:var(--text-muted);padding:2rem;">Renderizando diagrama...</div>';
+      }
 
       try {
         const themeConfig = THEMES[this.activeTheme] || THEMES.educational;
@@ -184,20 +268,63 @@ document.addEventListener('alpine:init', () => {
           themeVariables: themeConfig.mermaid.themeVariables
         });
 
-        const uniqueId = `svg-main-${this.selectedDiagram.id}-${Date.now()}`;
-        const cleanMermaid = this.selectedDiagram.content.replace(/```mermaid\n?/g, '').replace(/```/g, '').trim();
+        const uniqueId = `svg-main-${this.selectedDiagram?.id || 'editor'}-${Date.now()}`;
+        const cleanMermaid = contentToRender.replace(/```mermaid\n?/g, '').replace(/```/g, '').trim();
+
+        // Parse before render to catch errors without breaking UI
+        await mermaid.parse(cleanMermaid);
+        this.syntaxError = false;
+
         const { svg } = await mermaid.render(uniqueId, cleanMermaid);
 
         targetEl.innerHTML = svg;
         const svgEl = targetEl.querySelector('svg');
         if (svgEl) {
           postProcessSvg(svgEl, this.activeTheme);
+          this.bindNodeEvents(svgEl);
         }
       } catch (err: any) {
-        targetEl.innerHTML = `<div style="color:#EF4444;padding:2rem;">Erro ao renderizar Mermaid: ${err.message}</div>`;
+        this.syntaxError = true;
+        if (!fromEditor) {
+          targetEl.innerHTML = `<div style="color:#EF4444;padding:2rem;">Erro ao renderizar Mermaid: ${err.message}</div>`;
+        }
       } finally {
         this.isRendering = false;
       }
+    },
+
+    bindNodeEvents(svgEl: SVGElement) {
+      const nodes = svgEl.querySelectorAll('.node');
+      nodes.forEach(node => {
+        // Apply hover effects via JS or just CSS class, let's use events for tooltip
+        (node as HTMLElement).addEventListener('mouseenter', (e) => {
+           const id = node.id || 'N/A';
+           const labelEl = node.querySelector('.nodeLabel') || node.querySelector('.label');
+           const label = labelEl ? labelEl.textContent || 'N/A' : 'N/A';
+           // Find any title tag for metadata
+           const titleEl = node.querySelector('title');
+           const meta = titleEl ? titleEl.textContent : undefined;
+
+           this.inspectedNode = { id, label, metadata: meta || undefined };
+
+           // Highlight
+           const rectOrCircle = node.querySelector('rect, circle, polygon, path');
+           if(rectOrCircle) {
+             (rectOrCircle as HTMLElement).style.strokeWidth = '3px';
+             (rectOrCircle as HTMLElement).style.filter = 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))';
+           }
+        });
+
+        (node as HTMLElement).addEventListener('mouseleave', (e) => {
+           this.inspectedNode = null;
+           // Remove highlight
+           const rectOrCircle = node.querySelector('rect, circle, polygon, path');
+           if(rectOrCircle) {
+             (rectOrCircle as HTMLElement).style.strokeWidth = '';
+             (rectOrCircle as HTMLElement).style.filter = '';
+           }
+        });
+      });
     },
 
     zoomIn() {
@@ -210,13 +337,56 @@ document.addEventListener('alpine:init', () => {
 
     zoomReset() {
       this.zoom = 1.0;
+      this.panX = 0;
+      this.panY = 0;
     },
 
-    async handleExportPng() {
+    handleWheel(e: WheelEvent) {
+      if (e.ctrlKey) {
+        if (e.deltaY > 0) this.zoomOut();
+        else this.zoomIn();
+      } else {
+        this.panX -= e.deltaX;
+        this.panY -= e.deltaY;
+      }
+    },
+
+    startPan(e: MouseEvent) {
+      this.isPanning = true;
+      this.startX = e.clientX - this.panX;
+      this.startY = e.clientY - this.panY;
+    },
+
+    doPan(e: MouseEvent) {
+      if (!this.isPanning) return;
+      this.panX = e.clientX - this.startX;
+      this.panY = e.clientY - this.startY;
+    },
+
+    endPan() {
+      this.isPanning = false;
+    },
+
+    async handleExportPng(scale = 2) {
       const svgEl = document.querySelector('#modal-render-target svg') as SVGElement;
       if (!svgEl || !this.selectedDiagram) return;
-      await exportSvgToPng(svgEl, `${this.selectedDiagram.id}.png`, 2);
-      this.showToast('PNG de alta resolução exportado com sucesso!');
+      const bg = this.exportTransparent ? 'transparent' : undefined;
+      await exportSvgToPng(svgEl, `${this.selectedDiagram.id}.png`, scale, bg);
+      this.showToast(`PNG (${scale}x) exportado com sucesso!`);
+    },
+
+    async handleCopyImage() {
+       const svgEl = document.querySelector('#modal-render-target svg') as SVGElement;
+       if (!svgEl) return;
+       // Calling the new helper
+       const bg = this.exportTransparent ? 'transparent' : undefined;
+       const { exportSvgToClipboard } = await import('./export-helper.js');
+       const success = await exportSvgToClipboard(svgEl, bg);
+       if (success) {
+         this.showToast('Imagem copiada para a área de transferência!');
+       } else {
+         this.showToast('Erro ao copiar imagem.');
+       }
     },
 
     handleExportSvg() {
@@ -255,6 +425,54 @@ document.addEventListener('alpine:init', () => {
       } catch {
         return dateStr;
       }
+    },
+
+    async copyText(text: string) {
+      const success = await copyToClipboard(text);
+      if (success) this.showToast('Copiado para a área de transferência!');
+    },
+
+    getPlaygroundPrompt() {
+      const tool = this.playgroundTool;
+      const title = this.playgroundTitle || 'Exemplo';
+      const desc = this.playgroundDesc || 'Item 1, Item 2';
+
+      if (tool === 'mindmap') {
+        return `Gere um mapa mental com o tópico central "${title}" e os ramos: ${desc}.`;
+      } else if (tool === 'orgchart') {
+        return `Crie um organograma para a empresa/departamento "${title}" incluindo: ${desc}.`;
+      } else if (tool === 'architecture') {
+        return `Desenhe um diagrama de arquitetura C4 (nível C2) para o sistema "${title}" com os seguintes componentes: ${desc}.`;
+      } else {
+         return `Crie um fluxograma para o processo "${title}" com os passos: ${desc}.`;
+      }
+    },
+
+    getPlaygroundPayload() {
+      const tool = this.playgroundTool;
+      const title = this.playgroundTitle || 'Exemplo';
+
+      let args = {};
+      if (tool === 'mindmap') {
+        args = { central_topic: title, branches: [{ title: 'Exemplo', sub_branches: ['Sub'] }] };
+      } else if (tool === 'orgchart') {
+        args = { title, nodes: [{ id: 'ceo', label: 'CEO', role: 'Exec' }] };
+      } else if (tool === 'architecture') {
+        args = { c4_level: 'C2-container', system_name: title, elements: [] };
+      } else {
+        args = { title, steps: [{ id: 'start', type: 'start', label: 'Inicio' }] };
+      }
+
+      return JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: tool,
+        params: args
+      }, null, 2);
+    },
+
+    testPlayground() {
+       this.showToast('No modo local/estúdio, você deve usar um cliente MCP real (Claude/Cursor) enviando requisições ao servidor. Esta interface apenas simula e ajuda a criar os prompts.');
     },
 
     getTabEmoji(type: string) {

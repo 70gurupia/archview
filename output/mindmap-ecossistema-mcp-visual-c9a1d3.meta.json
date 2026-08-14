@@ -1,0 +1,30 @@
+{
+  "schema_version": "2.0",
+  "id": "mindmap-ecossistema-mcp-visual-c9a1d3",
+  "type": "mindmap",
+  "title": "Ecossistema MCP Visual",
+  "description": "Visão geral da arquitetura de visualização local",
+  "source": "claude-mcp",
+  "created_at": "2026-08-14T22:10:19.852Z",
+  "updated_at": "2026-08-14T22:10:19.852Z",
+  "files": {
+    "mermaid": "mindmap-ecossistema-mcp-visual-c9a1d3.mmd",
+    "meta": "mindmap-ecossistema-mcp-visual-c9a1d3.meta.json",
+    "svg": null,
+    "png": null
+  },
+  "style": {
+    "suggested_theme": "educational",
+    "applied_theme": null
+  },
+  "stats": {
+    "node_count": 15,
+    "max_depth": 2,
+    "generation_time_ms": 2
+  },
+  "tags": [
+    "mapa-mental",
+    "educacional",
+    "resumo"
+  ]
+}

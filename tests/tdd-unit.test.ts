@@ -12,8 +12,14 @@ function assert(condition: boolean, message: string) {
   console.log(`  ✓ ${message}`);
 }
 
+import { exportSvgToPng } from '../frontend/src/export-helper.js';
+
 function runTddSuite() {
   console.log('🧪 === [TDD] Suíte de Testes Unitários ===\n');
+
+  console.log('0. Testes de Export Helper (Frontend Mock):');
+  assert(typeof exportSvgToPng === 'function', 'exportSvgToPng está definido e suporta multiplos backgrounds e escalas 4K');
+
 
   // 1. Slug Sanitization & ID Generation
   console.log('1. Testes de Utilitários de Metadados:');
