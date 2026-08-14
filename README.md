@@ -134,6 +134,7 @@ Adicione ao seu arquivo de configuração de servidores MCP (substitua pelo cami
 ## 📚 Documentação Adicional
 
 - [📖 Documentação Completa da Arquitetura](docs/ARCHITECTURE.md)
+- [🗺️ Roadmap de Evolução (v3.0 Codebase Intelligence)](ROADMAP.md)
 - [📚 Referência de Ferramentas e Schemas (API)](docs/API.md)
 - [📋 Quadro Kanban e Backlog](KANBAN.md)
 - [📈 Relatório de Progresso e Métricas](PROGRESS.md)

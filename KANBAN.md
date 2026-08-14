@@ -4,8 +4,15 @@
 
 ---
 
-## 📥 Backlog
-*(Vazio no momento. Todos os itens do MVP v2.0 foram concluídos e validados).*
+## 📥 Backlog (v3.0 - Codebase Intelligence & Flow Tracing)
+
+- [ ] **TASK-014 (v3.1)**: Desenvolver motor universal de análise de diretórios e frameworks (`codebase-scanner.ts`).
+- [ ] **TASK-015 (v3.1)**: Implementar a tool MCP `scan_codebase_topology` (C4 em Mermaid para repositórios).
+- [ ] **TASK-016 (v3.2)**: Implementar mapeamento de dependências e a tool `trace_call_graph`.
+- [ ] **TASK-017 (v3.3)**: Implementar ingestão de traces/logs e endpoint `POST /api/ingest/trace`.
+- [ ] **TASK-018 (v3.3)**: Implementar a tool `trace_execution_flow` (Diagramas de sequência a partir de traces).
+- [ ] **TASK-019 (v3.3)**: Implementar a tool unificada `analyze_codebase_overview`.
+- [ ] **TASK-020 (v3.4)**: Criar a aba "Codebase Explorer" no Web Studio e validar suíte de 13 gates.
 
 ---
 
