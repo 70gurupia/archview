@@ -1,0 +1,53 @@
+name: 🐛 Relato de Bug
+description: Crie um relatório para nos ajudar a reproduzir e corrigir um bug.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por dedicar seu tempo para relatar este problema!
+  - type: input
+    id: tool_name
+    attributes:
+      label: Ferramenta MCP ou Componente Afetado
+      description: Ex: `generate_orgchart`, `generate_mindmap`, `Web Studio`, `SSE`
+      placeholder: generate_orgchart
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Descrição do Problema
+      description: Explique o que aconteceu de forma clara e concisa.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Passos para Reproduzir
+      description: Quais parâmetros ou passos foram executados?
+      placeholder: |
+        1. Executar tool `generate_mindmap` com o payload {...}
+        2. Abrir o Web Studio na porta 3001
+        3. Observar erro de renderização
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamento Esperado
+      description: O que você esperava que acontecesse?
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Ambiente / Cliente MCP
+      options:
+        - Claude Desktop
+        - Cursor
+        - Antigravity / Gemini CLI
+        - Node.js SDK / Stdout
+        - Outro
+    validations:
+      required: true

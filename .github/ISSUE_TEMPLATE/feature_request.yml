@@ -1,0 +1,29 @@
+name: 💡 Sugestão de Funcionalidade
+description: Sugira uma nova ferramenta de diagrama, tema ou aprimoramento no ArchView.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideias e sugestões de novos recursos são muito bem-vindas!
+  - type: input
+    id: feature_title
+    attributes:
+      label: Título da Funcionalidade
+      placeholder: Ex: Adicionar suporte a diagramas de sequência ou tema Cyberpunk
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Qual problema essa funcionalidade resolve?
+      description: Explique o caso de uso ou necessidade.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Descrição da Solução Proposta
+      description: Como você imagina que essa funcionalidade deve funcionar?
+    validations:
+      required: true

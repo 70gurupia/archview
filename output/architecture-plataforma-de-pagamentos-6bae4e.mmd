@@ -1,0 +1,12 @@
+C4Container
+  title Plataforma de Pagamentos
+  Person(user, "Cliente", "Usuário que realiza o pedido")
+  Container(web_app, "Web SPA", "Vue / Vite", "Interface do usuário")
+  Container(api_gateway, "API Gateway", "Go / Kong", "Roteador e autenticador")
+  Container(payment_svc, "Serviço de Pagamentos", "Node.js / TS", "Orquestrador financeiro")
+  ContainerDb(db_main, "PostgreSQL", "PostgreSQL 16", "Banco de dados principal")
+  ContainerQueue(queue_orders, "RabbitMQ", "RabbitMQ", "Fila de mensagens assíncronas")
+  Rel(web_app, api_gateway, "Envia requisições HTTPS", "REST/JSON")
+  Rel(api_gateway, payment_svc, "Chama processamento", "gRPC")
+  Rel(api_gateway, db_main, "Persiste sessão", "TCP")
+  Rel(payment_svc, queue_orders, "Publica eventos de pagamento", "AMQP")

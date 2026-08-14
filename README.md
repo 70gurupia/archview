@@ -90,7 +90,8 @@ flowchart TB
 
 ### 1. Instalação e Compilação
 ```bash
-cd /home/mat77/mcp-visual-server
+git clone https://github.com/70gurupia/archview.git
+cd archview
 npm install
 npm run build
 ```
@@ -115,14 +116,14 @@ npm run dev:frontend
 ## 🔌 Configuração em Clientes MCP
 
 ### Claude Desktop / Cursor / Antigravity
-Adicione ao seu arquivo de configuração de servidores MCP:
+Adicione ao seu arquivo de configuração de servidores MCP (substitua pelo caminho do diretório onde você clonou o repositório):
 
 ```json
 {
   "mcpServers": {
-    "visual-server": {
+    "archview": {
       "command": "node",
-      "args": ["/home/mat77/mcp-visual-server/build/server.js"]
+      "args": ["/caminho/absoluto/para/archview/build/server.js"]
     }
   }
 }
