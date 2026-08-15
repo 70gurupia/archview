@@ -109,20 +109,55 @@ function runTddSuite() {
   assert(archSyntaxC2.startsWith('C4Container'), 'C2 gera cabeçalho C4Container');
   assert(archSyntaxC2.includes('ContainerDb(db, "Banco", "PostgreSQL", "Armazena dados")'), 'C2 renderiza ContainerDb com tecnologia');
 
+  const archSyntaxFlow = generateArchitectureMermaid({
+    c4_level: 'C2-container',
+    system_name: 'Sistema Semântico',
+    elements: [
+      { id: 'usr', type: 'person', name: 'Admin', description: 'Operador', relationships: [{ target: 'mq', description: 'Publica Evento' }, { target: 'db', description: 'Consulta' }] },
+      { id: 'db', type: 'database', name: 'Base', description: 'Dados', technology: 'PostgreSQL' },
+      { id: 'mq', type: 'queue', name: 'Fila', description: 'Eventos' }
+    ],
+    style: { notation: 'flowchart' }
+  });
+  assert(archSyntaxFlow.includes('flowchart TD'), 'Arquitetura suporta modo flowchart TD');
+  assert(archSyntaxFlow.includes('usr(["<b>👤 Admin</b><br/>Operador"])'), 'Arquitetura modo flowchart renderiza person como stadium ([]) com ícone');
+  assert(archSyntaxFlow.includes('db[("<b>💾 Base</b><br/><i>PostgreSQL</i><br/>Dados")]'), 'Arquitetura modo flowchart renderiza database como cilindro [()] com ícone');
+  assert(archSyntaxFlow.includes('mq[["<b>📬 Fila</b><br/>Eventos"]]'), 'Arquitetura modo flowchart renderiza queue como subprocesso [[]] com ícone');
+  assert(archSyntaxFlow.includes('usr -.->|"Publica Evento"| mq'), 'Arquitetura renderiza conexão assíncrona com fila em linha tracejada -.->');
+  assert(archSyntaxFlow.includes('usr -->|"Consulta"| db'), 'Arquitetura renderiza conexão síncrona com banco em linha sólida -->');
+
   // 5. Flowchart Generator
   console.log('\n5. Testes de generate_flowchart:');
   const flowSyntax = generateFlowchartMermaid({
     title: 'Fluxo Decisório',
     steps: [
       { id: 'start', type: 'start', label: 'Início', next: ['dec'] },
-      { id: 'dec', type: 'decision', label: 'Válido?', next: [{ id: 'ok', label: 'Sim' }, { id: 'fail', label: 'Não' }] },
+      { id: 'dec', type: 'decision', label: 'Válido?', next: [{ id: 'ok', label: 'Sim' }, { id: 'fail', label: 'Não' }, { id: 'q', label: 'Async Event', style: 'dashed' }] },
+      { id: 'db', type: 'database', label: 'Grava no Banco' },
+      { id: 'q', type: 'queue', label: 'Dispara Fila' },
+      { id: 'doc', type: 'document', label: 'Gera Relatório' },
       { id: 'ok', type: 'end', label: 'Fim Sucesso' },
       { id: 'fail', type: 'end', label: 'Fim Falha' }
     ]
   });
   assert(flowSyntax.includes('flowchart TD'), 'Flowchart inicializa com direção padrão');
-  assert(flowSyntax.includes('dec{"Válido?"}'), 'Flowchart mapeia tipo decision para shape losango {}');
-  assert(flowSyntax.includes('dec -- "Sim" --> ok'), 'Flowchart mapeia labels de transição condicional');
+  assert(flowSyntax.includes('dec{"❓ Válido?"}'), 'Flowchart mapeia tipo decision para shape losango {} com ícone');
+  assert(flowSyntax.includes('db[("💾 Grava no Banco")]'), 'Flowchart mapeia tipo database para cilindro [()] com ícone');
+  assert(flowSyntax.includes('q[["📬 Dispara Fila"]]'), 'Flowchart mapeia tipo queue para subprocesso [[]] com ícone');
+  assert(flowSyntax.includes('doc[\\"' + '📄 Gera Relatório' + '"\\]'), 'Flowchart mapeia tipo document para documento [\\ \\] com ícone');
+  assert(flowSyntax.includes('dec -- "Sim" --> ok'), 'Flowchart mapeia labels de transição condicional sólida');
+  assert(flowSyntax.includes('dec -. "Async Event" .-> q'), 'Flowchart mapeia labels de transição assíncrona tracejada');
+
+  const groupedFlow = generateFlowchartMermaid({
+    title: 'Fluxo com Subgrafos',
+    steps: [
+      { id: 'in', type: 'input', label: 'Upload Arquivo', group: 'Camada de Entrada', next: ['proc'] },
+      { id: 'proc', type: 'process', label: 'Processamento', group: 'Camada de Negócio', next: ['out'] },
+      { id: 'out', type: 'output', label: 'Download Relatório', group: 'Camada de Saída' }
+    ]
+  });
+  assert(groupedFlow.includes('subgraph sg_1[" Camada de Entrada "]'), 'Flowchart renderiza subgraph nomeado para grupos');
+  assert(groupedFlow.includes('subgraph sg_2[" Camada de Negócio "]'), 'Flowchart renderiza múltiplos subgraphs');
 
   console.log('\n🎉 [TDD] Todos os testes unitários passaram com 100% de sucesso!\n');
 }

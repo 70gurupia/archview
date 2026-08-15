@@ -1,41 +1,39 @@
 flowchart TD
-  subgraph Clients[" 💻 Clientes & Interfaces "]
-    ai["🤖 <b>IA / LLM</b><br/>Claude Desktop, Cursor, Antigravity"]
-    browser["🌐 <b>Navegador Web</b><br/>Usuário no Web Studio"]
+  subgraph sg_1[" Clientes e Consumidores "]
+    ai_client(["<b>👤 IA / Desenvolvedor</b><br/>Claude Desktop, Cursor, Antigravity ou Terminal"])
+    browser_user(["<b>👤 Usuário no Navegador</b><br/>Edita diagramas, usa o playground e exporta em até 4K"])
   end
 
-  subgraph Core[" ⚡ ArchView Core (Processo Único • Porta 3001) "]
-    mcp["⚙️ <b>MCP Server Daemon</b><br/>JSON-RPC (stdio) • TypeScript"]
-    sse["📡 <b>Express SSE & REST Hub</b><br/>Streaming de Eventos em Tempo Real"]
-    engine["🔍 <b>Engine de Diagramação</b><br/>Mindmap, OrgChart (DFS), C4, Flow"]
+  subgraph sg_2[" Servidores e Backend "]
+    mcp_server["<b>📦 ArchView MCP Daemon</b><br/><i>TypeScript / Node.js 20</i><br/>Executa tools de diagramação e gerencia estado"]
+    sse_server["<b>📦 Express SSE & REST</b><br/><i>Express 5 / Porta 3001</i><br/>Transmissão de eventos em tempo real e API REST"]
   end
 
-  subgraph Storage[" 💾 Armazenamento Local "]
-    disk[("📁 <b>Diretório output/</b><br/>.mmd (Mermaid) + .meta.json")]
+  subgraph sg_3[" Camada de Persistência "]
+    storage[("<b>💾 Armazenamento output/</b><br/><i>Local Disk / JSON</i><br/>Diretório local com sintaxes Mermaid e manifestos JSON")]
   end
 
-  subgraph Studio[" 🎨 Web Studio SPA (Low-CPU) "]
-    spa["🖥️ <b>Interface Reativa</b><br/>Alpine.js (~15KB) • 4 Temas"]
-    editor["✏️ <b>Editor Split-View</b><br/>Live Preview + Validação"]
-    play["🧪 <b>Playground MCP</b><br/>Gerador de Prompts & JSON"]
+  subgraph sg_4[" Interface Gráfica Web "]
+    web_studio["<b>📦 Web Studio SPA (Low-CPU)</b><br/><i>Alpine.js (~15KB) / Vite / CSS GPU</i><br/>Galeria reativa com Editor Split-View, Playground e 4 Temas"]
   end
 
-  ai -->|"JSON-RPC (stdio)"| mcp
-  mcp -->|"Executa & Valida"| engine
-  engine -->|"Grava Arquivos"| disk
-  mcp -->|"Notifica Evento"| sse
-  sse -->|"Stream SSE (/events)"| spa
-  spa -->|"Lê e Salva Edições"| sse
-  browser <-->|"Interage & Exporta 4K"| spa
-  spa --- editor
-  spa --- play
+  ai_client -->|"Envia requisições MCP [JSON-RPC (stdio)]"| mcp_server
+  mcp_server -->|"Inicia em background [In-process]"| sse_server
+  mcp_server -->|"Persiste .mmd e .meta.json [Filesystem]"| storage
+  sse_server -.->|"Lê e grava arquivos editados [fs / assertSafePath]"| storage
+  sse_server -.->|"Transmite stream /events [Server-Sent Events]"| web_studio
+  web_studio -->|"Renderiza interface com 0% CPU em repouso [HTML5 / SVG DOM]"| browser_user
+  web_studio -->|"Salva edições ao vivo (PUT /api/diagrams/:id) [REST JSON]"| sse_server
 
-  classDef clientBox fill:#1E293B,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
-  classDef coreBox fill:#1E40AF,stroke:#60A5FA,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
-  classDef storeBox fill:#0F766E,stroke:#14B8A6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
-  classDef studioBox fill:#3730A3,stroke:#818CF8,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
-
-  class ai,browser clientBox;
-  class mcp,sse,engine coreBox;
-  class disk storeBox;
-  class spa,editor,play studioBox;
+  classDef default fill:#F8FAFC,stroke:#64748B,stroke-width:1.5px,color:#1E293B,rx:8px,ry:8px;
+  classDef primary fill:#1E40AF,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef success fill:#0F766E,stroke:#14B8A6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef accent fill:#3730A3,stroke:#818CF8,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef warning fill:#D97706,stroke:#F59E0B,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef danger fill:#B91C1C,stroke:#EF4444,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  class ai_client accent;
+  class browser_user accent;
+  class mcp_server primary;
+  class sse_server primary;
+  class storage success;
+  class web_studio primary;

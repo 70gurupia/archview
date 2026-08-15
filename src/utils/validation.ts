@@ -58,6 +58,7 @@ export const ArchitectureElementSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().min(1).max(255),
   technology: z.string().max(100).optional(),
+  group: z.string().max(100).optional(),
   relationships: z.array(z.object({
     target: z.string().min(1).max(50),
     description: z.string().min(1).max(100),
@@ -71,7 +72,9 @@ export const ArchitectureInputSchema = z.object({
   description: z.string().max(255).optional(),
   elements: z.array(ArchitectureElementSchema).min(1).max(MAX_NODES),
   style: z.object({
+    notation: z.enum(['c4', 'flowchart']).optional(),
     show_technology: z.boolean().optional(),
+    direction: z.enum(['TB', 'LR', 'BT', 'RL']).optional(),
     palette: z.enum(['educational', 'corporate', 'minimal', 'dark']).optional()
   }).optional(),
   output_path: z.string().optional()
@@ -79,13 +82,15 @@ export const ArchitectureInputSchema = z.object({
 
 export const FlowchartStepSchema = z.object({
   id: z.string().min(1).max(50),
-  type: z.enum(["start", "end", "process", "decision", "input", "output", "subprocess"]),
+  type: z.enum(["start", "end", "process", "decision", "input", "output", "subprocess", "database", "queue", "document"]),
   label: z.string().min(1).max(100),
+  group: z.string().max(100).optional(),
   next: z.array(z.union([
     z.string().min(1).max(50),
     z.object({
       id: z.string().min(1).max(50),
-      label: z.string().max(100).optional()
+      label: z.string().max(100).optional(),
+      style: z.enum(['solid', 'dashed', 'dotted', 'thick']).optional()
     })
   ])).max(10).optional(),
   details: z.string().max(255).optional()

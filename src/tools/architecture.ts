@@ -1,6 +1,6 @@
 import { ArchitectureInputSchema } from '../utils/validation.js';
 import { ToolExecutionResult } from '../types/index.js';
-import { saveDiagramWithMeta } from '../utils/meta.js';
+import { saveDiagramWithMeta, getSemanticIcon, getDesignSystemClassDefs, getNodeClass } from '../utils/meta.js';
 
 export interface C4Relationship {
   target: string;
@@ -14,6 +14,7 @@ export interface C4Element {
   name: string;
   description: string;
   technology?: string;
+  group?: string;
   relationships?: C4Relationship[];
 }
 
@@ -32,6 +33,91 @@ export interface ArchitectureInput {
 }
 
 export function generateArchitectureMermaid(input: ArchitectureInput): string {
+  if (input.style?.notation === 'flowchart') {
+    const dir = input.style.direction || 'TD';
+    let mermaid = `flowchart ${dir}\n`;
+
+    // Group elements by subgraph if group is provided
+    const groups: { [key: string]: C4Element[] } = {};
+    const ungrouped: C4Element[] = [];
+
+    input.elements.forEach(el => {
+      if (el.group) {
+        if (!groups[el.group]) groups[el.group] = [];
+        groups[el.group].push(el);
+      } else {
+        ungrouped.push(el);
+      }
+    });
+
+    const renderElement = (el: C4Element) => {
+      let open = '[';
+      let close = ']';
+      let tech = el.technology ? `<br/><i>${el.technology}</i>` : '';
+      const icon = getSemanticIcon(el.type, el.name);
+
+      switch (el.type) {
+        case 'person':
+          open = '(['; close = '])';
+          break;
+        case 'database':
+          open = '[('; close = ')]';
+          break;
+        case 'queue':
+          open = '[['; close = ']]';
+          break;
+        case 'external':
+          open = '[/'; close = '/]';
+          break;
+        default:
+          open = '['; close = ']';
+          break;
+      }
+
+      return `    ${el.id}${open}"<b>${icon}${el.name}</b>${tech}<br/>${el.description}"${close}\n`;
+    };
+
+    let groupIdx = 0;
+    Object.entries(groups).forEach(([groupName, elements]) => {
+      groupIdx++;
+      mermaid += `  subgraph sg_${groupIdx}[" ${groupName} "]\n`;
+      elements.forEach(el => {
+        mermaid += renderElement(el);
+      });
+      mermaid += `  end\n\n`;
+    });
+
+    ungrouped.forEach(el => {
+      mermaid += renderElement(el).replace(/^    /, '  ');
+    });
+
+    input.elements.forEach(el => {
+      if (el.relationships && el.relationships.length > 0) {
+        el.relationships.forEach(rel => {
+          const targetEl = input.elements.find(e => e.id === rel.target);
+          const isAsync = targetEl?.type === 'queue' || /event|queue|stream|sse|async|kafka|rabbit/i.test(rel.technology || '') || /event|ass[ií]ncrono|fila|stream/i.test(rel.description || '');
+          const tech = rel.technology ? ` [${rel.technology}]` : '';
+          if (isAsync) {
+            mermaid += `  ${el.id} -.->|"${rel.description}${tech}"| ${rel.target}\n`;
+          } else {
+            mermaid += `  ${el.id} -->|"${rel.description}${tech}"| ${rel.target}\n`;
+          }
+        });
+      }
+    });
+
+    // Apply Design System ClassDefs & Node styling
+    mermaid += getDesignSystemClassDefs();
+    input.elements.forEach(el => {
+      const cls = getNodeClass(el.type);
+      if (cls !== 'default') {
+        mermaid += `  class ${el.id} ${cls};\n`;
+      }
+    });
+
+    return mermaid;
+  }
+
   let mermaid = `C4Context\n`;
   if (input.c4_level === 'C2-container') mermaid = `C4Container\n`;
   if (input.c4_level === 'C3-component') mermaid = `C4Component\n`;

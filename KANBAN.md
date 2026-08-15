@@ -6,16 +6,7 @@
 
 ## 📥 Backlog
 
-### 🎨 Fase 2.5: Refinamento Visual e Semântica de Design (Prioridade Imediata)
-- [ ] **TASK-014 (v2.5)**: Integrar formas semânticas nativas do Mermaid (cilindros, losangos, pílulas e subprocessos).
-- [ ] **TASK-015 (v2.5)**: Implementar otimização inteligente de direção (`LR` para fluxos/pipelines e `TD` para árvores).
-- [ ] **TASK-016 (v2.5)**: Padronizar âncoras visuais com ícones semânticos (🤖 IA, ⚙️ Core, 📡 SSE, 💾 Disco, 🎨 UI, 🛡️ Segurança).
-- [ ] **TASK-017 (v2.5)**: Diferenciar tipos de conexão (sólidas `-->`, tracejadas `-.->` e destacadas para erros).
-- [ ] **TASK-018 (v2.5)**: Aplicar classes de design system com bordas curvas (`rx:8px`) e paleta harmonizada.
-- [ ] **TASK-019 (v2.5)**: Implementar agrupamento automático de subgrafos nos geradores de arquitetura e fluxograma.
-
 ### 🗺️ Fase 3.0: Codebase Intelligence & Flow Tracing (Motor Determinístico)
-- [ ] **TASK-020 (v3.1)**: Desenvolver motor universal de análise de diretórios e frameworks (`codebase-scanner.ts`).
 - [ ] **TASK-021 (v3.1)**: Implementar a tool MCP `scan_codebase_topology` (C4 em Mermaid para repositórios).
 - [ ] **TASK-022 (v3.2)**: Implementar mapeamento de dependências e a tool `trace_call_graph`.
 - [ ] **TASK-023 (v3.3)**: Implementar ingestão de traces/logs e endpoint `POST /api/ingest/trace`.
@@ -25,12 +16,19 @@
 
 ---
 
-## ⏳ Em Progresso (WIP: 0/1)
-*(Nenhuma tarefa ativa. Todas as tarefas concluídas).*
+## ⏳ Em Progresso (WIP: 1/1)
+- [ ] **TASK-020 (v3.1)**: Desenvolver motor universal de análise de diretórios e frameworks (`codebase-scanner.ts`).
 
 ---
 
 ## ✅ Concluído (Done)
+
+- [x] **TASK-019 (v2.5)**: Implementação de agrupamento automático e explícito por subgrafos nomeados (`subgraph [Nome] ... end`) nos geradores de arquitetura e fluxograma.
+- [x] **TASK-018 (v2.5)**: Aplicação de classes de design system com bordas curvas (`rx:8px, ry:8px`) e paleta de cores semântica harmonizada (Azul Safira, Verde-Petróleo, Índigo e Âmbar).
+- [x] **TASK-017 (v2.5)**: Diferenciação de tipos de conexão (sólidas `-->` para chamadas síncronas e tracejadas `-.->` para eventos assíncronos/filas).
+- [x] **TASK-016 (v2.5)**: Padronização de âncoras visuais com ícones semânticos (🤖 IA, 👤 Usuário, ⚙️ Core, 📡 SSE, 💾 Disco, 🎨 UI, 🛡️ Segurança).
+- [x] **TASK-015 (v2.5)**: Otimização inteligente de direção (`LR` horizontal widescreen para pipelines lineares e `TD` para fluxos de decisão/árvores).
+- [x] **TASK-014 (v2.5)**: Integração de formas semânticas nativas do Mermaid (cilindros `[(...)]`, losangos `{"..."}`, pílulas `([...])`, subprocessos `[[...]]` e documentos `[\...\]`) em fluxogramas e arquitetura.
 
 - [x] **TASK-001**: Leitura e diagnóstico técnico completo do documento de requisitos (`Prompt MCP Ferramentas Gratuitas.docx`).
 - [x] **TASK-002**: Realização do alinhamento técnico `/grill-me` com definição de 5 decisões arquiteturais.

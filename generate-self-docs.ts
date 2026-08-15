@@ -122,9 +122,17 @@ async function generateSelfDocumentationDiagrams() {
         type: "person",
         name: "IA / Desenvolvedor",
         description: "Claude Desktop, Cursor, Antigravity ou Terminal",
+        group: "Clientes e Consumidores",
         relationships: [
           { target: "mcp_server", description: "Envia requisições MCP", technology: "JSON-RPC (stdio)" }
         ]
+      },
+      {
+        id: "browser_user",
+        type: "person",
+        name: "Usuário no Navegador",
+        description: "Edita diagramas, usa o playground e exporta em até 4K",
+        group: "Clientes e Consumidores"
       },
       {
         id: "mcp_server",
@@ -132,6 +140,7 @@ async function generateSelfDocumentationDiagrams() {
         name: "ArchView MCP Daemon",
         description: "Executa tools de diagramação e gerencia estado",
         technology: "TypeScript / Node.js 20",
+        group: "Servidores e Backend",
         relationships: [
           { target: "sse_server", description: "Inicia em background", technology: "In-process" },
           { target: "storage", description: "Persiste .mmd e .meta.json", technology: "Filesystem" }
@@ -143,6 +152,7 @@ async function generateSelfDocumentationDiagrams() {
         name: "Express SSE & REST",
         description: "Transmissão de eventos em tempo real e API REST",
         technology: "Express 5 / Porta 3001",
+        group: "Servidores e Backend",
         relationships: [
           { target: "storage", description: "Lê e grava arquivos editados", technology: "fs / assertSafePath" },
           { target: "web_studio", description: "Transmite stream /events", technology: "Server-Sent Events" }
@@ -153,7 +163,8 @@ async function generateSelfDocumentationDiagrams() {
         type: "database",
         name: "Armazenamento output/",
         description: "Diretório local com sintaxes Mermaid e manifestos JSON",
-        technology: "Local Disk / JSON"
+        technology: "Local Disk / JSON",
+        group: "Camada de Persistência"
       },
       {
         id: "web_studio",
@@ -161,19 +172,14 @@ async function generateSelfDocumentationDiagrams() {
         name: "Web Studio SPA (Low-CPU)",
         description: "Galeria reativa com Editor Split-View, Playground e 4 Temas",
         technology: "Alpine.js (~15KB) / Vite / CSS GPU",
+        group: "Interface Gráfica Web",
         relationships: [
           { target: "browser_user", description: "Renderiza interface com 0% CPU em repouso", technology: "HTML5 / SVG DOM" },
           { target: "sse_server", description: "Salva edições ao vivo (PUT /api/diagrams/:id)", technology: "REST JSON" }
         ]
-      },
-      {
-        id: "browser_user",
-        type: "person",
-        name: "Usuário no Navegador",
-        description: "Edita diagramas, usa o playground e exporta em até 4K"
       }
     ],
-    style: { palette: "corporate", show_technology: true },
+    style: { palette: "corporate", show_technology: true, notation: "flowchart" },
     output_path: "self-doc-architecture.md"
   });
   console.log("  ✅ Arquitetura C4:", archRes.file_path);
@@ -185,19 +191,21 @@ async function generateSelfDocumentationDiagrams() {
     title: "Ciclo de Vida da Geração, Edição e Renderização",
     description: "Do comando da IA ou Playground até a renderização e exportação",
     steps: [
-      { id: "input_source", type: "start", label: "Entrada: IA (MCP stdio), Playground Web ou Editor Split-View", next: ["sec_filter"] },
-      { id: "sec_filter", type: "process", label: "Filtro de Segurança (Anti-Path Traversal & Validação Zod)", next: ["valid_gate"] },
-      { id: "valid_gate", type: "decision", label: "Payload Válido e Seguro?", next: [{ id: "build_mermaid", label: "Sim" }, { id: "error_block", label: "Não" }] },
-      { id: "error_block", type: "process", label: "Retorna Erro Estruturado (McpErrorPayload)", next: ["end_error"] },
-      { id: "end_error", type: "end", label: "Execução Interrompida com Erro" },
-      { id: "build_mermaid", type: "process", label: "Gera Sintaxe Mermaid Pura (.mmd) com Algoritmo DFS Anti-Ciclo", next: ["write_meta"] },
-      { id: "write_meta", type: "process", label: "Grava slug-id.mmd e slug-id.meta.json no output/", next: ["sse_emit"] },
-      { id: "sse_emit", type: "process", label: "Dispara Evento SSE (diagram.created ou diagram.updated)", next: ["resp_client"] },
-      { id: "resp_client", type: "process", label: "Retorna JSON de Sucesso para a IA ou UI", next: ["fe_catch"] },
-      { id: "fe_catch", type: "process", label: "Web Studio recebe evento via EventSource sem polling", next: ["apply_themes"] },
-      { id: "apply_themes", type: "process", label: "Aplica 3 Camadas: themeVariables -> CSS Vars -> SVG DOM Post-Processor", next: ["user_actions"] },
-      { id: "user_actions", type: "process", label: "Interações: GPU Pan/Zoom, Inspetor de Nós, Edição ao Vivo ou Exportação 4K", next: ["end_done"] },
-      { id: "end_done", type: "end", label: "Diagrama Pronto e Interativo" }
+      { id: "input_source", type: "start", label: "Entrada: IA (stdio) ou Web Studio", group: "1. Entrada e Segurança", next: ["sec_filter"] },
+      { id: "sec_filter", type: "process", label: "Filtro de Segurança (Anti-Traversal & Zod)", group: "1. Entrada e Segurança", next: ["valid_gate"] },
+      { id: "valid_gate", type: "decision", label: "Payload Válido e Seguro?", group: "1. Entrada e Segurança", next: [{ id: "build_mermaid", label: "Sim" }, { id: "error_block", label: "Não" }] },
+      { id: "error_block", type: "process", label: "Retorna Erro Estruturado (McpError)", group: "1. Entrada e Segurança", next: ["end_error"] },
+      { id: "end_error", type: "end", label: "Execução com Erro", group: "1. Entrada e Segurança" },
+
+      { id: "build_mermaid", type: "process", label: "Gera Sintaxe Mermaid com Algoritmo DFS Anti-Ciclo", group: "2. Motor Core & Persistência", next: ["write_meta"] },
+      { id: "write_meta", type: "database", label: "Grava .mmd e .meta.json no output/", group: "2. Motor Core & Persistência", next: ["sse_emit"] },
+      { id: "sse_emit", type: "queue", label: "Dispara SSE (diagram.created / updated)", group: "2. Motor Core & Persistência", next: ["resp_client"] },
+      { id: "resp_client", type: "process", label: "Retorna JSON de Sucesso para IA/UI", group: "2. Motor Core & Persistência", next: ["fe_catch"] },
+
+      { id: "fe_catch", type: "process", label: "Web Studio recebe evento sem polling", group: "3. Experiência Web Reativa", next: ["apply_themes"] },
+      { id: "apply_themes", type: "process", label: "Aplica 3 Camadas de Estilo e Temas", group: "3. Experiência Web Reativa", next: ["user_actions"] },
+      { id: "user_actions", type: "process", label: "GPU Pan/Zoom, Live Edit ou Exportação 4K", group: "3. Experiência Web Reativa", next: ["end_done"] },
+      { id: "end_done", type: "end", label: "Diagrama Pronto e Interativo", group: "3. Experiência Web Reativa" }
     ],
     style: { direction: "TB", palette: "educational" },
     output_path: "self-doc-flowchart.md"

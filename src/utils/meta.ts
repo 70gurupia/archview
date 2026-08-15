@@ -1,7 +1,58 @@
 
+export function getSemanticIcon(type: string, text: string = ''): string {
+  if (/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/u.test(text)) {
+    return '';
+  }
+  switch (type.toLowerCase()) {
+    case 'person': return '👤 ';
+    case 'database': return '💾 ';
+    case 'queue': return '📬 ';
+    case 'external': return '🌐 ';
+    case 'system': return '🏢 ';
+    case 'container': return '📦 ';
+    case 'component': return '🧩 ';
+    case 'decision': return '❓ ';
+    case 'start': return '🚀 ';
+    case 'end': return '🏁 ';
+    case 'document': return '📄 ';
+    case 'input': return '📥 ';
+    case 'output': return '📤 ';
+    case 'subprocess': return '⚙️ ';
+    default: return '';
+  }
+}
+
+export function getDesignSystemClassDefs(): string {
+  return `\n  classDef default fill:#F8FAFC,stroke:#64748B,stroke-width:1.5px,color:#1E293B,rx:8px,ry:8px;\n  classDef primary fill:#1E40AF,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef success fill:#0F766E,stroke:#14B8A6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef accent fill:#3730A3,stroke:#818CF8,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef warning fill:#D97706,stroke:#F59E0B,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef danger fill:#B91C1C,stroke:#EF4444,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n`;
+}
+
+export function getNodeClass(type: string): string {
+  switch (type.toLowerCase()) {
+    case 'start':
+    case 'container':
+    case 'system':
+      return 'primary';
+    case 'database':
+    case 'document':
+      return 'success';
+    case 'person':
+    case 'subprocess':
+    case 'component':
+      return 'accent';
+    case 'decision':
+    case 'queue':
+    case 'input':
+    case 'output':
+      return 'warning';
+    case 'end':
+      return 'danger';
+    default:
+      return 'default';
+  }
+}
+
 export function escapeMermaidHTML(input: string): string {
   if (!input) return input;
-  // Basic escaping to prevent XSS payloads in mermaid syntax
   return input
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replace(/on\w+="[^"]*"/gi, '')
@@ -9,6 +60,7 @@ export function escapeMermaidHTML(input: string): string {
     .replace(/on\w+=\S+/gi, '')
     .replace(/javascript:/gi, '');
 }
+
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';

@@ -1,12 +1,13 @@
 import { FlowchartInputSchema } from '../utils/validation.js';
 import { ToolExecutionResult } from '../types/index.js';
-import { saveDiagramWithMeta } from '../utils/meta.js';
+import { saveDiagramWithMeta, getSemanticIcon, getDesignSystemClassDefs, getNodeClass } from '../utils/meta.js';
 
 export interface FlowchartStep {
   id: string;
-  type: 'start' | 'end' | 'process' | 'decision' | 'input' | 'output' | 'subprocess';
+  type: 'start' | 'end' | 'process' | 'decision' | 'input' | 'output' | 'subprocess' | 'database' | 'queue' | 'document';
   label: string;
-  next?: (string | { id: string, label: string })[];
+  group?: string;
+  next?: (string | { id: string, label?: string, style?: 'solid' | 'dashed' | 'dotted' | 'thick' })[];
   details?: string;
 }
 
@@ -23,13 +24,28 @@ export interface FlowchartInput {
 }
 
 export function generateFlowchartMermaid(input: FlowchartInput): string {
-  const direction = input.style?.direction || 'TD';
+  // Direcionamento inteligente: se não especificado, fluxos com decisões usam TD e pipelines sequenciais usam LR widescreen
+  const hasDecisions = input.steps.some(s => s.type === 'decision' || (s.next && s.next.length > 1));
+  const direction = input.style?.direction || (hasDecisions ? 'TD' : 'LR');
   let mermaid = `flowchart ${direction}\n`;
 
-  // Define nodes
+  // Group steps by subgraph if group is provided
+  const groups: { [key: string]: FlowchartStep[] } = {};
+  const ungrouped: FlowchartStep[] = [];
+
   input.steps.forEach(step => {
+    if (step.group) {
+      if (!groups[step.group]) groups[step.group] = [];
+      groups[step.group].push(step);
+    } else {
+      ungrouped.push(step);
+    }
+  });
+
+  const renderStep = (step: FlowchartStep) => {
     let shapeOpen = '[';
     let shapeClose = ']';
+    const icon = getSemanticIcon(step.type, step.label);
 
     switch (step.type) {
       case 'start':
@@ -39,31 +55,74 @@ export function generateFlowchartMermaid(input: FlowchartInput): string {
       case 'decision':
         shapeOpen = '{'; shapeClose = '}';
         break;
+      case 'database':
+        shapeOpen = '[('; shapeClose = ')]';
+        break;
+      case 'queue':
+      case 'subprocess':
+        shapeOpen = '[['; shapeClose = ']]';
+        break;
+      case 'document':
+        shapeOpen = '[\\'; shapeClose = '\\]';
+        break;
       case 'input':
       case 'output':
         shapeOpen = '([/'; shapeClose = '/])';
-        break;
-      case 'subprocess':
-        shapeOpen = '[['; shapeClose = ']]';
         break;
       default:
         shapeOpen = '['; shapeClose = ']';
         break;
     }
 
-    mermaid += `  ${step.id}${shapeOpen}"${step.label}"${shapeClose}\n`;
+    return `    ${step.id}${shapeOpen}"${icon}${step.label}"${shapeClose}\n`;
+  };
+
+  let groupIdx = 0;
+  Object.entries(groups).forEach(([groupName, steps]) => {
+    groupIdx++;
+    mermaid += `  subgraph sg_${groupIdx}[" ${groupName} "]\n`;
+    steps.forEach(step => {
+      mermaid += renderStep(step);
+    });
+    mermaid += `  end\n\n`;
   });
 
-  // Define edges
+  ungrouped.forEach(step => {
+    mermaid += renderStep(step).replace(/^    /, '  ');
+  });
+
+  // Define edges with semantic connection styles
   input.steps.forEach(step => {
     if (step.next) {
       step.next.forEach(n => {
         if (typeof n === 'string') {
-          mermaid += `  ${step.id} --> ${n}\n`;
+          const targetStep = input.steps.find(s => s.id === n);
+          const isAsync = targetStep?.type === 'queue' || targetStep?.type === 'subprocess';
+          if (isAsync) {
+            mermaid += `  ${step.id} -.-> ${n}\n`;
+          } else {
+            mermaid += `  ${step.id} --> ${n}\n`;
+          }
         } else if (n && n.id) {
-          mermaid += `  ${step.id} -- "${n.label}" --> ${n.id}\n`;
+          const targetStep = input.steps.find(s => s.id === n.id);
+          const isAsync = n.style === 'dashed' || (!n.style && (targetStep?.type === 'queue' || targetStep?.type === 'subprocess'));
+          const labelStr = n.label ? `"${n.label}"` : '';
+          if (isAsync) {
+            mermaid += labelStr ? `  ${step.id} -. ${labelStr} .-> ${n.id}\n` : `  ${step.id} -.-> ${n.id}\n`;
+          } else {
+            mermaid += labelStr ? `  ${step.id} -- ${labelStr} --> ${n.id}\n` : `  ${step.id} --> ${n.id}\n`;
+          }
         }
       });
+    }
+  });
+
+  // Apply Design System ClassDefs & Node styling
+  mermaid += getDesignSystemClassDefs();
+  input.steps.forEach(step => {
+    const cls = getNodeClass(step.type);
+    if (cls !== 'default') {
+      mermaid += `  class ${step.id} ${cls};\n`;
     }
   });
 
