@@ -45,6 +45,7 @@ export interface DiagramMeta {
 export interface ToolExecutionResult {
   file_path: string;
   meta_path: string;
+  html_path?: string;
   format: string;
   markdown: string;
   meta: DiagramMeta;

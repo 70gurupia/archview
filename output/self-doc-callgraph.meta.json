@@ -1,12 +1,12 @@
 {
   "schema_version": "2.0",
-  "id": "flowchart-grafo-de-chamadas-scancodebase-272cd9",
+  "id": "flowchart-grafo-de-chamadas-scancodebase-e6122e",
   "type": "flowchart",
   "title": "Grafo de Chamadas: scanCodebase",
   "description": "Rastreamento bidirecional (4 chamadores inbound, 6 dependências outbound)",
   "source": "claude-mcp",
-  "created_at": "2026-08-15T23:42:15.239Z",
-  "updated_at": "2026-08-15T23:42:15.239Z",
+  "created_at": "2026-08-15T23:47:37.820Z",
+  "updated_at": "2026-08-15T23:47:37.820Z",
   "files": {
     "mermaid": "self-doc-callgraph.mmd",
     "meta": "self-doc-callgraph.meta.json",
@@ -20,7 +20,7 @@
   },
   "stats": {
     "node_count": 11,
-    "generation_time_ms": 30
+    "generation_time_ms": 31
   },
   "tags": [
     "callgraph",

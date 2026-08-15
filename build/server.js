@@ -1,3 +1,4 @@
+import path from 'path';
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, ErrorCode, McpError, } from "@modelcontextprotocol/sdk/types.js";
@@ -372,6 +373,7 @@ class VisualServer {
                                 output: {
                                     file_path: result.file_path,
                                     meta_path: result.meta_path,
+                                    html_path: result.html_path || (result.meta?.files?.html ? path.join(path.dirname(result.file_path), result.meta.files.html) : undefined),
                                     format: result.format
                                 },
                                 metadata: result.meta || undefined,

@@ -278,7 +278,7 @@
 
     <div class="meta-drawer">
       <div><strong>Descrição:</strong> Do comando da IA até a persistência do HTML standalone e visualização offline</div>
-      <div style="margin-top: 0.35rem;"><strong>Nós:</strong> 14 • <strong>Render:</strong> 13ms • <strong>Criado:</strong> 15/08/2026</div>
+      <div style="margin-top: 0.35rem;"><strong>Nós:</strong> 14 • <strong>Render:</strong> 39ms • <strong>Criado:</strong> 15/08/2026</div>
     </div>
 
     <div class="zoom-controls">
@@ -3885,13 +3885,13 @@ globalThis["mermaid"] = globalThis.__esbuild_esm_mermaid_nm["mermaid"].default;
     const rawMermaidCode = "flowchart TB\n  subgraph sg_1[\" 1. Entrada e Segurança \"]\n    input_source([\"🚀 Entrada: IA (stdio), Web Studio ou HTTP REST\"])\n    sec_filter[\"Filtro de Segurança (assertSafePath & Zod)\"]\n    valid_gate{\"❓ Payload Válido e Seguro?\"}\n    error_block[\"Retorna Erro Estruturado (McpError)\"]\n    end_error([\"🏁 Execução com Erro\"])\n  end\n\n  subgraph sg_2[\" 2. Motor Core & Inteligência \"]\n    select_engine[\"Executa Motor e Registra Métrica Prometheus\"]\n    build_mermaid[\"Gera Sintaxe Mermaid (C4, Flowchart, Sequence ou Mindmap)\"]\n    write_meta[(\"💾 Grava .mmd, .meta.json e .html no output/\")]\n    sse_emit[[\"📬 Dispara SSE (diagram.created / updated)\"]]\n    resp_client[\"Retorna JSON de Sucesso para IA/UI\"]\n  end\n\n  subgraph sg_3[\" 3. Experiência Web Reativa \"]\n    fe_catch[\"Web Studio atualiza galeria e Observability Hub\"]\n    apply_themes[\"Aplica Temas, Subgrafos e Estilização SVG\"]\n    user_actions[\"Abertura Offline (.html), Pan/Zoom ou Exportação 4K\"]\n    end_done([\"🏁 Visualização Interativa Concluída\"])\n  end\n\n  input_source --> sec_filter\n  sec_filter --> valid_gate\n  valid_gate -- \"Sim\" --> select_engine\n  valid_gate -- \"Não\" --> error_block\n  error_block --> end_error\n  select_engine --> build_mermaid\n  build_mermaid --> write_meta\n  write_meta -.-> sse_emit\n  sse_emit --> resp_client\n  resp_client --> fe_catch\n  fe_catch --> apply_themes\n  apply_themes --> user_actions\n  user_actions --> end_done\n\n  classDef default fill:#F8FAFC,stroke:#64748B,stroke-width:1.5px,color:#1E293B,rx:8px,ry:8px;\n  classDef primary fill:#1E40AF,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef success fill:#0F766E,stroke:#14B8A6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef accent fill:#3730A3,stroke:#818CF8,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef warning fill:#D97706,stroke:#F59E0B,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef danger fill:#B91C1C,stroke:#EF4444,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  class input_source primary;\n  class valid_gate warning;\n  class end_error danger;\n  class write_meta success;\n  class sse_emit warning;\n  class end_done danger;";
     const metadata = {
   "schema_version": "2.0",
-  "id": "flowchart-ciclo-de-vida-mcp-ast-prometheus-e-html--357280",
+  "id": "flowchart-ciclo-de-vida-mcp-ast-prometheus-e-html--33bdf1",
   "type": "flowchart",
   "title": "Ciclo de Vida: MCP, AST, Prometheus e HTML Generator",
   "description": "Do comando da IA até a persistência do HTML standalone e visualização offline",
   "source": "claude-mcp",
-  "created_at": "2026-08-15T23:42:15.138Z",
-  "updated_at": "2026-08-15T23:42:15.138Z",
+  "created_at": "2026-08-15T23:47:37.711Z",
+  "updated_at": "2026-08-15T23:47:37.711Z",
   "files": {
     "mermaid": "self-doc-flowchart.mmd",
     "meta": "self-doc-flowchart.meta.json",
@@ -3905,7 +3905,7 @@ globalThis["mermaid"] = globalThis.__esbuild_esm_mermaid_nm["mermaid"].default;
   },
   "stats": {
     "node_count": 14,
-    "generation_time_ms": 13
+    "generation_time_ms": 39
   },
   "tags": [
     "fluxograma",

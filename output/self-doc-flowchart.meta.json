@@ -1,12 +1,12 @@
 {
   "schema_version": "2.0",
-  "id": "flowchart-ciclo-de-vida-mcp-ast-prometheus-e-html--357280",
+  "id": "flowchart-ciclo-de-vida-mcp-ast-prometheus-e-html--33bdf1",
   "type": "flowchart",
   "title": "Ciclo de Vida: MCP, AST, Prometheus e HTML Generator",
   "description": "Do comando da IA até a persistência do HTML standalone e visualização offline",
   "source": "claude-mcp",
-  "created_at": "2026-08-15T23:42:15.138Z",
-  "updated_at": "2026-08-15T23:42:15.138Z",
+  "created_at": "2026-08-15T23:47:37.711Z",
+  "updated_at": "2026-08-15T23:47:37.711Z",
   "files": {
     "mermaid": "self-doc-flowchart.mmd",
     "meta": "self-doc-flowchart.meta.json",
@@ -20,7 +20,7 @@
   },
   "stats": {
     "node_count": 14,
-    "generation_time_ms": 13
+    "generation_time_ms": 39
   },
   "tags": [
     "fluxograma",

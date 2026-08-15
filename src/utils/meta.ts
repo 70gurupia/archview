@@ -192,6 +192,7 @@ export function saveDiagramWithMeta(options: SaveDiagramOptions): ToolExecutionR
   return {
     file_path: mmdPath,
     meta_path: metaPath,
+    html_path: htmlPath,
     format: 'mermaid',
     markdown,
     meta
