@@ -10,6 +10,8 @@ import { assertSafePath } from './meta.js';
 import { executeTraceExecution } from '../tools/trace-execution.js';
 import { executeScanTopology } from '../tools/scan-topology.js';
 import { executeTraceCallGraph } from '../tools/trace-callgraph.js';
+import { executeExportHtmlReport } from '../tools/export-html.js';
+import { generateStandaloneDiagramHtml } from '../engine/html-generator.js';
 import {
   getMetricsContentType,
   getMetricsAsText,
@@ -148,7 +150,7 @@ export function createSseApp(): express.Express {
       }
 
       const files = fs.readdirSync(outDir);
-      const metaFile = files.find(f => f.startsWith(`${id}.meta.json`) || f.includes(id));
+      const metaFile = files.find(f => f.endsWith('.meta.json') && (f.startsWith(`${id}.meta.json`) || f.includes(id)));
       if (!metaFile) {
         return res.status(404).json({ error: 'Diagram metadata not found' });
       }
@@ -185,7 +187,7 @@ export function createSseApp(): express.Express {
       }
 
       const files = fs.readdirSync(outDir);
-      const metaFile = files.find(f => f.startsWith(`${id}.meta.json`) || f.includes(id));
+      const metaFile = files.find(f => f.endsWith('.meta.json') && (f.startsWith(`${id}.meta.json`) || f.includes(id)));
       if (!metaFile) {
         return res.status(404).json({ error: 'Diagram metadata not found' });
       }
@@ -234,12 +236,51 @@ export function createSseApp(): express.Express {
     res.json({
       status: stats.health,
       server: 'archview',
-      version: '4.0.0',
+      version: '5.0.0',
       connectedClients: clients.length,
       uptime: process.uptime(),
       memory: stats.memory,
       totalDiagrams: stats.total_diagrams
     });
+  });
+
+  // REST: Get Standalone HTML for a Diagram
+  app.get('/api/diagrams/:id/html', (req: Request, res: Response) => {
+    try {
+      const id = String(req.params.id);
+      if (!fs.existsSync(outDir)) {
+        return res.status(404).send('Output directory not found');
+      }
+
+      const files = fs.readdirSync(outDir);
+      const metaFile = files.find(f => f.endsWith('.meta.json') && (f.startsWith(`${id}.meta.json`) || f.includes(id)));
+      if (!metaFile) {
+        return res.status(404).send('Diagram metadata not found');
+      }
+
+      const metaRaw = fs.readFileSync(path.join(outDir, metaFile), 'utf-8');
+      const meta: DiagramMeta = JSON.parse(metaRaw);
+      const mmdPath = path.join(outDir, meta.files.mermaid);
+      const code = fs.existsSync(mmdPath) ? fs.readFileSync(mmdPath, 'utf-8') : '';
+
+      const html = generateStandaloneDiagramHtml(meta, code);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(html);
+    } catch (err: any) {
+      res.status(500).send(`Error generating HTML: ${err.message}`);
+    }
+  });
+
+  // REST: Get Consolidated Dashboard HTML
+  app.get('/api/export/dashboard-html', (_req: Request, res: Response) => {
+    try {
+      const result = executeExportHtmlReport({ mode: 'dashboard' });
+      const htmlContent = fs.readFileSync(result.file_path, 'utf-8');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(htmlContent);
+    } catch (err: any) {
+      res.status(500).send(`Error generating Dashboard HTML: ${err.message}`);
+    }
   });
 
   // REST: Ingest Execution Trace

@@ -5,18 +5,19 @@ import { executeFlowchart } from './src/tools/flowchart.js';
 import { executeScanTopology } from './src/tools/scan-topology.js';
 import { executeTraceCallGraph } from './src/tools/trace-callgraph.js';
 import { executeGetObservability } from './src/tools/observability.js';
+import { executeExportHtmlReport } from './src/tools/export-html.js';
 
 async function generateSelfDocumentationDiagrams() {
-  console.log("🚀 === [Dogfooding v4.0] Gerando Diagramas de Produção do ArchView ===\n");
+  console.log("🚀 === [Dogfooding v5.0] Gerando Diagramas de Produção do ArchView ===\n");
 
-  // 1. Mapa Mental Completo do Sistema v4.0
-  console.log("1. Gerando Mapa Mental do Ecossistema v4.0...");
+  // 1. Mapa Mental Completo do Sistema v5.0
+  console.log("1. Gerando Mapa Mental do Ecossistema v5.0...");
   const mindmapRes = executeMindmap({
-    central_topic: "ArchView v4.0 Ecosystem",
-    description: "Visão 360 graus do servidor MCP, inteligência de código e observabilidade corporativa",
+    central_topic: "ArchView v5.0 Ecosystem",
+    description: "Visão 360 graus do servidor MCP, gerador de HTML standalone e observabilidade",
     branches: [
       {
-        title: "Ferramentas MCP Nativas (10 Tools)",
+        title: "Ferramentas MCP Nativas (11 Tools)",
         icons: ["🛠️"],
         sub_branches: [
           "generate_mindmap (Mapas Mentais Radiais)",
@@ -28,11 +29,23 @@ async function generateSelfDocumentationDiagrams() {
           "trace_execution_flow (Sequence Diagrams de Logs)",
           "analyze_codebase_overview (Raio-X 360 de Repositórios)",
           "get_system_observability (Telemetria Prometheus & Charts)",
+          "export_html_report (HTML Standalone e Dashboards)",
           "export_diagram (Exportação SVG/PNG/4K no Cliente)"
         ]
       },
       {
-        title: "Observabilidade e SRE (v4.0)",
+        title: "Geração de HTML & Dashboards (v5.0)",
+        icons: ["🌐"],
+        sub_branches: [
+          "Geração automática de .html standalone por diagrama",
+          "Dashboard executivo consolidado (All-in-One)",
+          "100% Autocontido e offline-first (Zero Servidor)",
+          "Pan/Zoom com aceleração por hardware",
+          "Seletor dos 4 temas visuais e exportador PNG/SVG"
+        ]
+      },
+      {
+        title: "Observabilidade e SRE",
         icons: ["📈"],
         sub_branches: [
           "Endpoint /metrics no padrão texto Prometheus",
@@ -57,11 +70,11 @@ async function generateSelfDocumentationDiagrams() {
         title: "Web Studio Interativo (Low-CPU)",
         icons: ["🎨"],
         sub_branches: [
+          "Botões de download de HTML individual e Dashboard",
           "Aba Observability Hub com telemetria em tempo real",
           "Aba Codebase Explorer com disparo de scans",
           "Editor Split-View com live preview",
-          "Playground Didático MCP",
-          "GPU-Accelerated Pan e Zoom (0% CPU em repouso)"
+          "Playground Didático MCP"
         ]
       },
       {
@@ -80,56 +93,50 @@ async function generateSelfDocumentationDiagrams() {
     output_path: "self-doc-mindmap.md"
   });
   console.log("  ✅ Mapa Mental:", mindmapRes.file_path);
-  console.log("  📄 Metadados:", mindmapRes.meta_path);
 
-  // 2. Organograma Modular da Arquitetura v4.0
+  // 2. Organograma Modular da Arquitetura v5.0
   console.log("\n2. Gerando Organograma Modular do Sistema...");
   const orgRes = executeOrgchart({
-    title: "Estrutura Modular do ArchView v4.0",
-    description: "Hierarquia de componentes do servidor, engine de inteligência, observabilidade e estúdio web",
+    title: "Estrutura Modular do ArchView v5.0",
+    description: "Hierarquia de componentes do servidor, engine de inteligência, HTML generator e estúdio web",
     nodes: [
       { id: "core", label: "ArchView Core", role: "Orquestrador Central MCP (stdio)", level: 0, reports_to: null },
       { id: "engine_v3", label: "Codebase Engine", role: "AST & Flow Tracing Determinístico", level: 1, reports_to: "core" },
-      { id: "tools_layer", label: "Camada de Tools (10 Tools)", role: "Geradores Especializados", level: 1, reports_to: "core" },
+      { id: "html_gen", label: "HTML Generator Engine", role: "Geração Offline Standalone & Dashboard", level: 1, reports_to: "core" },
+      { id: "tools_layer", label: "Camada de Tools (11 Tools)", role: "Geradores Especializados", level: 1, reports_to: "core" },
       { id: "infra_layer", label: "Infra & Observability", role: "Express 5 + Prometheus + OTel + SSE (3001)", level: 1, reports_to: "core" },
       { id: "web_studio", label: "Web Studio SPA (Low-CPU)", role: "Alpine.js + Vite (5173)", level: 1, reports_to: "infra_layer" },
       { id: "qa_sec", label: "QA & Segurança SAST", role: "CodeQL, Pentest OWASP, TDD/ODD", level: 1, reports_to: "core" },
       
-      // Infra & Obs Sub-modules
-      { id: "prom_m", label: "Prometheus Metrics", role: "Coleta e scraping /metrics", department: "Infra", level: 2, reports_to: "infra_layer" },
-      { id: "otel_s", label: "OpenTelemetry SDK", role: "Tracing OTLP assíncrono", department: "Infra", level: 2, reports_to: "infra_layer" },
-      { id: "sse_h", label: "SSE Hub & REST", role: "Eventos e endpoints de ingestão", department: "Infra", level: 2, reports_to: "infra_layer" },
-
       // Tools
-      { id: "t_mind", label: "Mindmap Tool", role: "Mapas Mentais Radiais", department: "Tools", level: 2, reports_to: "tools_layer" },
-      { id: "t_org", label: "Orgchart Tool", role: "Validador DFS e Árvore", department: "Tools", level: 2, reports_to: "tools_layer" },
-      { id: "t_arch", label: "Architecture Tool", role: "Modelo C4 com Subgrafos", department: "Tools", level: 2, reports_to: "tools_layer" },
-      { id: "t_flow", label: "Flowchart Tool", role: "Processos e Decisões", department: "Tools", level: 2, reports_to: "tools_layer" },
+      { id: "t_mind", label: "generate_mindmap", role: "Mapas Mentais Radiais", department: "Tools", level: 2, reports_to: "tools_layer" },
+      { id: "t_org", label: "generate_orgchart", role: "Validador DFS e Árvore", department: "Tools", level: 2, reports_to: "tools_layer" },
+      { id: "t_arch", label: "generate_architecture", role: "Modelo C4 com Subgrafos", department: "Tools", level: 2, reports_to: "tools_layer" },
+      { id: "t_flow", label: "generate_flowchart", role: "Processos e Decisões", department: "Tools", level: 2, reports_to: "tools_layer" },
       { id: "t_scan_top", label: "scan_codebase_topology", role: "Topologia C4 de Diretórios", department: "Tools", level: 2, reports_to: "tools_layer" },
       { id: "t_trace_call", label: "trace_call_graph", role: "Grafo de Chamadas Bidirecional", department: "Tools", level: 2, reports_to: "tools_layer" },
       { id: "t_trace_exec", label: "trace_execution_flow", role: "Diagramas de Sequência", department: "Tools", level: 2, reports_to: "tools_layer" },
       { id: "t_overview", label: "analyze_codebase_overview", role: "Raio-X 360 do Repositório", department: "Tools", level: 2, reports_to: "tools_layer" },
       { id: "t_obs", label: "get_system_observability", role: "Métricas e Gráficos de Saúde", department: "Tools", level: 2, reports_to: "tools_layer" },
+      { id: "t_html", label: "export_html_report", role: "Exportação Standalone & Dashboard", department: "Tools", level: 2, reports_to: "tools_layer" },
 
       // Web Studio Sub-modules
       { id: "ui_obs", label: "Observability Hub", role: "Dashboard de saúde e traces", department: "UI", level: 2, reports_to: "web_studio" },
       { id: "ui_explorer", label: "Codebase Explorer", role: "Painel de varredura e grafos", department: "UI", level: 2, reports_to: "web_studio" },
       { id: "ui_editor", label: "Editor Split-View", role: "Edição ao vivo com preview", department: "UI", level: 2, reports_to: "web_studio" },
-      { id: "ui_play", label: "Playground MCP", role: "Gerador didático de prompts e JSON", department: "UI", level: 2, reports_to: "web_studio" },
-      { id: "ui_canvas", label: "GPU Canvas Pan/Zoom", role: "Aceleração por hardware CSS", department: "UI", level: 2, reports_to: "web_studio" }
+      { id: "ui_play", label: "Playground MCP", role: "Gerador didático de prompts e JSON", department: "UI", level: 2, reports_to: "web_studio" }
     ],
     style: { color_by_level: true, palette: "corporate" },
     output_path: "self-doc-orgchart.md"
   });
   console.log("  ✅ Organograma:", orgRes.file_path);
-  console.log("  📄 Metadados:", orgRes.meta_path);
 
-  // 3. Diagrama C4 de Arquitetura de Containers (v4.0)
+  // 3. Diagrama C4 de Arquitetura de Containers (v5.0)
   console.log("\n3. Gerando Diagrama C4 de Arquitetura de Containers...");
   const archRes = executeArchitecture({
     c4_level: "C2-container",
-    system_name: "Arquitetura do ArchView v4.0",
-    description: "Visão dos containers executáveis, motor de AST, observabilidade Prometheus e fluxos de dados",
+    system_name: "Arquitetura do ArchView v5.0",
+    description: "Visão dos containers executáveis, motor de AST, gerador HTML e observabilidade",
     elements: [
       {
         id: "ai_client",
@@ -138,35 +145,28 @@ async function generateSelfDocumentationDiagrams() {
         description: "Claude Desktop, Cursor, Antigravity ou Terminal",
         group: "Clientes e Consumidores",
         relationships: [
-          { target: "mcp_server", description: "Envia comandos MCP (10 Tools)", technology: "JSON-RPC (stdio)" }
+          { target: "mcp_server", description: "Envia comandos MCP (11 Tools)", technology: "JSON-RPC (stdio)" }
         ]
       },
       {
         id: "browser_user",
         type: "person",
         name: "Usuário no Navegador",
-        description: "Observability Hub, Codebase Explorer e Editor ao Vivo",
+        description: "Observability Hub, Codebase Explorer e Exportação HTML Offline",
         group: "Clientes e Consumidores"
-      },
-      {
-        id: "prom_collector",
-        type: "external",
-        name: "Servidor Prometheus / Grafana",
-        description: "Scraping contínuo de métricas em /metrics",
-        technology: "Prometheus Text Format",
-        group: "Sistemas Externos"
       },
       {
         id: "mcp_server",
         type: "container",
         name: "ArchView MCP Server",
-        description: "Orquestrador de 10 ferramentas MCP e motor de AST",
+        description: "Orquestrador de 11 ferramentas MCP, AST e HTML Generator",
         technology: "TypeScript / Node.js 20",
         group: "Servidores e Backend",
         relationships: [
           { target: "engine_v3", description: "Executa varreduras de código", technology: "AST / Regex" },
+          { target: "html_engine", description: "Gera páginas HTML autocontidas", technology: "TypeScript Engine" },
           { target: "sse_server", description: "Inicia em background", technology: "In-process" },
-          { target: "storage", description: "Persiste .mmd e .meta.json", technology: "Filesystem" }
+          { target: "storage", description: "Persiste .mmd, .html e .meta.json", technology: "Filesystem" }
         ]
       },
       {
@@ -178,36 +178,43 @@ async function generateSelfDocumentationDiagrams() {
         group: "Servidores e Backend"
       },
       {
+        id: "html_engine",
+        type: "container",
+        name: "Motor Standalone HTML",
+        description: "Construtor de páginas offline interativas e dashboards",
+        technology: "HTML5 / CSS / Mermaid",
+        group: "Servidores e Backend"
+      },
+      {
         id: "sse_server",
         type: "container",
         name: "Express SSE & Prometheus Hub",
-        description: "Transmissão SSE, exportador /metrics e endpoints de traces",
+        description: "Transmissão SSE, exportador /metrics e entrega de HTML",
         technology: "Express 5 / Porta 3001",
         group: "Servidores e Backend",
         relationships: [
           { target: "storage", description: "Lê e grava arquivos com assertSafePath", technology: "fs" },
-          { target: "web_studio", description: "Transmite eventos /events", technology: "Server-Sent Events" },
-          { target: "prom_collector", description: "Responde scraping /metrics", technology: "HTTP GET" }
+          { target: "web_studio", description: "Transmite eventos /events", technology: "Server-Sent Events" }
         ]
       },
       {
         id: "storage",
         type: "database",
         name: "Armazenamento output/",
-        description: "Diretório local com sintaxes Mermaid e manifestos JSON",
-        technology: "Local Disk / JSON",
+        description: "Diretório local com sintaxes Mermaid, manifestos JSON e páginas HTML",
+        technology: "Local Disk / JSON / HTML",
         group: "Camada de Persistência"
       },
       {
         id: "web_studio",
         type: "container",
         name: "Web Studio SPA (Low-CPU)",
-        description: "Observability Hub, Codebase Explorer, Editor e 4 Temas",
+        description: "Observability Hub, Codebase Explorer, Editor e Download HTML",
         technology: "Alpine.js (~15KB) / Vite / CSS GPU",
         group: "Interface Gráfica Web",
         relationships: [
           { target: "browser_user", description: "Renderiza diagramas com 0% CPU em repouso", technology: "HTML5 / SVG DOM" },
-          { target: "sse_server", description: "Dispara scans e consulta métricas", technology: "REST JSON" }
+          { target: "sse_server", description: "Dispara scans e consulta métricas/HTML", technology: "REST JSON" }
         ]
       }
     ],
@@ -215,13 +222,12 @@ async function generateSelfDocumentationDiagrams() {
     output_path: "self-doc-architecture.md"
   });
   console.log("  ✅ Arquitetura C4:", archRes.file_path);
-  console.log("  📄 Metadados:", archRes.meta_path);
 
   // 4. Fluxograma do Ciclo de Vida da Requisição e Ingestão
-  console.log("\n4. Gerando Fluxograma do Ciclo de Vida e Telemetria...");
+  console.log("\n4. Gerando Fluxograma do Ciclo de Vida...");
   const flowRes = executeFlowchart({
-    title: "Ciclo de Vida: MCP, Codebase Intelligence e Prometheus",
-    description: "Do comando da IA até a telemetria do Prometheus e renderização web",
+    title: "Ciclo de Vida: MCP, AST, Prometheus e HTML Generator",
+    description: "Do comando da IA até a persistência do HTML standalone e visualização offline",
     steps: [
       { id: "input_source", type: "start", label: "Entrada: IA (stdio), Web Studio ou HTTP REST", group: "1. Entrada e Segurança", next: ["sec_filter"] },
       { id: "sec_filter", type: "process", label: "Filtro de Segurança (assertSafePath & Zod)", group: "1. Entrada e Segurança", next: ["valid_gate"] },
@@ -231,31 +237,29 @@ async function generateSelfDocumentationDiagrams() {
 
       { id: "select_engine", type: "process", label: "Executa Motor e Registra Métrica Prometheus", group: "2. Motor Core & Inteligência", next: ["build_mermaid"] },
       { id: "build_mermaid", type: "process", label: "Gera Sintaxe Mermaid (C4, Flowchart, Sequence ou Mindmap)", group: "2. Motor Core & Inteligência", next: ["write_meta"] },
-      { id: "write_meta", type: "database", label: "Grava .mmd e .meta.json no output/", group: "2. Motor Core & Inteligência", next: ["sse_emit"] },
+      { id: "write_meta", type: "database", label: "Grava .mmd, .meta.json e .html no output/", group: "2. Motor Core & Inteligência", next: ["sse_emit"] },
       { id: "sse_emit", type: "queue", label: "Dispara SSE (diagram.created / updated)", group: "2. Motor Core & Inteligência", next: ["resp_client"] },
       { id: "resp_client", type: "process", label: "Retorna JSON de Sucesso para IA/UI", group: "2. Motor Core & Inteligência", next: ["fe_catch"] },
 
       { id: "fe_catch", type: "process", label: "Web Studio atualiza galeria e Observability Hub", group: "3. Experiência Web Reativa", next: ["apply_themes"] },
       { id: "apply_themes", type: "process", label: "Aplica Temas, Subgrafos e Estilização SVG", group: "3. Experiência Web Reativa", next: ["user_actions"] },
-      { id: "user_actions", type: "process", label: "Navegação Codebase, Zoom GPU ou Exportação 4K", group: "3. Experiência Web Reativa", next: ["end_done"] },
+      { id: "user_actions", type: "process", label: "Abertura Offline (.html), Pan/Zoom ou Exportação 4K", group: "3. Experiência Web Reativa", next: ["end_done"] },
       { id: "end_done", type: "end", label: "Visualização Interativa Concluída", group: "3. Experiência Web Reativa" }
     ],
     style: { direction: "TB", palette: "educational" },
     output_path: "self-doc-flowchart.md"
   });
   console.log("  ✅ Fluxograma:", flowRes.file_path);
-  console.log("  📄 Metadados:", flowRes.meta_path);
 
   // 5. Topologia C4 Real do Próprio ArchView (via scan_codebase_topology)
   console.log("\n5. Gerando Topologia C4 Real do Projeto (Dogfooding AST)...");
   const topRes = executeScanTopology({
-    title: "Topologia Real do Código do ArchView v4.0",
+    title: "Topologia Real do Código do ArchView v5.0",
     view_mode: "hybrid",
     max_depth: 5,
     output_path: "self-doc-topology.md"
   });
   console.log("  ✅ Topologia do Código:", topRes.file_path);
-  console.log("  📄 Metadados:", topRes.meta_path);
 
   // 6. Grafo de Chamadas Real (via trace_call_graph)
   console.log("\n6. Gerando Grafo de Chamadas do Motor de Scanner...");
@@ -265,18 +269,24 @@ async function generateSelfDocumentationDiagrams() {
     output_path: "self-doc-callgraph.md"
   });
   console.log("  ✅ Grafo de Chamadas:", callRes.file_path);
-  console.log("  📄 Metadados:", callRes.meta_path);
 
   // 7. Telemetria e Métricas do Sistema (via get_system_observability)
-  console.log("\n7. Gerando Gráfico de Métricas do Sistema (Dogfooding Observability)...");
+  console.log("\n7. Gerando Gráfico de Métricas do Sistema...");
   const obsRes = await executeGetObservability({
     generate_chart: "xychart",
     output_path: "self-doc-metrics.md"
   });
   console.log("  ✅ Telemetria do Sistema:", obsRes.file_path);
-  console.log("  📄 Metadados:", obsRes.meta_path);
 
-  console.log("\n🎉 === Todos os 7 diagramas de produção do ArchView v4.0 foram gerados com sucesso! ===");
+  // 8. Dashboard Consolidado HTML (via export_html_report)
+  console.log("\n8. Gerando Dashboard Executivo HTML Consolidado (All-in-One)...");
+  const dashRes = executeExportHtmlReport({
+    mode: "dashboard",
+    output_path: "archview-dashboard.html"
+  });
+  console.log("  ✅ Dashboard Consolidado:", dashRes.file_path);
+
+  console.log("\n🎉 === Todos os diagramas e páginas HTML do ArchView v5.0 foram gerados com sucesso! ===");
 }
 
 generateSelfDocumentationDiagrams().catch(console.error);

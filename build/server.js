@@ -11,6 +11,7 @@ import { executeTraceCallGraph } from './tools/trace-callgraph.js';
 import { executeTraceExecution } from './tools/trace-execution.js';
 import { executeAnalyzeOverview } from './tools/analyze-overview.js';
 import { executeGetObservability } from './tools/observability.js';
+import { executeExportHtmlReport } from './tools/export-html.js';
 import { startSseServer } from './utils/sse.js';
 import { initOpenTelemetry } from './utils/otel.js';
 class VisualServer {
@@ -19,7 +20,7 @@ class VisualServer {
         initOpenTelemetry();
         this.server = new Server({
             name: "mcp-visual-server",
-            version: "4.0.0",
+            version: "5.0.0",
         }, {
             capabilities: {
                 tools: {},
@@ -303,6 +304,19 @@ class VisualServer {
                             output_path: { type: "string", description: "Caminho opcional do arquivo de saída" }
                         }
                     }
+                },
+                {
+                    name: "export_html_report",
+                    description: "Gera arquivo HTML autocontido e interativo de um diagrama específico ou um Dashboard consolidado com todos os diagramas do projeto (100% offline).",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            diagram_id: { type: "string", description: "ID ou slug do diagrama a exportar (ignorado se mode for dashboard)" },
+                            mode: { type: "string", enum: ["single", "dashboard"], description: "Modo de exportação: diagrama individual ou dashboard consolidado" },
+                            theme: { type: "string", enum: ["educational", "corporate", "minimal", "dark"], description: "Tema visual inicial do HTML" },
+                            output_path: { type: "string", description: "Caminho opcional do arquivo .html gerado" }
+                        }
+                    }
                 }
             ],
         }));
@@ -341,6 +355,9 @@ class VisualServer {
                         break;
                     case "get_system_observability":
                         result = await executeGetObservability(args);
+                        break;
+                    case "export_html_report":
+                        result = executeExportHtmlReport(args);
                         break;
                     default:
                         throw new McpError(ErrorCode.MethodNotFound, `Ferramenta desconhecida: ${name}`);

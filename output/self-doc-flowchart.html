@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="educational">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ciclo de Vida: MCP, AST, Prometheus e HTML Generator | ArchView</title>
+  <style>
+    :root {
+      --bg-body: #0F172A;
+      --bg-card: #1E293B;
+      --bg-panel: #334155;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --border-color: #475569;
+      --accent-color: #38BDF8;
+      --accent-hover: #0EA5E9;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    }
+
+    [data-theme="educational"] {
+      --bg-body: #F0F9FF;
+      --bg-card: #FFFFFF;
+      --bg-panel: #E0F2FE;
+      --text-main: #0C4A6E;
+      --text-muted: #0284C7;
+      --border-color: #BAE6FD;
+      --accent-color: #0284C7;
+      --accent-hover: #0369A1;
+      --shadow-lg: 0 10px 25px -5px rgba(2, 132, 199, 0.15);
+    }
+
+    [data-theme="corporate"] {
+      --bg-body: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --bg-panel: #F1F5F9;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --border-color: #CBD5E1;
+      --accent-color: #2563EB;
+      --accent-hover: #1D4ED8;
+      --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.1);
+    }
+
+    [data-theme="minimal"] {
+      --bg-body: #FFFFFF;
+      --bg-card: #FAFAFA;
+      --bg-panel: #F4F4F5;
+      --text-main: #18181B;
+      --text-muted: #71717A;
+      --border-color: #E4E4E7;
+      --accent-color: #18181B;
+      --accent-hover: #27272A;
+      --shadow-lg: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    [data-theme="dark"] {
+      --bg-body: #090D16;
+      --bg-card: #131B2E;
+      --bg-panel: #1E293B;
+      --text-main: #F1F5F9;
+      --text-muted: #94A3B8;
+      --border-color: #334155;
+      --accent-color: #38BDF8;
+      --accent-hover: #7DD3FC;
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.7);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      transition: background-color 200ms ease, color 200ms ease;
+    }
+
+    header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .brand-title h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .brand-title span {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: var(--bg-panel);
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-sm);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      background: var(--bg-panel);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.75rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 150ms ease;
+      font-weight: 500;
+    }
+
+    .btn:hover {
+      background: var(--border-color);
+      transform: translateY(-1px);
+    }
+
+    .btn.primary {
+      background: var(--accent-color);
+      color: #FFFFFF;
+      border-color: var(--accent-color);
+    }
+
+    .btn.primary:hover {
+      background: var(--accent-hover);
+    }
+
+    select.theme-select {
+      background: var(--bg-panel);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.6rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    main {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
+      background-size: 24px 24px;
+      cursor: grab;
+    }
+
+    main:active {
+      cursor: grabbing;
+    }
+
+    #viewport {
+      transform-origin: 0 0;
+      transition: transform 50ms ease-out;
+      will-change: transform;
+      user-select: none;
+    }
+
+    .meta-drawer {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      box-shadow: var(--shadow-lg);
+      max-width: 320px;
+      z-index: 5;
+      backdrop-filter: blur(8px);
+    }
+
+    .meta-drawer strong {
+      color: var(--text-main);
+    }
+
+    .zoom-controls {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      display: flex;
+      gap: 0.25rem;
+      padding: 0.25rem;
+      box-shadow: var(--shadow-lg);
+      z-index: 5;
+    }
+
+    .toast {
+      position: absolute;
+      top: 4.5rem;
+      right: 1.5rem;
+      background: var(--accent-color);
+      color: #FFFFFF;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      transition: opacity 200ms ease;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand-title">
+      <h1>Ciclo de Vida: MCP, AST, Prometheus e HTML Generator</h1>
+      <span>flowchart</span>
+    </div>
+
+    <div class="toolbar">
+      <select class="theme-select" id="themeSelect" onchange="changeTheme(this.value)">
+        <option value="educational" selected>🎓 Educacional</option>
+        <option value="corporate" >🏢 Corporativo</option>
+        <option value="minimal" >⚪ Minimalista</option>
+        <option value="dark" >🌑 Modo Escuro</option>
+      </select>
+
+      <button class="btn" onclick="copyMermaid()">📋 Copiar Mermaid</button>
+      <button class="btn" onclick="exportSvg()">🖼️ Baixar SVG</button>
+      <button class="btn primary" onclick="exportPng(2)">📸 Baixar PNG HD</button>
+      <button class="btn primary" onclick="exportPng(4)">✨ PNG 4K</button>
+    </div>
+  </header>
+
+  <main id="canvasContainer">
+    <div id="viewport">
+      <div id="diagramContainer" class="mermaid">
+flowchart TB
+  subgraph sg_1[" 1. Entrada e Segurança "]
+    input_source(["🚀 Entrada: IA (stdio), Web Studio ou HTTP REST"])
+    sec_filter["Filtro de Segurança (assertSafePath & Zod)"]
+    valid_gate{"❓ Payload Válido e Seguro?"}
+    error_block["Retorna Erro Estruturado (McpError)"]
+    end_error(["🏁 Execução com Erro"])
+  end
+
+  subgraph sg_2[" 2. Motor Core & Inteligência "]
+    select_engine["Executa Motor e Registra Métrica Prometheus"]
+    build_mermaid["Gera Sintaxe Mermaid (C4, Flowchart, Sequence ou Mindmap)"]
+    write_meta[("💾 Grava .mmd, .meta.json e .html no output/")]
+    sse_emit[["📬 Dispara SSE (diagram.created / updated)"]]
+    resp_client["Retorna JSON de Sucesso para IA/UI"]
+  end
+
+  subgraph sg_3[" 3. Experiência Web Reativa "]
+    fe_catch["Web Studio atualiza galeria e Observability Hub"]
+    apply_themes["Aplica Temas, Subgrafos e Estilização SVG"]
+    user_actions["Abertura Offline (.html), Pan/Zoom ou Exportação 4K"]
+    end_done(["🏁 Visualização Interativa Concluída"])
+  end
+
+  input_source --> sec_filter
+  sec_filter --> valid_gate
+  valid_gate -- "Sim" --> select_engine
+  valid_gate -- "Não" --> error_block
+  error_block --> end_error
+  select_engine --> build_mermaid
+  build_mermaid --> write_meta
+  write_meta -.-> sse_emit
+  sse_emit --> resp_client
+  resp_client --> fe_catch
+  fe_catch --> apply_themes
+  apply_themes --> user_actions
+  user_actions --> end_done
+
+  classDef default fill:#F8FAFC,stroke:#64748B,stroke-width:1.5px,color:#1E293B,rx:8px,ry:8px;
+  classDef primary fill:#1E40AF,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef success fill:#0F766E,stroke:#14B8A6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef accent fill:#3730A3,stroke:#818CF8,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef warning fill:#D97706,stroke:#F59E0B,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef danger fill:#B91C1C,stroke:#EF4444,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  class input_source primary;
+  class valid_gate warning;
+  class end_error danger;
+  class write_meta success;
+  class sse_emit warning;
+  class end_done danger;
+      </div>
+    </div>
+
+    <div class="meta-drawer">
+      <div><strong>Descrição:</strong> Do comando da IA até a persistência do HTML standalone e visualização offline</div>
+      <div style="margin-top: 0.35rem;"><strong>Nós:</strong> 14 • <strong>Render:</strong> 1ms • <strong>Criado:</strong> 15/08/2026</div>
+    </div>
+
+    <div class="zoom-controls">
+      <button class="btn" onclick="zoomIn()" title="Aumentar Zoom">🔍 +</button>
+      <button class="btn" onclick="resetZoom()" title="Resetar">100%</button>
+      <button class="btn" onclick="zoomOut()" title="Diminuir Zoom">🔍 -</button>
+    </div>
+
+    <div id="toast" class="toast">Código Mermaid copiado!</div>
+  </main>
+
+  <!-- Runtime Mermaid Standalone -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    const rawMermaidCode = "flowchart TB\n  subgraph sg_1[\" 1. Entrada e Segurança \"]\n    input_source([\"🚀 Entrada: IA (stdio), Web Studio ou HTTP REST\"])\n    sec_filter[\"Filtro de Segurança (assertSafePath & Zod)\"]\n    valid_gate{\"❓ Payload Válido e Seguro?\"}\n    error_block[\"Retorna Erro Estruturado (McpError)\"]\n    end_error([\"🏁 Execução com Erro\"])\n  end\n\n  subgraph sg_2[\" 2. Motor Core & Inteligência \"]\n    select_engine[\"Executa Motor e Registra Métrica Prometheus\"]\n    build_mermaid[\"Gera Sintaxe Mermaid (C4, Flowchart, Sequence ou Mindmap)\"]\n    write_meta[(\"💾 Grava .mmd, .meta.json e .html no output/\")]\n    sse_emit[[\"📬 Dispara SSE (diagram.created / updated)\"]]\n    resp_client[\"Retorna JSON de Sucesso para IA/UI\"]\n  end\n\n  subgraph sg_3[\" 3. Experiência Web Reativa \"]\n    fe_catch[\"Web Studio atualiza galeria e Observability Hub\"]\n    apply_themes[\"Aplica Temas, Subgrafos e Estilização SVG\"]\n    user_actions[\"Abertura Offline (.html), Pan/Zoom ou Exportação 4K\"]\n    end_done([\"🏁 Visualização Interativa Concluída\"])\n  end\n\n  input_source --> sec_filter\n  sec_filter --> valid_gate\n  valid_gate -- \"Sim\" --> select_engine\n  valid_gate -- \"Não\" --> error_block\n  error_block --> end_error\n  select_engine --> build_mermaid\n  build_mermaid --> write_meta\n  write_meta -.-> sse_emit\n  sse_emit --> resp_client\n  resp_client --> fe_catch\n  fe_catch --> apply_themes\n  apply_themes --> user_actions\n  user_actions --> end_done\n\n  classDef default fill:#F8FAFC,stroke:#64748B,stroke-width:1.5px,color:#1E293B,rx:8px,ry:8px;\n  classDef primary fill:#1E40AF,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef success fill:#0F766E,stroke:#14B8A6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef accent fill:#3730A3,stroke:#818CF8,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef warning fill:#D97706,stroke:#F59E0B,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef danger fill:#B91C1C,stroke:#EF4444,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  class input_source primary;\n  class valid_gate warning;\n  class end_error danger;\n  class write_meta success;\n  class sse_emit warning;\n  class end_done danger;";
+    const metadata = {
+  "schema_version": "2.0",
+  "id": "flowchart-ciclo-de-vida-mcp-ast-prometheus-e-html--5c64c0",
+  "type": "flowchart",
+  "title": "Ciclo de Vida: MCP, AST, Prometheus e HTML Generator",
+  "description": "Do comando da IA até a persistência do HTML standalone e visualização offline",
+  "source": "claude-mcp",
+  "created_at": "2026-08-15T22:11:29.091Z",
+  "updated_at": "2026-08-15T22:11:29.091Z",
+  "files": {
+    "mermaid": "self-doc-flowchart.mmd",
+    "meta": "self-doc-flowchart.meta.json",
+    "html": "self-doc-flowchart.html",
+    "svg": null,
+    "png": null
+  },
+  "style": {
+    "suggested_theme": "educational",
+    "applied_theme": null
+  },
+  "stats": {
+    "node_count": 14,
+    "generation_time_ms": 1
+  },
+  "tags": [
+    "fluxograma",
+    "processo",
+    "algoritmo"
+  ]
+};
+
+    let zoom = 1.0;
+    let panX = 0;
+    let panY = 0;
+    let isPanning = false;
+    let startX = 0;
+    let startY = 0;
+
+    const viewport = document.getElementById('viewport');
+    const container = document.getElementById('canvasContainer');
+
+    function updateTransform() {
+      viewport.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+    }
+
+    function zoomIn() {
+      zoom = Math.min(zoom * 1.25, 5.0);
+      updateTransform();
+    }
+
+    function zoomOut() {
+      zoom = Math.max(zoom / 1.25, 0.2);
+      updateTransform();
+    }
+
+    function resetZoom() {
+      zoom = 1.0;
+      panX = 0;
+      panY = 0;
+      updateTransform();
+    }
+
+    container.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.1 : 0.9;
+      zoom = Math.min(Math.max(zoom * factor, 0.2), 5.0);
+      updateTransform();
+    }, { passive: false });
+
+    container.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      isPanning = true;
+      startX = e.clientX - panX;
+      startY = e.clientY - panY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isPanning) return;
+      panX = e.clientX - startX;
+      panY = e.clientY - startY;
+      updateTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      isPanning = false;
+    });
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function copyMermaid() {
+      navigator.clipboard.writeText(rawMermaidCode).then(() => {
+        showToast('✅ Código Mermaid copiado!');
+      });
+    }
+
+    function changeTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      reRender();
+    }
+
+    function getMermaidThemeConfig(theme) {
+      if (theme === 'dark') {
+        return { theme: 'dark', themeVariables: { darkMode: true, background: '#131B2E' } };
+      } else if (theme === 'corporate') {
+        return { theme: 'neutral', themeVariables: { primaryColor: '#2563EB', primaryTextColor: '#FFFFFF' } };
+      } else if (theme === 'minimal') {
+        return { theme: 'base', themeVariables: { primaryColor: '#F4F4F5', primaryTextColor: '#18181B' } };
+      }
+      return { theme: 'default', themeVariables: { primaryColor: '#0284C7', primaryTextColor: '#FFFFFF' } };
+    }
+
+    async function reRender() {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'educational';
+      const conf = getMermaidThemeConfig(currentTheme);
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'loose',
+        ...conf
+      });
+
+      const diagEl = document.getElementById('diagramContainer');
+      diagEl.removeAttribute('data-processed');
+      diagEl.textContent = rawMermaidCode;
+      await mermaid.run({ nodes: [diagEl] });
+    }
+
+    function exportSvg() {
+      const svg = document.querySelector('#diagramContainer svg');
+      if (!svg) return;
+      const serializer = new XMLSerializer();
+      const blob = new Blob([serializer.serializeToString(svg)], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${metadata.id || 'diagram'}.svg`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('✅ SVG exportado com sucesso!');
+    }
+
+    function exportPng(scale = 2) {
+      const svg = document.querySelector('#diagramContainer svg');
+      if (!svg) return;
+
+      const serializer = new XMLSerializer();
+      const svgString = serializer.serializeToString(svg);
+      const img = new Image();
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const bbox = svg.getBoundingClientRect();
+        const width = (bbox.width || 800) * scale;
+        const height = (bbox.height || 600) * scale;
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'educational';
+        ctx.fillStyle = currentTheme === 'dark' ? '#090D16' : '#FFFFFF';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const pngUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = pngUrl;
+          a.download = `${metadata.id || 'diagram'}_${scale}x.png`;
+          a.click();
+          URL.revokeObjectURL(pngUrl);
+          showToast(`✅ PNG ${scale === 4 ? '4K' : 'HD'} exportado!`);
+        }, 'image/png');
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (typeof mermaid !== 'undefined') {
+        await reRender();
+      }
+    });
+  </script>
+</body>
+</html>

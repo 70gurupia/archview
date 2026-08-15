@@ -163,6 +163,13 @@ export const ObservabilityInputSchema = z.object({
   output_path: z.string().optional()
 });
 
+export const ExportHtmlInputSchema = z.object({
+  diagram_id: z.string().optional(),
+  mode: z.enum(['single', 'dashboard']).optional(),
+  theme: z.enum(['educational', 'corporate', 'minimal', 'dark']).optional(),
+  output_path: z.string().optional()
+});
+
 
 
 // ---- GUARDRAILS ----

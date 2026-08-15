@@ -89,7 +89,15 @@ Consulta métricas do Prometheus, estado de saúde do runtime, latência e estat
 - **Input (Zod)**
   - `include_prometheus_raw` (boolean, opcional): Se true, inclui o texto bruto das métricas Prometheus.
   - `generate_chart` (enum, opcional): `"xychart"`, `"quadrant"` ou `"none"`.
-  - `output_path` (string, opcional): Caminho seguro para gravação do arquivo `.mmd` e `.meta.json`.
+  - `output_path` (string, opcional): Caminho seguro para gravação do arquivo `.mmd`, `.meta.json` e `.html`.
+
+## 11. `export_html_report` (v5.0)
+Gera arquivo HTML autocontido e interativo de um diagrama específico ou um Dashboard consolidado com todos os diagramas do projeto (100% offline).
+- **Input (Zod)**
+  - `diagram_id` (string, opcional): ID ou slug do diagrama a exportar (ignorado se mode for dashboard).
+  - `mode` (enum, opcional): `"single"` ou `"dashboard"`. Padrão: `"single"`.
+  - `theme` (enum, opcional): `"educational"`, `"corporate"`, `"minimal"`, `"dark"`.
+  - `output_path` (string, opcional): Caminho opcional do arquivo `.html` gerado na pasta `output/`.
 
 ---
 
@@ -100,6 +108,8 @@ Consulta métricas do Prometheus, estado de saúde do runtime, latência e estat
 * `GET /api/observability/stats`: Estatísticas agregadas em JSON (uptime, consumo de memória, conexões SSE e saúde).
 * `GET /api/diagrams`: Lista todos os diagramas com metadados e conteúdo `.mmd`.
 * `GET /api/diagrams/:id`: Recupera metadados e conteúdo de um diagrama específico.
+* `GET /api/diagrams/:id/html`: Entrega o arquivo HTML standalone interativo do diagrama.
+* `GET /api/export/dashboard-html`: Entrega o Dashboard executivo consolidado em HTML autocontido.
 * `PUT /api/diagrams/:id`: Atualiza o código Mermaid de um diagrama com revalidação de path traversal.
 * `GET /api/health`: Status operacional enriquecido (`healthy` | `degraded` | `unhealthy`), uptime, versão e memória.
 * `POST /api/ingest/trace`: Ingestão de traces via HTTP para geração de `sequenceDiagram`.

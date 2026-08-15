@@ -1,15 +1,16 @@
 {
   "schema_version": "2.0",
-  "id": "architecture-arquitetura-do-archview-v4-0-ef9bcf",
+  "id": "architecture-arquitetura-do-archview-v5-0-3827e6",
   "type": "architecture",
-  "title": "Arquitetura do ArchView v4.0",
-  "description": "Visão dos containers executáveis, motor de AST, observabilidade Prometheus e fluxos de dados",
+  "title": "Arquitetura do ArchView v5.0",
+  "description": "Visão dos containers executáveis, motor de AST, gerador HTML e observabilidade",
   "source": "claude-mcp",
-  "created_at": "2026-08-15T21:38:12.442Z",
-  "updated_at": "2026-08-15T21:38:12.442Z",
+  "created_at": "2026-08-15T22:11:29.088Z",
+  "updated_at": "2026-08-15T22:11:29.088Z",
   "files": {
     "mermaid": "self-doc-architecture.mmd",
     "meta": "self-doc-architecture.meta.json",
+    "html": "self-doc-architecture.html",
     "svg": null,
     "png": null
   },
@@ -19,7 +20,7 @@
   },
   "stats": {
     "node_count": 8,
-    "generation_time_ms": 2
+    "generation_time_ms": 3
   },
   "tags": [
     "c4-model",

@@ -1,4 +1,4 @@
-# 📋 Quadro Kanban: MCP Visual Server (ArchView) v4.0
+# 📋 Quadro Kanban: MCP Visual Server (ArchView) v5.0
 
 > WIP Limit: 1 tarefa ativa por vez.
 
@@ -6,7 +6,7 @@
 
 ## 📥 Backlog
 
-*(Todas as tarefas planejadas para as Fases 1.0, 2.0, 2.5, 3.0 e 4.0 foram concluídas com 100% de sucesso)*
+*(Todas as tarefas planejadas para as Fases 1.0, 2.0, 2.5, 3.0, 4.0 e 5.0 foram concluídas com 100% de sucesso)*
 
 ---
 
@@ -15,6 +15,12 @@
 ---
 
 ## ✅ Concluído (Done)
+
+- [x] **TASK-039 (v5.0)**: Validação pelos 13 gates, testes TDD da v5.0 (`tests/tdd-html-generator-v5.test.ts`), regeneração de self-docs com HTML e sincronização no GitHub.
+- [x] **TASK-038 (v5.0)**: Adição de botões de download de HTML individual e Dashboard consolidado no Web Studio SPA (`frontend/`).
+- [x] **TASK-037 (v5.0)**: Criação de endpoints HTTP REST `GET /api/diagrams/:id/html` e `GET /api/export/dashboard-html` no Express (`src/utils/sse.ts`).
+- [x] **TASK-036 (v5.0)**: Implementação da 11ª ferramenta MCP `export_html_report` (`src/tools/export-html.ts`) com modos `single` e `dashboard`.
+- [x] **TASK-035 (v5.0)**: Implementação do motor de geração de HTML standalone e Dashboard executivo consolidado com Pan/Zoom e 4 temas (`src/engine/html-generator.ts`).
 
 - [x] **TASK-034 (v4.0)**: Criação da suíte de testes TDD da v4.0 (`tests/tdd-observability-v4.test.ts`), compilação TypeScript/Vite e passagem de todos os 13 gates.
 - [x] **TASK-033 (v4.0)**: Construção da aba "Observability Hub" no Web Studio com cards de saúde, métricas de memória, ingestão de traces e amostra Prometheus.

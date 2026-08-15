@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="educational">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArchView v5.0 Ecosystem | ArchView</title>
+  <style>
+    :root {
+      --bg-body: #0F172A;
+      --bg-card: #1E293B;
+      --bg-panel: #334155;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --border-color: #475569;
+      --accent-color: #38BDF8;
+      --accent-hover: #0EA5E9;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    }
+
+    [data-theme="educational"] {
+      --bg-body: #F0F9FF;
+      --bg-card: #FFFFFF;
+      --bg-panel: #E0F2FE;
+      --text-main: #0C4A6E;
+      --text-muted: #0284C7;
+      --border-color: #BAE6FD;
+      --accent-color: #0284C7;
+      --accent-hover: #0369A1;
+      --shadow-lg: 0 10px 25px -5px rgba(2, 132, 199, 0.15);
+    }
+
+    [data-theme="corporate"] {
+      --bg-body: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --bg-panel: #F1F5F9;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --border-color: #CBD5E1;
+      --accent-color: #2563EB;
+      --accent-hover: #1D4ED8;
+      --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.1);
+    }
+
+    [data-theme="minimal"] {
+      --bg-body: #FFFFFF;
+      --bg-card: #FAFAFA;
+      --bg-panel: #F4F4F5;
+      --text-main: #18181B;
+      --text-muted: #71717A;
+      --border-color: #E4E4E7;
+      --accent-color: #18181B;
+      --accent-hover: #27272A;
+      --shadow-lg: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    [data-theme="dark"] {
+      --bg-body: #090D16;
+      --bg-card: #131B2E;
+      --bg-panel: #1E293B;
+      --text-main: #F1F5F9;
+      --text-muted: #94A3B8;
+      --border-color: #334155;
+      --accent-color: #38BDF8;
+      --accent-hover: #7DD3FC;
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.7);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      transition: background-color 200ms ease, color 200ms ease;
+    }
+
+    header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .brand-title h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .brand-title span {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: var(--bg-panel);
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-sm);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      background: var(--bg-panel);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.75rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 150ms ease;
+      font-weight: 500;
+    }
+
+    .btn:hover {
+      background: var(--border-color);
+      transform: translateY(-1px);
+    }
+
+    .btn.primary {
+      background: var(--accent-color);
+      color: #FFFFFF;
+      border-color: var(--accent-color);
+    }
+
+    .btn.primary:hover {
+      background: var(--accent-hover);
+    }
+
+    select.theme-select {
+      background: var(--bg-panel);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.6rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    main {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
+      background-size: 24px 24px;
+      cursor: grab;
+    }
+
+    main:active {
+      cursor: grabbing;
+    }
+
+    #viewport {
+      transform-origin: 0 0;
+      transition: transform 50ms ease-out;
+      will-change: transform;
+      user-select: none;
+    }
+
+    .meta-drawer {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      box-shadow: var(--shadow-lg);
+      max-width: 320px;
+      z-index: 5;
+      backdrop-filter: blur(8px);
+    }
+
+    .meta-drawer strong {
+      color: var(--text-main);
+    }
+
+    .zoom-controls {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      display: flex;
+      gap: 0.25rem;
+      padding: 0.25rem;
+      box-shadow: var(--shadow-lg);
+      z-index: 5;
+    }
+
+    .toast {
+      position: absolute;
+      top: 4.5rem;
+      right: 1.5rem;
+      background: var(--accent-color);
+      color: #FFFFFF;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      transition: opacity 200ms ease;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand-title">
+      <h1>ArchView v5.0 Ecosystem</h1>
+      <span>mindmap</span>
+    </div>
+
+    <div class="toolbar">
+      <select class="theme-select" id="themeSelect" onchange="changeTheme(this.value)">
+        <option value="educational" selected>🎓 Educacional</option>
+        <option value="corporate" >🏢 Corporativo</option>
+        <option value="minimal" >⚪ Minimalista</option>
+        <option value="dark" >🌑 Modo Escuro</option>
+      </select>
+
+      <button class="btn" onclick="copyMermaid()">📋 Copiar Mermaid</button>
+      <button class="btn" onclick="exportSvg()">🖼️ Baixar SVG</button>
+      <button class="btn primary" onclick="exportPng(2)">📸 Baixar PNG HD</button>
+      <button class="btn primary" onclick="exportPng(4)">✨ PNG 4K</button>
+    </div>
+  </header>
+
+  <main id="canvasContainer">
+    <div id="viewport">
+      <div id="diagramContainer" class="mermaid">
+mindmap
+  root(("ArchView v5.0 Ecosystem"))
+    ("🛠️ Ferramentas MCP Nativas (11 Tools)")
+      generate_mindmap (Mapas Mentais Radiais)
+      generate_orgchart (Organogramas Hierárquicos DFS)
+      generate_architecture_diagram (Modelo C4 com Subgrafos)
+      generate_flowchart (Fluxogramas e Pipelines)
+      scan_codebase_topology (Topologia C4 Automática)
+      trace_call_graph (Grafo Bidirecional Inbound/Outbound)
+      trace_execution_flow (Sequence Diagrams de Logs)
+      analyze_codebase_overview (Raio-X 360 de Repositórios)
+      get_system_observability (Telemetria Prometheus & Charts)
+      export_html_report (HTML Standalone e Dashboards)
+      export_diagram (Exportação SVG/PNG/4K no Cliente)
+    ("🌐 Geração de HTML & Dashboards (v5.0)")
+      Geração automática de .html standalone por diagrama
+      Dashboard executivo consolidado (All-in-One)
+      100% Autocontido e offline-first (Zero Servidor)
+      Pan/Zoom com aceleração por hardware
+      Seletor dos 4 temas visuais e exportador PNG/SVG
+    ("📈 Observabilidade e SRE")
+      Endpoint /metrics no padrão texto Prometheus
+      Métricas de Runtime Node.js (CPU, Heap, EventLoop)
+      Histogramas de latência e contadores por diagrama
+      Tracing com OpenTelemetry SDK e exportador OTLP
+      Health check enriquecido com níveis de degradação
+    ("🧠 Codebase Intelligence Engine")
+      AST Léxica para TypeScript e JavaScript
+      Parser Léxico Universal (Python, Go, Java, Rust, C#, PHP)
+      Detecção de Frameworks (Express, Nest, FastAPI, Fiber)
+      Resolução Determinística de Chamadas Cruzadas
+      Execução instantânea (< 200ms) sem IA e sem WASM
+    ("🎨 Web Studio Interativo (Low-CPU)")
+      Botões de download de HTML individual e Dashboard
+      Aba Observability Hub com telemetria em tempo real
+      Aba Codebase Explorer com disparo de scans
+      Editor Split-View com live preview
+      Playground Didático MCP
+    ("🛡️ Segurança e Governança")
+      Anti-Path Traversal estrito (assertSafePath)
+      Validação de Schemas Zod com guardrails
+      Scanner SAST Local e GitHub CodeQL
+      Pentest Automatizado 8 Vetores OWASP
+      DOM Sanitizado sem injeção direta de HTML
+      </div>
+    </div>
+
+    <div class="meta-drawer">
+      <div><strong>Descrição:</strong> Visão 360 graus do servidor MCP, gerador de HTML standalone e observabilidade</div>
+      <div style="margin-top: 0.35rem;"><strong>Nós:</strong> 43 • <strong>Render:</strong> 2ms • <strong>Criado:</strong> 15/08/2026</div>
+    </div>
+
+    <div class="zoom-controls">
+      <button class="btn" onclick="zoomIn()" title="Aumentar Zoom">🔍 +</button>
+      <button class="btn" onclick="resetZoom()" title="Resetar">100%</button>
+      <button class="btn" onclick="zoomOut()" title="Diminuir Zoom">🔍 -</button>
+    </div>
+
+    <div id="toast" class="toast">Código Mermaid copiado!</div>
+  </main>
+
+  <!-- Runtime Mermaid Standalone -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    const rawMermaidCode = "mindmap\n  root((\"ArchView v5.0 Ecosystem\"))\n    (\"🛠️ Ferramentas MCP Nativas (11 Tools)\")\n      generate_mindmap (Mapas Mentais Radiais)\n      generate_orgchart (Organogramas Hierárquicos DFS)\n      generate_architecture_diagram (Modelo C4 com Subgrafos)\n      generate_flowchart (Fluxogramas e Pipelines)\n      scan_codebase_topology (Topologia C4 Automática)\n      trace_call_graph (Grafo Bidirecional Inbound/Outbound)\n      trace_execution_flow (Sequence Diagrams de Logs)\n      analyze_codebase_overview (Raio-X 360 de Repositórios)\n      get_system_observability (Telemetria Prometheus & Charts)\n      export_html_report (HTML Standalone e Dashboards)\n      export_diagram (Exportação SVG/PNG/4K no Cliente)\n    (\"🌐 Geração de HTML & Dashboards (v5.0)\")\n      Geração automática de .html standalone por diagrama\n      Dashboard executivo consolidado (All-in-One)\n      100% Autocontido e offline-first (Zero Servidor)\n      Pan/Zoom com aceleração por hardware\n      Seletor dos 4 temas visuais e exportador PNG/SVG\n    (\"📈 Observabilidade e SRE\")\n      Endpoint /metrics no padrão texto Prometheus\n      Métricas de Runtime Node.js (CPU, Heap, EventLoop)\n      Histogramas de latência e contadores por diagrama\n      Tracing com OpenTelemetry SDK e exportador OTLP\n      Health check enriquecido com níveis de degradação\n    (\"🧠 Codebase Intelligence Engine\")\n      AST Léxica para TypeScript e JavaScript\n      Parser Léxico Universal (Python, Go, Java, Rust, C#, PHP)\n      Detecção de Frameworks (Express, Nest, FastAPI, Fiber)\n      Resolução Determinística de Chamadas Cruzadas\n      Execução instantânea (< 200ms) sem IA e sem WASM\n    (\"🎨 Web Studio Interativo (Low-CPU)\")\n      Botões de download de HTML individual e Dashboard\n      Aba Observability Hub com telemetria em tempo real\n      Aba Codebase Explorer com disparo de scans\n      Editor Split-View com live preview\n      Playground Didático MCP\n    (\"🛡️ Segurança e Governança\")\n      Anti-Path Traversal estrito (assertSafePath)\n      Validação de Schemas Zod com guardrails\n      Scanner SAST Local e GitHub CodeQL\n      Pentest Automatizado 8 Vetores OWASP\n      DOM Sanitizado sem injeção direta de HTML";
+    const metadata = {
+  "schema_version": "2.0",
+  "id": "mindmap-archview-v5-0-ecosystem-ad2bb7",
+  "type": "mindmap",
+  "title": "ArchView v5.0 Ecosystem",
+  "description": "Visão 360 graus do servidor MCP, gerador de HTML standalone e observabilidade",
+  "source": "claude-mcp",
+  "created_at": "2026-08-15T22:11:29.051Z",
+  "updated_at": "2026-08-15T22:11:29.051Z",
+  "files": {
+    "mermaid": "self-doc-mindmap.mmd",
+    "meta": "self-doc-mindmap.meta.json",
+    "html": "self-doc-mindmap.html",
+    "svg": null,
+    "png": null
+  },
+  "style": {
+    "suggested_theme": "educational",
+    "applied_theme": null
+  },
+  "stats": {
+    "node_count": 43,
+    "max_depth": 2,
+    "generation_time_ms": 2
+  },
+  "tags": [
+    "mapa-mental",
+    "educacional",
+    "resumo"
+  ]
+};
+
+    let zoom = 1.0;
+    let panX = 0;
+    let panY = 0;
+    let isPanning = false;
+    let startX = 0;
+    let startY = 0;
+
+    const viewport = document.getElementById('viewport');
+    const container = document.getElementById('canvasContainer');
+
+    function updateTransform() {
+      viewport.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+    }
+
+    function zoomIn() {
+      zoom = Math.min(zoom * 1.25, 5.0);
+      updateTransform();
+    }
+
+    function zoomOut() {
+      zoom = Math.max(zoom / 1.25, 0.2);
+      updateTransform();
+    }
+
+    function resetZoom() {
+      zoom = 1.0;
+      panX = 0;
+      panY = 0;
+      updateTransform();
+    }
+
+    container.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.1 : 0.9;
+      zoom = Math.min(Math.max(zoom * factor, 0.2), 5.0);
+      updateTransform();
+    }, { passive: false });
+
+    container.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      isPanning = true;
+      startX = e.clientX - panX;
+      startY = e.clientY - panY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isPanning) return;
+      panX = e.clientX - startX;
+      panY = e.clientY - startY;
+      updateTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      isPanning = false;
+    });
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function copyMermaid() {
+      navigator.clipboard.writeText(rawMermaidCode).then(() => {
+        showToast('✅ Código Mermaid copiado!');
+      });
+    }
+
+    function changeTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      reRender();
+    }
+
+    function getMermaidThemeConfig(theme) {
+      if (theme === 'dark') {
+        return { theme: 'dark', themeVariables: { darkMode: true, background: '#131B2E' } };
+      } else if (theme === 'corporate') {
+        return { theme: 'neutral', themeVariables: { primaryColor: '#2563EB', primaryTextColor: '#FFFFFF' } };
+      } else if (theme === 'minimal') {
+        return { theme: 'base', themeVariables: { primaryColor: '#F4F4F5', primaryTextColor: '#18181B' } };
+      }
+      return { theme: 'default', themeVariables: { primaryColor: '#0284C7', primaryTextColor: '#FFFFFF' } };
+    }
+
+    async function reRender() {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'educational';
+      const conf = getMermaidThemeConfig(currentTheme);
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'loose',
+        ...conf
+      });
+
+      const diagEl = document.getElementById('diagramContainer');
+      diagEl.removeAttribute('data-processed');
+      diagEl.textContent = rawMermaidCode;
+      await mermaid.run({ nodes: [diagEl] });
+    }
+
+    function exportSvg() {
+      const svg = document.querySelector('#diagramContainer svg');
+      if (!svg) return;
+      const serializer = new XMLSerializer();
+      const blob = new Blob([serializer.serializeToString(svg)], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${metadata.id || 'diagram'}.svg`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('✅ SVG exportado com sucesso!');
+    }
+
+    function exportPng(scale = 2) {
+      const svg = document.querySelector('#diagramContainer svg');
+      if (!svg) return;
+
+      const serializer = new XMLSerializer();
+      const svgString = serializer.serializeToString(svg);
+      const img = new Image();
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const bbox = svg.getBoundingClientRect();
+        const width = (bbox.width || 800) * scale;
+        const height = (bbox.height || 600) * scale;
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'educational';
+        ctx.fillStyle = currentTheme === 'dark' ? '#090D16' : '#FFFFFF';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const pngUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = pngUrl;
+          a.download = `${metadata.id || 'diagram'}_${scale}x.png`;
+          a.click();
+          URL.revokeObjectURL(pngUrl);
+          showToast(`✅ PNG ${scale === 4 ? '4K' : 'HD'} exportado!`);
+        }, 'image/png');
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (typeof mermaid !== 'undefined') {
+        await reRender();
+      }
+    });
+  </script>
+</body>
+</html>

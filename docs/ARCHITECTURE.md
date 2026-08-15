@@ -1,6 +1,6 @@
-# 🏗️ Arquitetura do Sistema: ArchView v4.0 (Observability Hub, Prometheus & Codebase Engine)
+# 🏗️ Arquitetura do Sistema: ArchView v5.0 (Standalone HTML Generator & Observability Hub)
 
-Documentação técnica da arquitetura, fluxo de dados, guardrails de segurança e subsistemas do **ArchView (MCP Visual Server, Web Studio, Observability Hub & Codebase Engine)**.
+Documentação técnica da arquitetura, fluxo de dados, guardrails de segurança e subsistemas do **ArchView (MCP Visual Server, Web Studio, HTML Generator, Observability Hub & Codebase Engine)**.
 
 ---
 
@@ -12,31 +12,33 @@ O diagrama abaixo ilustra os containers executáveis, limites de processo e cana
 flowchart TD
   subgraph sg_1[" Clientes e Consumidores "]
     ai_client(["<b>👤 IA / Desenvolvedor</b><br/>Claude Desktop, Cursor, Antigravity ou Terminal"])
-    browser_user(["<b>👤 Usuário no Navegador</b><br/>Observability Hub, Codebase Explorer e Editor ao Vivo"])
+    browser_user(["<b>👤 Usuário no Navegador</b><br/>Observability Hub, Codebase Explorer e Exportação HTML Offline"])
   end
 
   subgraph sg_2[" Servidores e Backend "]
-    mcp_server["<b>📦 ArchView MCP Server</b><br/><i>TypeScript / Node.js 20</i><br/>Orquestrador de 10 ferramentas MCP e motor de AST"]
+    mcp_server["<b>📦 ArchView MCP Server</b><br/><i>TypeScript / Node.js 20</i><br/>Orquestrador de 11 ferramentas MCP, AST e HTML Generator"]
     engine_v3["<b>📦 Motor de Codebase Intelligence</b><br/><i>TypeScript Lexical Engine (< 200ms)</i><br/>Parsers AST TS/JS e léxico universal (Python, Go, Java, Rust)"]
-    sse_server["<b>📦 Express SSE & Prometheus Hub</b><br/><i>Express 5 / Porta 3001</i><br/>Transmissão SSE, exportador /metrics e endpoints de traces"]
+    html_engine["<b>📦 Motor Standalone HTML</b><br/><i>HTML5 / CSS / Mermaid</i><br/>Construtor de páginas offline interativas e dashboards"]
+    sse_server["<b>📦 Express SSE & Prometheus Hub</b><br/><i>Express 5 / Porta 3001</i><br/>Transmissão SSE, exportador /metrics e entrega de HTML"]
   end
 
   subgraph sg_3[" Camada de Persistência "]
-    storage[("<b>💾 Armazenamento output/</b><br/><i>Local Disk / JSON</i><br/>Diretório local com sintaxes Mermaid e manifestos JSON")]
+    storage[("<b>💾 Armazenamento output/</b><br/><i>Local Disk / JSON / HTML</i><br/>Diretório local com sintaxes Mermaid, manifestos JSON e páginas HTML")]
   end
 
   subgraph sg_4[" Interface Gráfica Web "]
-    web_studio["<b>📦 Web Studio SPA (Low-CPU)</b><br/><i>Alpine.js (~15KB) / Vite / CSS GPU</i><br/>Observability Hub, Codebase Explorer, Editor e 4 Temas"]
+    web_studio["<b>📦 Web Studio SPA (Low-CPU)</b><br/><i>Alpine.js (~15KB) / Vite / CSS GPU</i><br/>Observability Hub, Codebase Explorer, Editor e Download HTML"]
   end
 
-  ai_client -->|"Envia comandos MCP (10 Tools) [JSON-RPC (stdio)]"| mcp_server
+  ai_client -->|"Envia comandos MCP (11 Tools) [JSON-RPC (stdio)]"| mcp_server
   mcp_server -->|"Executa varreduras de código [AST / Regex]"| engine_v3
+  mcp_server -->|"Gera páginas HTML autocontidas [TypeScript Engine]"| html_engine
   mcp_server -->|"Inicia em background [In-process]"| sse_server
-  mcp_server -->|"Persiste .mmd e .meta.json [Filesystem]"| storage
+  mcp_server -->|"Persiste .mmd, .html e .meta.json [Filesystem]"| storage
   sse_server -->|"Lê e grava arquivos com assertSafePath [fs]"| storage
   sse_server -.->|"Transmite eventos /events [Server-Sent Events]"| web_studio
   web_studio -->|"Renderiza diagramas com 0% CPU em repouso [HTML5 / SVG DOM]"| browser_user
-  web_studio -->|"Dispara scans e consulta métricas [REST JSON]"| sse_server
+  web_studio -->|"Dispara scans e consulta métricas/HTML [REST JSON]"| sse_server
 
   classDef default fill:#F8FAFC,stroke:#64748B,stroke-width:1.5px,color:#1E293B,rx:8px,ry:8px;
   classDef primary fill:#1E40AF,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
@@ -48,6 +50,7 @@ flowchart TD
   class browser_user accent;
   class mcp_server primary;
   class engine_v3 primary;
+  class html_engine primary;
   class sse_server primary;
   class storage success;
   class web_studio primary;
@@ -55,14 +58,14 @@ flowchart TD
 
 ---
 
-## 2. Mapa Conceitual do Ecossistema v3.0
+## 2. Mapa Conceitual do Ecossistema v5.0
 
 Visão completa das funcionalidades, camadas de comunicação, garantias de segurança e recursos do motor de codebase intelligence:
 
 ```mermaid
 mindmap
-  root(("ArchView v3.0 Ecosystem"))
-    ("🛠️ Ferramentas MCP Nativas (9 Tools)")
+  root(("ArchView v5.0 Ecosystem"))
+    ("🛠️ Ferramentas MCP Nativas (11 Tools)")
       generate_mindmap (Mapas Mentais Radiais)
       generate_orgchart (Organogramas Hierárquicos DFS)
       generate_architecture_diagram (Modelo C4 com Subgrafos)
@@ -71,25 +74,33 @@ mindmap
       trace_call_graph (Grafo Bidirecional Inbound/Outbound)
       trace_execution_flow (Sequence Diagrams de Logs)
       analyze_codebase_overview (Raio-X 360 de Repositórios)
+      get_system_observability (Telemetria Prometheus & Charts)
+      export_html_report (HTML Standalone e Dashboards)
       export_diagram (Exportação SVG/PNG/4K no Cliente)
-    ("🧠 Codebase Intelligence (v3.0 Engine)")
+    ("🌐 Geração de HTML & Dashboards (v5.0)")
+      Geração automática de .html standalone por diagrama
+      Dashboard executivo consolidado (All-in-One)
+      100% Autocontido e offline-first (Zero Servidor)
+      Pan/Zoom com aceleração por hardware
+      Seletor dos 4 temas visuais e exportador PNG/SVG
+    ("📈 Observabilidade e SRE")
+      Endpoint /metrics no padrão texto Prometheus
+      Métricas de Runtime Node.js (CPU, Heap, EventLoop)
+      Histogramas de latência e contadores por diagrama
+      Tracing com OpenTelemetry SDK e exportador OTLP
+      Health check enriquecido com níveis de degradação
+    ("🧠 Codebase Intelligence Engine")
       AST Léxica para TypeScript e JavaScript
       Parser Léxico Universal (Python, Go, Java, Rust, C#, PHP)
-      Detecção de Frameworks (Express, Nest, FastAPI, Fiber, Gin)
+      Detecção de Frameworks (Express, Nest, FastAPI, Fiber)
       Resolução Determinística de Chamadas Cruzadas
       Execução instantânea (< 200ms) sem IA e sem WASM
-    ("⚡ Comunicação e Streaming")
-      MCP Stdio JSON-RPC (Claude, Cursor, Antigravity)
-      Express 5 API REST na porta 3001
-      Server-Sent Events (/events em tempo real)
-      Endpoint POST /api/ingest/trace para logs HTTP
-      Endpoints POST /api/codebase/* para varreduras remotas
     ("🎨 Web Studio Interativo (Low-CPU)")
+      Botões de download de HTML individual e Dashboard
+      Aba Observability Hub com telemetria em tempo real
       Aba Codebase Explorer com disparo de scans
       Editor Split-View com live preview
       Playground Didático MCP
-      GPU-Accelerated Pan e Zoom (0% CPU em repouso)
-      4 Temas (Educacional, Corporativo, Minimal, Dark)
     ("🛡️ Segurança e Governança")
       Anti-Path Traversal estrito (assertSafePath)
       Validação de Schemas Zod com guardrails

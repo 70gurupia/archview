@@ -62,6 +62,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { broadcastEvent } from './sse.js';
 import { recordDiagramCreated } from './metrics.js';
+import { generateStandaloneDiagramHtml } from '../engine/html-generator.js';
 export function sanitizeSlug(text) {
     return text
         .toLowerCase()
@@ -98,10 +99,13 @@ export function saveDiagramWithMeta(options) {
     const { id, baseFilename } = generateId(options.type, options.title);
     const mmdFilename = options.outputPath ? path.basename(options.outputPath, path.extname(options.outputPath)) + '.mmd' : `${baseFilename}.mmd`;
     const metaFilename = mmdFilename.replace(/\.mmd$/, '.meta.json');
+    const htmlFilename = mmdFilename.replace(/\.mmd$/, '.html');
     assertSafePath(mmdFilename, outDir);
     assertSafePath(metaFilename, outDir);
+    assertSafePath(htmlFilename, outDir);
     const mmdPath = path.join(outDir, mmdFilename);
     const metaPath = path.join(outDir, metaFilename);
+    const htmlPath = path.join(outDir, htmlFilename);
     // Write .mmd file (raw mermaid code)
     const sanitizedSyntax = escapeMermaidHTML(options.mermaidSyntax);
     fs.writeFileSync(mmdPath, sanitizedSyntax, 'utf-8');
@@ -119,6 +123,7 @@ export function saveDiagramWithMeta(options) {
         files: {
             mermaid: mmdFilename,
             meta: metaFilename,
+            html: htmlFilename,
             svg: null,
             png: null
         },
@@ -133,6 +138,9 @@ export function saveDiagramWithMeta(options) {
         },
         tags: options.tags || [options.type]
     };
+    // Generate and write standalone offline HTML
+    const standaloneHtml = generateStandaloneDiagramHtml(meta, sanitizedSyntax);
+    fs.writeFileSync(htmlPath, standaloneHtml, 'utf-8');
     // Record Prometheus metrics
     recordDiagramCreated(meta.type, 'success', meta.stats.generation_time_ms || 0);
     // Write meta.json

@@ -51,7 +51,10 @@
       </div>
     </div>
 
-    <div class="header-status">
+    <div class="header-status" style="display: flex; gap: 0.75rem; align-items: center;">
+      <button class="action-btn" @click="downloadDashboardHtml()" title="Baixar Dashboard HTML Offline com todos os diagramas" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+        📦 Baixar Dashboard HTML
+      </button>
       <!-- Status SSE -->
       <div class="sse-badge" :class="sseStatus">
         <span class="status-dot"></span>
@@ -396,6 +399,9 @@
             </button>
             <button class="action-btn" @click="handleExportSvg()" title="Baixar arquivo vetorial SVG">
               ⬇️ SVG
+            </button>
+            <button class="action-btn" style="background-color: #0284C7; color: #FFFFFF; border-color: #0284C7;" @click="downloadDiagramHtml(selectedDiagram ? selectedDiagram.id : '')" title="Baixar arquivo HTML autocontido e interativo (Offline)">
+              🌐 HTML
             </button>
             <button class="action-btn primary" @click="handleExportPng(2)" title="Baixar imagem PNG em alta resolução (2x)">
               📸 2x

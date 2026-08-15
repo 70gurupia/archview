@@ -1,6 +1,6 @@
 {
   "name": "archview",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "description": "ArchView: Servidor Model Context Protocol (MCP) local e reativo para diagramação arquitetural, inteligência de código e flow tracing",
   "repository": {
     "type": "git",
@@ -9,11 +9,11 @@
   "main": "build/server.js",
   "scripts": {
     "test": "npm run test:all",
-    "test:tdd": "npx tsx tests/tdd-unit.test.ts && npx tsx tests/tdd-v3.test.ts && npx tsx tests/tdd-observability-v4.test.ts",
+    "test:tdd": "npx tsx tests/tdd-unit.test.ts && npx tsx tests/tdd-v3.test.ts && npx tsx tests/tdd-observability-v4.test.ts && npx tsx tests/tdd-html-generator-v5.test.ts",
     "test:odd": "npx tsx tests/odd-observability.test.ts",
     "test:pentest": "npx tsx tests/pentest-security.test.ts",
     "test:sast": "npx tsx tests/sast-scanner.ts",
-    "test:all": "npx tsx tests/sast-scanner.ts && npx tsx tests/tdd-unit.test.ts && npx tsx tests/tdd-v3.test.ts && npx tsx tests/tdd-observability-v4.test.ts && npx tsx tests/odd-observability.test.ts && npx tsx tests/pentest-security.test.ts && npx tsx test-v2.ts",
+    "test:all": "npx tsx tests/sast-scanner.ts && npx tsx tests/tdd-unit.test.ts && npx tsx tests/tdd-v3.test.ts && npx tsx tests/tdd-observability-v4.test.ts && npx tsx tests/tdd-html-generator-v5.test.ts && npx tsx tests/odd-observability.test.ts && npx tsx tests/pentest-security.test.ts && npx tsx test-v2.ts",
     "build:server": "tsc",
     "build:frontend": "npm run build --prefix frontend",
     "build": "tsc && npm run build --prefix frontend",

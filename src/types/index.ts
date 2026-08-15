@@ -3,6 +3,7 @@ export type DiagramType = 'mindmap' | 'orgchart' | 'architecture' | 'flowchart';
 export interface DiagramFiles {
   mermaid: string;
   meta: string;
+  html?: string | null;
   svg?: string | null;
   png?: string | null;
 }

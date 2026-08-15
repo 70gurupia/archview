@@ -23,13 +23,19 @@ async function runOddSuite() {
   const health = await healthRes.json();
   assert(['healthy', 'ok', 'degraded'].includes(health.status), 'Health check reporta status saudável');
   assert(typeof health.uptime === 'number' && health.uptime >= 0, 'Health check reporta métrica de uptime válida');
-  assert(health.version === '4.0.0', 'Health check reporta versão semântica 4.0.0');
+  assert(health.version === '5.0.0', 'Health check reporta versão semântica 5.0.0');
 
   // 2b. Endpoint Prometheus (/metrics)
   const metricsRes = await fetch('http://localhost:3002/metrics');
   const metricsText = await metricsRes.text();
   assert(metricsRes.status === 200, 'Endpoint /metrics retorna HTTP 200');
   assert(metricsText.includes('archview_'), 'Endpoint /metrics contém métricas do ArchView');
+
+  // 2c. Endpoint Dashboard HTML (/api/export/dashboard-html)
+  const dashRes = await fetch('http://localhost:3002/api/export/dashboard-html');
+  const dashHtml = await dashRes.text();
+  assert(dashRes.status === 200, 'Endpoint /api/export/dashboard-html retorna HTTP 200');
+  assert(dashHtml.includes('<!DOCTYPE html>'), 'Endpoint /api/export/dashboard-html retorna HTML5 válido');
 
   // 3. Métricas no meta.json gerado
   console.log('\n2. Auditoria de Métricas e Telemetria de Diagrama:');
@@ -71,6 +77,9 @@ async function runOddSuite() {
     body: JSON.stringify({ content: 'graph TD\n A-->B' })
   });
   const putData = await putRes.json();
+  if (!putData.success) {
+    console.error("DEBUG PUT ERROR:", putData);
+  }
   assert(putData.success === true, 'API PUT /api/diagrams/:id permite salvar edições no disco');
 
   // 6. Teste de Consulta Individual por ID

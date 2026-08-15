@@ -10,7 +10,7 @@ flowchart TB
   subgraph sg_2[" 2. Motor Core & Inteligência "]
     select_engine["Executa Motor e Registra Métrica Prometheus"]
     build_mermaid["Gera Sintaxe Mermaid (C4, Flowchart, Sequence ou Mindmap)"]
-    write_meta[("💾 Grava .mmd e .meta.json no output/")]
+    write_meta[("💾 Grava .mmd, .meta.json e .html no output/")]
     sse_emit[["📬 Dispara SSE (diagram.created / updated)"]]
     resp_client["Retorna JSON de Sucesso para IA/UI"]
   end
@@ -18,7 +18,7 @@ flowchart TB
   subgraph sg_3[" 3. Experiência Web Reativa "]
     fe_catch["Web Studio atualiza galeria e Observability Hub"]
     apply_themes["Aplica Temas, Subgrafos e Estilização SVG"]
-    user_actions["Navegação Codebase, Zoom GPU ou Exportação 4K"]
+    user_actions["Abertura Offline (.html), Pan/Zoom ou Exportação 4K"]
     end_done(["🏁 Visualização Interativa Concluída"])
   end
 

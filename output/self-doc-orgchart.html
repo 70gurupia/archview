@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="corporate">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estrutura Modular do ArchView v5.0 | ArchView</title>
+  <style>
+    :root {
+      --bg-body: #0F172A;
+      --bg-card: #1E293B;
+      --bg-panel: #334155;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --border-color: #475569;
+      --accent-color: #38BDF8;
+      --accent-hover: #0EA5E9;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    }
+
+    [data-theme="educational"] {
+      --bg-body: #F0F9FF;
+      --bg-card: #FFFFFF;
+      --bg-panel: #E0F2FE;
+      --text-main: #0C4A6E;
+      --text-muted: #0284C7;
+      --border-color: #BAE6FD;
+      --accent-color: #0284C7;
+      --accent-hover: #0369A1;
+      --shadow-lg: 0 10px 25px -5px rgba(2, 132, 199, 0.15);
+    }
+
+    [data-theme="corporate"] {
+      --bg-body: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --bg-panel: #F1F5F9;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --border-color: #CBD5E1;
+      --accent-color: #2563EB;
+      --accent-hover: #1D4ED8;
+      --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.1);
+    }
+
+    [data-theme="minimal"] {
+      --bg-body: #FFFFFF;
+      --bg-card: #FAFAFA;
+      --bg-panel: #F4F4F5;
+      --text-main: #18181B;
+      --text-muted: #71717A;
+      --border-color: #E4E4E7;
+      --accent-color: #18181B;
+      --accent-hover: #27272A;
+      --shadow-lg: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    [data-theme="dark"] {
+      --bg-body: #090D16;
+      --bg-card: #131B2E;
+      --bg-panel: #1E293B;
+      --text-main: #F1F5F9;
+      --text-muted: #94A3B8;
+      --border-color: #334155;
+      --accent-color: #38BDF8;
+      --accent-hover: #7DD3FC;
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.7);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      transition: background-color 200ms ease, color 200ms ease;
+    }
+
+    header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .brand-title h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .brand-title span {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: var(--bg-panel);
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-sm);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      background: var(--bg-panel);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.75rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 150ms ease;
+      font-weight: 500;
+    }
+
+    .btn:hover {
+      background: var(--border-color);
+      transform: translateY(-1px);
+    }
+
+    .btn.primary {
+      background: var(--accent-color);
+      color: #FFFFFF;
+      border-color: var(--accent-color);
+    }
+
+    .btn.primary:hover {
+      background: var(--accent-hover);
+    }
+
+    select.theme-select {
+      background: var(--bg-panel);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.6rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    main {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
+      background-size: 24px 24px;
+      cursor: grab;
+    }
+
+    main:active {
+      cursor: grabbing;
+    }
+
+    #viewport {
+      transform-origin: 0 0;
+      transition: transform 50ms ease-out;
+      will-change: transform;
+      user-select: none;
+    }
+
+    .meta-drawer {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      box-shadow: var(--shadow-lg);
+      max-width: 320px;
+      z-index: 5;
+      backdrop-filter: blur(8px);
+    }
+
+    .meta-drawer strong {
+      color: var(--text-main);
+    }
+
+    .zoom-controls {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      display: flex;
+      gap: 0.25rem;
+      padding: 0.25rem;
+      box-shadow: var(--shadow-lg);
+      z-index: 5;
+    }
+
+    .toast {
+      position: absolute;
+      top: 4.5rem;
+      right: 1.5rem;
+      background: var(--accent-color);
+      color: #FFFFFF;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      transition: opacity 200ms ease;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand-title">
+      <h1>Estrutura Modular do ArchView v5.0</h1>
+      <span>orgchart</span>
+    </div>
+
+    <div class="toolbar">
+      <select class="theme-select" id="themeSelect" onchange="changeTheme(this.value)">
+        <option value="educational" >🎓 Educacional</option>
+        <option value="corporate" selected>🏢 Corporativo</option>
+        <option value="minimal" >⚪ Minimalista</option>
+        <option value="dark" >🌑 Modo Escuro</option>
+      </select>
+
+      <button class="btn" onclick="copyMermaid()">📋 Copiar Mermaid</button>
+      <button class="btn" onclick="exportSvg()">🖼️ Baixar SVG</button>
+      <button class="btn primary" onclick="exportPng(2)">📸 Baixar PNG HD</button>
+      <button class="btn primary" onclick="exportPng(4)">✨ PNG 4K</button>
+    </div>
+  </header>
+
+  <main id="canvasContainer">
+    <div id="viewport">
+      <div id="diagramContainer" class="mermaid">
+graph TD
+  core["<b>ArchView Core</b><br/>Orquestrador Central MCP (stdio)"]
+  engine_v3["<b>Codebase Engine</b><br/>AST & Flow Tracing Determinístico"]
+  html_gen["<b>HTML Generator Engine</b><br/>Geração Offline Standalone & Dashboard"]
+  tools_layer["<b>Camada de Tools (11 Tools)</b><br/>Geradores Especializados"]
+  infra_layer["<b>Infra & Observability</b><br/>Express 5 + Prometheus + OTel + SSE (3001)"]
+  web_studio["<b>Web Studio SPA (Low-CPU)</b><br/>Alpine.js + Vite (5173)"]
+  qa_sec["<b>QA & Segurança SAST</b><br/>CodeQL, Pentest OWASP, TDD/ODD"]
+  t_mind["<b>generate_mindmap</b><br/>Mapas Mentais Radiais<br/><i>Tools</i>"]
+  t_org["<b>generate_orgchart</b><br/>Validador DFS e Árvore<br/><i>Tools</i>"]
+  t_arch["<b>generate_architecture</b><br/>Modelo C4 com Subgrafos<br/><i>Tools</i>"]
+  t_flow["<b>generate_flowchart</b><br/>Processos e Decisões<br/><i>Tools</i>"]
+  t_scan_top["<b>scan_codebase_topology</b><br/>Topologia C4 de Diretórios<br/><i>Tools</i>"]
+  t_trace_call["<b>trace_call_graph</b><br/>Grafo de Chamadas Bidirecional<br/><i>Tools</i>"]
+  t_trace_exec["<b>trace_execution_flow</b><br/>Diagramas de Sequência<br/><i>Tools</i>"]
+  t_overview["<b>analyze_codebase_overview</b><br/>Raio-X 360 do Repositório<br/><i>Tools</i>"]
+  t_obs["<b>get_system_observability</b><br/>Métricas e Gráficos de Saúde<br/><i>Tools</i>"]
+  t_html["<b>export_html_report</b><br/>Exportação Standalone & Dashboard<br/><i>Tools</i>"]
+  ui_obs["<b>Observability Hub</b><br/>Dashboard de saúde e traces<br/><i>UI</i>"]
+  ui_explorer["<b>Codebase Explorer</b><br/>Painel de varredura e grafos<br/><i>UI</i>"]
+  ui_editor["<b>Editor Split-View</b><br/>Edição ao vivo com preview<br/><i>UI</i>"]
+  ui_play["<b>Playground MCP</b><br/>Gerador didático de prompts e JSON<br/><i>UI</i>"]
+  core --> engine_v3
+  core --> html_gen
+  core --> tools_layer
+  core --> infra_layer
+  infra_layer --> web_studio
+  core --> qa_sec
+  tools_layer --> t_mind
+  tools_layer --> t_org
+  tools_layer --> t_arch
+  tools_layer --> t_flow
+  tools_layer --> t_scan_top
+  tools_layer --> t_trace_call
+  tools_layer --> t_trace_exec
+  tools_layer --> t_overview
+  tools_layer --> t_obs
+  tools_layer --> t_html
+  web_studio --> ui_obs
+  web_studio --> ui_explorer
+  web_studio --> ui_editor
+  web_studio --> ui_play
+
+  classDef default fill:#F8FAFC,stroke:#64748B,stroke-width:1.5px,color:#1E293B,rx:6px,ry:6px;
+  classDef lvl0 fill:#1E40AF,stroke:#1D4ED8,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef lvl1 fill:#2563EB,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:6px,ry:6px;
+  classDef lvl2 fill:#DBEAFE,stroke:#60A5FA,stroke-width:1.5px,color:#1E40AF,rx:6px,ry:6px;
+  classDef lvl3 fill:#F1F5F9,stroke:#94A3B8,stroke-width:1.5px,color:#334155,rx:4px,ry:4px;
+  class core lvl0;
+  class engine_v3 lvl1;
+  class html_gen lvl1;
+  class tools_layer lvl1;
+  class infra_layer lvl1;
+  class web_studio lvl1;
+  class qa_sec lvl1;
+  class t_mind lvl2;
+  class t_org lvl2;
+  class t_arch lvl2;
+  class t_flow lvl2;
+  class t_scan_top lvl2;
+  class t_trace_call lvl2;
+  class t_trace_exec lvl2;
+  class t_overview lvl2;
+  class t_obs lvl2;
+  class t_html lvl2;
+  class ui_obs lvl2;
+  class ui_explorer lvl2;
+  class ui_editor lvl2;
+  class ui_play lvl2;
+      </div>
+    </div>
+
+    <div class="meta-drawer">
+      <div><strong>Descrição:</strong> Hierarquia de componentes do servidor, engine de inteligência, HTML generator e estúdio web</div>
+      <div style="margin-top: 0.35rem;"><strong>Nós:</strong> 21 • <strong>Render:</strong> 2ms • <strong>Criado:</strong> 15/08/2026</div>
+    </div>
+
+    <div class="zoom-controls">
+      <button class="btn" onclick="zoomIn()" title="Aumentar Zoom">🔍 +</button>
+      <button class="btn" onclick="resetZoom()" title="Resetar">100%</button>
+      <button class="btn" onclick="zoomOut()" title="Diminuir Zoom">🔍 -</button>
+    </div>
+
+    <div id="toast" class="toast">Código Mermaid copiado!</div>
+  </main>
+
+  <!-- Runtime Mermaid Standalone -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    const rawMermaidCode = "graph TD\n  core[\"<b>ArchView Core</b><br/>Orquestrador Central MCP (stdio)\"]\n  engine_v3[\"<b>Codebase Engine</b><br/>AST & Flow Tracing Determinístico\"]\n  html_gen[\"<b>HTML Generator Engine</b><br/>Geração Offline Standalone & Dashboard\"]\n  tools_layer[\"<b>Camada de Tools (11 Tools)</b><br/>Geradores Especializados\"]\n  infra_layer[\"<b>Infra & Observability</b><br/>Express 5 + Prometheus + OTel + SSE (3001)\"]\n  web_studio[\"<b>Web Studio SPA (Low-CPU)</b><br/>Alpine.js + Vite (5173)\"]\n  qa_sec[\"<b>QA & Segurança SAST</b><br/>CodeQL, Pentest OWASP, TDD/ODD\"]\n  t_mind[\"<b>generate_mindmap</b><br/>Mapas Mentais Radiais<br/><i>Tools</i>\"]\n  t_org[\"<b>generate_orgchart</b><br/>Validador DFS e Árvore<br/><i>Tools</i>\"]\n  t_arch[\"<b>generate_architecture</b><br/>Modelo C4 com Subgrafos<br/><i>Tools</i>\"]\n  t_flow[\"<b>generate_flowchart</b><br/>Processos e Decisões<br/><i>Tools</i>\"]\n  t_scan_top[\"<b>scan_codebase_topology</b><br/>Topologia C4 de Diretórios<br/><i>Tools</i>\"]\n  t_trace_call[\"<b>trace_call_graph</b><br/>Grafo de Chamadas Bidirecional<br/><i>Tools</i>\"]\n  t_trace_exec[\"<b>trace_execution_flow</b><br/>Diagramas de Sequência<br/><i>Tools</i>\"]\n  t_overview[\"<b>analyze_codebase_overview</b><br/>Raio-X 360 do Repositório<br/><i>Tools</i>\"]\n  t_obs[\"<b>get_system_observability</b><br/>Métricas e Gráficos de Saúde<br/><i>Tools</i>\"]\n  t_html[\"<b>export_html_report</b><br/>Exportação Standalone & Dashboard<br/><i>Tools</i>\"]\n  ui_obs[\"<b>Observability Hub</b><br/>Dashboard de saúde e traces<br/><i>UI</i>\"]\n  ui_explorer[\"<b>Codebase Explorer</b><br/>Painel de varredura e grafos<br/><i>UI</i>\"]\n  ui_editor[\"<b>Editor Split-View</b><br/>Edição ao vivo com preview<br/><i>UI</i>\"]\n  ui_play[\"<b>Playground MCP</b><br/>Gerador didático de prompts e JSON<br/><i>UI</i>\"]\n  core --> engine_v3\n  core --> html_gen\n  core --> tools_layer\n  core --> infra_layer\n  infra_layer --> web_studio\n  core --> qa_sec\n  tools_layer --> t_mind\n  tools_layer --> t_org\n  tools_layer --> t_arch\n  tools_layer --> t_flow\n  tools_layer --> t_scan_top\n  tools_layer --> t_trace_call\n  tools_layer --> t_trace_exec\n  tools_layer --> t_overview\n  tools_layer --> t_obs\n  tools_layer --> t_html\n  web_studio --> ui_obs\n  web_studio --> ui_explorer\n  web_studio --> ui_editor\n  web_studio --> ui_play\n\n  classDef default fill:#F8FAFC,stroke:#64748B,stroke-width:1.5px,color:#1E293B,rx:6px,ry:6px;\n  classDef lvl0 fill:#1E40AF,stroke:#1D4ED8,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef lvl1 fill:#2563EB,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:6px,ry:6px;\n  classDef lvl2 fill:#DBEAFE,stroke:#60A5FA,stroke-width:1.5px,color:#1E40AF,rx:6px,ry:6px;\n  classDef lvl3 fill:#F1F5F9,stroke:#94A3B8,stroke-width:1.5px,color:#334155,rx:4px,ry:4px;\n  class core lvl0;\n  class engine_v3 lvl1;\n  class html_gen lvl1;\n  class tools_layer lvl1;\n  class infra_layer lvl1;\n  class web_studio lvl1;\n  class qa_sec lvl1;\n  class t_mind lvl2;\n  class t_org lvl2;\n  class t_arch lvl2;\n  class t_flow lvl2;\n  class t_scan_top lvl2;\n  class t_trace_call lvl2;\n  class t_trace_exec lvl2;\n  class t_overview lvl2;\n  class t_obs lvl2;\n  class t_html lvl2;\n  class ui_obs lvl2;\n  class ui_explorer lvl2;\n  class ui_editor lvl2;\n  class ui_play lvl2;";
+    const metadata = {
+  "schema_version": "2.0",
+  "id": "orgchart-estrutura-modular-do-archview-v5-0-33fde0",
+  "type": "orgchart",
+  "title": "Estrutura Modular do ArchView v5.0",
+  "description": "Hierarquia de componentes do servidor, engine de inteligência, HTML generator e estúdio web",
+  "source": "claude-mcp",
+  "created_at": "2026-08-15T22:11:29.084Z",
+  "updated_at": "2026-08-15T22:11:29.084Z",
+  "files": {
+    "mermaid": "self-doc-orgchart.mmd",
+    "meta": "self-doc-orgchart.meta.json",
+    "html": "self-doc-orgchart.html",
+    "svg": null,
+    "png": null
+  },
+  "style": {
+    "suggested_theme": "corporate",
+    "applied_theme": null
+  },
+  "stats": {
+    "node_count": 21,
+    "max_depth": 3,
+    "generation_time_ms": 2
+  },
+  "tags": [
+    "organograma",
+    "hierarquia",
+    "equipe"
+  ]
+};
+
+    let zoom = 1.0;
+    let panX = 0;
+    let panY = 0;
+    let isPanning = false;
+    let startX = 0;
+    let startY = 0;
+
+    const viewport = document.getElementById('viewport');
+    const container = document.getElementById('canvasContainer');
+
+    function updateTransform() {
+      viewport.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+    }
+
+    function zoomIn() {
+      zoom = Math.min(zoom * 1.25, 5.0);
+      updateTransform();
+    }
+
+    function zoomOut() {
+      zoom = Math.max(zoom / 1.25, 0.2);
+      updateTransform();
+    }
+
+    function resetZoom() {
+      zoom = 1.0;
+      panX = 0;
+      panY = 0;
+      updateTransform();
+    }
+
+    container.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.1 : 0.9;
+      zoom = Math.min(Math.max(zoom * factor, 0.2), 5.0);
+      updateTransform();
+    }, { passive: false });
+
+    container.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      isPanning = true;
+      startX = e.clientX - panX;
+      startY = e.clientY - panY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isPanning) return;
+      panX = e.clientX - startX;
+      panY = e.clientY - startY;
+      updateTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      isPanning = false;
+    });
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function copyMermaid() {
+      navigator.clipboard.writeText(rawMermaidCode).then(() => {
+        showToast('✅ Código Mermaid copiado!');
+      });
+    }
+
+    function changeTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      reRender();
+    }
+
+    function getMermaidThemeConfig(theme) {
+      if (theme === 'dark') {
+        return { theme: 'dark', themeVariables: { darkMode: true, background: '#131B2E' } };
+      } else if (theme === 'corporate') {
+        return { theme: 'neutral', themeVariables: { primaryColor: '#2563EB', primaryTextColor: '#FFFFFF' } };
+      } else if (theme === 'minimal') {
+        return { theme: 'base', themeVariables: { primaryColor: '#F4F4F5', primaryTextColor: '#18181B' } };
+      }
+      return { theme: 'default', themeVariables: { primaryColor: '#0284C7', primaryTextColor: '#FFFFFF' } };
+    }
+
+    async function reRender() {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'educational';
+      const conf = getMermaidThemeConfig(currentTheme);
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'loose',
+        ...conf
+      });
+
+      const diagEl = document.getElementById('diagramContainer');
+      diagEl.removeAttribute('data-processed');
+      diagEl.textContent = rawMermaidCode;
+      await mermaid.run({ nodes: [diagEl] });
+    }
+
+    function exportSvg() {
+      const svg = document.querySelector('#diagramContainer svg');
+      if (!svg) return;
+      const serializer = new XMLSerializer();
+      const blob = new Blob([serializer.serializeToString(svg)], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${metadata.id || 'diagram'}.svg`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('✅ SVG exportado com sucesso!');
+    }
+
+    function exportPng(scale = 2) {
+      const svg = document.querySelector('#diagramContainer svg');
+      if (!svg) return;
+
+      const serializer = new XMLSerializer();
+      const svgString = serializer.serializeToString(svg);
+      const img = new Image();
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const bbox = svg.getBoundingClientRect();
+        const width = (bbox.width || 800) * scale;
+        const height = (bbox.height || 600) * scale;
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'educational';
+        ctx.fillStyle = currentTheme === 'dark' ? '#090D16' : '#FFFFFF';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const pngUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = pngUrl;
+          a.download = `${metadata.id || 'diagram'}_${scale}x.png`;
+          a.click();
+          URL.revokeObjectURL(pngUrl);
+          showToast(`✅ PNG ${scale === 4 ? '4K' : 'HD'} exportado!`);
+        }, 'image/png');
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (typeof mermaid !== 'undefined') {
+        await reRender();
+      }
+    });
+  </script>
+</body>
+</html>

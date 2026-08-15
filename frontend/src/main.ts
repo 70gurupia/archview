@@ -632,6 +632,27 @@ document.addEventListener('alpine:init', () => {
       return `${hours}h ${remMins}m`;
     },
 
+    downloadDiagramHtml(id: string) {
+      if (!id) return;
+      const url = `/api/diagrams/${id}/html`;
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${id}.html`;
+      a.target = '_blank';
+      a.click();
+      this.showToast('✅ Download do HTML Standalone iniciado!');
+    },
+
+    downloadDashboardHtml() {
+      const url = '/api/export/dashboard-html';
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'archview-dashboard.html';
+      a.target = '_blank';
+      a.click();
+      this.showToast('✅ Download do Dashboard Consolidado iniciado!');
+    },
+
     getTabEmoji(type: string) {
       switch (type) {
         case 'mindmap': return '🧠';

@@ -2,6 +2,27 @@
 
 Todas as alterações notáveis deste projeto serão documentadas neste arquivo.
 
+## [5.0.0] - 2026-08-15
+
+### Adicionado
+- **Motor de Geração de HTML Standalone & Offline Dashboards (`src/engine/html-generator.ts`)**:
+  - Geração automática de páginas HTML autocontidas para cada diagrama gravado no diretório `output/`.
+  - Suporte a visualização interativa com Pan/Zoom acelerado por hardware via CSS transform e ponteiros de mouse.
+  - Seletor de 4 temas visuais integrados (Educacional, Corporativo, Minimal e Dark).
+  - Exportação direta no navegador para formatos SVG, PNG em alta resolução (2x) e Ultra Definição (4K / 3x) sem consumo de CPU no servidor.
+  - Geração de **Dashboard Executivo Consolidado** (`archview-dashboard.html`), agrupando todos os diagramas do repositório em uma única interface interativa e offline.
+- **11ª Ferramenta MCP (`export_html_report`) (`src/tools/export-html.ts`)**:
+  - Exportação controlada por IA de diagramas individuais ou consolidados em formato HTML.
+  - Suporte aos modos `single` e `dashboard` com temas visuais customizados e proteção estrita contra path traversal.
+- **Novos Endpoints HTTP REST (`src/utils/sse.ts`)**:
+  - `GET /api/diagrams/:id/html`: Entrega o arquivo HTML standalone correspondente ao ID do diagrama.
+  - `GET /api/export/dashboard-html`: Entrega o Dashboard executivo consolidado sob demanda.
+- **Integração no Web Studio SPA**:
+  - Botão "🌐 HTML" no modal de visualização para download instantâneo do HTML individual.
+  - Botão "📦 Baixar Dashboard HTML" no cabeçalho para download do painel consolidado.
+- **Suíte de Testes TDD v5.0 (`tests/tdd-html-generator-v5.test.ts`)**:
+  - Cobertura de geração de HTML individual, dashboard consolidado, proteção anti-path traversal e endpoints REST com 100% de aprovação.
+
 ## [4.0.0] - 2026-08-15
 
 ### Adicionado

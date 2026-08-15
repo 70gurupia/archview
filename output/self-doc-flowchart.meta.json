@@ -1,15 +1,16 @@
 {
   "schema_version": "2.0",
-  "id": "flowchart-ciclo-de-vida-mcp-codebase-intelligence--fe8e82",
+  "id": "flowchart-ciclo-de-vida-mcp-ast-prometheus-e-html--5c64c0",
   "type": "flowchart",
-  "title": "Ciclo de Vida: MCP, Codebase Intelligence e Prometheus",
-  "description": "Do comando da IA até a telemetria do Prometheus e renderização web",
+  "title": "Ciclo de Vida: MCP, AST, Prometheus e HTML Generator",
+  "description": "Do comando da IA até a persistência do HTML standalone e visualização offline",
   "source": "claude-mcp",
-  "created_at": "2026-08-15T21:38:12.444Z",
-  "updated_at": "2026-08-15T21:38:12.444Z",
+  "created_at": "2026-08-15T22:11:29.091Z",
+  "updated_at": "2026-08-15T22:11:29.091Z",
   "files": {
     "mermaid": "self-doc-flowchart.mmd",
     "meta": "self-doc-flowchart.meta.json",
+    "html": "self-doc-flowchart.html",
     "svg": null,
     "png": null
   },
