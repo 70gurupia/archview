@@ -2,6 +2,17 @@
 
 Todas as alterações notáveis deste projeto serão documentadas neste arquivo.
 
+## [2.5.0] - 2026-08-15
+
+### Adicionado
+- **Formas Semânticas Nativas do Mermaid**: Cilindros `[("...")]` para bancos e storage, subprocessos/filas `[["..."]]`, documentos `[\"..."\]`, losangos `{"..."}` para decisões e pílulas `(["..."])` para início/fim e atores.
+- **Otimização Inteligente de Direção**: Detecção automática de direção `LR` (horizontal widescreen 16:9) para pipelines sequenciais lineares e preservação de `TD` para fluxos de decisão ramificados e organogramas.
+- **Âncoras Visuais Padronizadas**: Prefixação inteligente de ícones semânticos (👤, 🤖, 📦, 💾, 📬, 🚀, 🏁, ❓, 🛡️, 🌐) com prevenção contra emojis duplicados.
+- **Diferenciação de Conexões**: Linhas sólidas (`-->`) para chamadas síncronas e linhas tracejadas (`-.->`) para mensageria assíncrona, filas e streaming Server-Sent Events.
+- **Design System de Classes CSS**: Bloco `classDef` padronizado com bordas arredondadas suaves (`rx:8px, ry:8px`) e paleta de cores harmoniosa em conformidade com o Web Studio.
+- **Agrupamento Automático e Explícito por Subgrafos**: Suporte a `subgraph sg_N[" Nome "] ... end` via propriedade `group` nos geradores de arquitetura e fluxogramas.
+- **Modo Flowchart para Arquitetura**: Parâmetro `notation: 'flowchart'` na ferramenta de arquitetura para renderização nítida e responsiva no GitHub.
+
 ## [2.0.0] - 2026-08-14
 
 ### Adicionado

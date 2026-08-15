@@ -1,12 +1,12 @@
 {
   "schema_version": "2.0",
-  "id": "architecture-arquitetura-do-archview-v2-0-a606c5",
+  "id": "architecture-arquitetura-do-archview-v2-0-e9e7ca",
   "type": "architecture",
   "title": "Arquitetura do ArchView v2.0",
   "description": "Visão dos containers executáveis, clientes suportados e fluxo de dados",
   "source": "claude-mcp",
-  "created_at": "2026-08-15T13:41:08.539Z",
-  "updated_at": "2026-08-15T13:41:08.539Z",
+  "created_at": "2026-08-15T13:46:08.662Z",
+  "updated_at": "2026-08-15T13:46:08.662Z",
   "files": {
     "mermaid": "self-doc-architecture.mmd",
     "meta": "self-doc-architecture.meta.json",
@@ -19,7 +19,7 @@
   },
   "stats": {
     "node_count": 6,
-    "generation_time_ms": 1
+    "generation_time_ms": 82
   },
   "tags": [
     "c4-model",

@@ -1,12 +1,12 @@
 {
   "schema_version": "2.0",
-  "id": "flowchart-ciclo-de-vida-da-geracao-edicao-e-render-d1670d",
+  "id": "flowchart-ciclo-de-vida-da-geracao-edicao-e-render-d2cf84",
   "type": "flowchart",
   "title": "Ciclo de Vida da Geração, Edição e Renderização",
   "description": "Do comando da IA ou Playground até a renderização e exportação",
   "source": "claude-mcp",
-  "created_at": "2026-08-15T13:41:08.541Z",
-  "updated_at": "2026-08-15T13:41:08.541Z",
+  "created_at": "2026-08-15T13:46:08.665Z",
+  "updated_at": "2026-08-15T13:46:08.665Z",
   "files": {
     "mermaid": "self-doc-flowchart.mmd",
     "meta": "self-doc-flowchart.meta.json",
@@ -19,7 +19,7 @@
   },
   "stats": {
     "node_count": 13,
-    "generation_time_ms": 1
+    "generation_time_ms": 2
   },
   "tags": [
     "fluxograma",

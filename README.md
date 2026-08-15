@@ -93,31 +93,53 @@ mindmap
 
 ```mermaid
 flowchart TB
-  input_source(["Entrada: IA (MCP stdio), Playground Web ou Editor Split-View"])
-  sec_filter["Filtro de Segurança (Anti-Path Traversal & Validação Zod)"]
-  valid_gate{"Payload Válido e Seguro?"}
-  error_block["Retorna Erro Estruturado (McpErrorPayload)"]
-  end_error(["Execução Interrompida com Erro"])
-  build_mermaid["Gera Sintaxe Mermaid Pura (.mmd) com Algoritmo DFS Anti-Ciclo"]
-  write_meta["Grava slug-id.mmd e slug-id.meta.json no output/"]
-  sse_emit["Dispara Evento SSE (diagram.created ou diagram.updated)"]
-  resp_client["Retorna JSON de Sucesso para a IA ou UI"]
-  fe_catch["Web Studio recebe evento via EventSource sem polling"]
-  apply_themes["Aplica 3 Camadas: themeVariables -> CSS Vars -> SVG DOM Post-Processor"]
-  user_actions["Interações: GPU Pan/Zoom, Inspetor de Nós, Edição ao Vivo ou Exportação 4K"]
-  end_done(["Diagrama Pronto e Interativo"])
+  subgraph sg_1[" 1. Entrada e Segurança "]
+    input_source(["🚀 Entrada: IA (stdio) ou Web Studio"])
+    sec_filter["Filtro de Segurança (Anti-Traversal & Zod)"]
+    valid_gate{"❓ Payload Válido e Seguro?"}
+    error_block["Retorna Erro Estruturado (McpError)"]
+    end_error(["🏁 Execução com Erro"])
+  end
+
+  subgraph sg_2[" 2. Motor Core & Persistência "]
+    build_mermaid["Gera Sintaxe Mermaid com Algoritmo DFS Anti-Ciclo"]
+    write_meta[("💾 Grava .mmd e .meta.json no output/")]
+    sse_emit[["📬 Dispara SSE (diagram.created / updated)"]]
+    resp_client["Retorna JSON de Sucesso para IA/UI"]
+  end
+
+  subgraph sg_3[" 3. Experiência Web Reativa "]
+    fe_catch["Web Studio recebe evento sem polling"]
+    apply_themes["Aplica 3 Camadas de Estilo e Temas"]
+    user_actions["GPU Pan/Zoom, Live Edit ou Exportação 4K"]
+    end_done(["🏁 Diagrama Pronto e Interativo"])
+  end
+
   input_source --> sec_filter
   sec_filter --> valid_gate
   valid_gate -- "Sim" --> build_mermaid
   valid_gate -- "Não" --> error_block
   error_block --> end_error
   build_mermaid --> write_meta
-  write_meta --> sse_emit
+  write_meta -.-> sse_emit
   sse_emit --> resp_client
   resp_client --> fe_catch
   fe_catch --> apply_themes
   apply_themes --> user_actions
   user_actions --> end_done
+
+  classDef default fill:#F8FAFC,stroke:#64748B,stroke-width:1.5px,color:#1E293B,rx:8px,ry:8px;
+  classDef primary fill:#1E40AF,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef success fill:#0F766E,stroke:#14B8A6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef accent fill:#3730A3,stroke:#818CF8,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef warning fill:#D97706,stroke:#F59E0B,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  classDef danger fill:#B91C1C,stroke:#EF4444,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
+  class input_source primary;
+  class valid_gate warning;
+  class end_error danger;
+  class write_meta success;
+  class sse_emit warning;
+  class end_done danger;
 ```
 
 ---
