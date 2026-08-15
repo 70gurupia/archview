@@ -1,6 +1,6 @@
 # 🏗️ Arquitetura do Sistema: ArchView v2.0 & Roadmap v3.0
 
-Documentação técnica da arquitetura, fluxo de dados e decisões de design do **ArchView (MCP Visual Server & Web Studio)**.
+Documentação técnica da arquitetura, fluxo de dados, guardrails e decisões de design do **ArchView (MCP Visual Server & Web Studio)**.
 
 ---
 
@@ -19,6 +19,7 @@ flowchart TD
     mcp["⚙️ <b>MCP Server Daemon</b><br/>JSON-RPC (stdio) • TypeScript"]
     sse["📡 <b>Express SSE & REST Hub</b><br/>Streaming de Eventos em Tempo Real"]
     engine["🔍 <b>Engine de Diagramação</b><br/>Mindmap, OrgChart (DFS), C4, Flow"]
+    guard["🛡️ <b>Zod Guardrails & SAST</b><br/>Limite de 50 nós • Profundidade 5 • Rate Limit"]
   end
 
   subgraph Storage[" 💾 Armazenamento Local "]
@@ -32,7 +33,8 @@ flowchart TD
   end
 
   ai -->|"JSON-RPC (stdio)"| mcp
-  mcp -->|"Executa & Valida"| engine
+  mcp -->|"Valida com Zod"| guard
+  guard -->|"Executa & Transpila"| engine
   engine -->|"Grava Arquivos"| disk
   mcp -->|"Notifica Evento"| sse
   sse -->|"Stream SSE (/events)"| spa
@@ -47,7 +49,7 @@ flowchart TD
   classDef studioBox fill:#3730A3,stroke:#818CF8,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
 
   class ai,browser clientBox;
-  class mcp,sse,engine coreBox;
+  class mcp,sse,engine,guard coreBox;
   class disk storeBox;
   class spa,editor,play studioBox;
 ```
@@ -79,10 +81,11 @@ mindmap
       GPU-Accelerated Pan e Zoom (0% CPU em repouso)
       4 Temas (Educacional, Corporativo, Minimal, Dark)
     ("🛡️ Segurança e Governança")
+      Zod Runtime Validation & Guardrails (max 50 nós)
       Anti-Path Traversal estrito (assertSafePath)
       Scanner SAST Local e GitHub CodeQL
+      Rate Limiting e Hardening de CORS
       Pentest Automatizado 8 Vetores OWASP
-      Dependabot e PR Quality Bot no CI/CD
     ("🗺️ Roadmap v3.0 (Codebase Intelligence)")
       scan_codebase_topology (Visão C4 automática)
       trace_call_graph (Grafo de quem chama quem)
@@ -100,8 +103,8 @@ Organização interna dos módulos do backend, do estúdio web e do motor de cod
 ```mermaid
 graph TD
   core["<b>ArchView Core</b><br/>Orquestrador Central MCP (stdio)"]
-  tools_layer["<b>Camada de Tools (v2.0)</b><br/>Geradores Especializados"]
-  infra_layer["<b>Infra & Streaming</b><br/>Express 5 + SSE Hub (3001)"]
+  tools_layer["<b>Camada de Tools (v2.0)</b><br/>Geradores Especializados com Zod"]
+  infra_layer["<b>Infra & Streaming</b><br/>Express 5 + SSE Hub (3001) + Rate Limit"]
   web_studio["<b>Web Studio SPA (Low-CPU)</b><br/>Alpine.js + Vite (5173)"]
   qa_sec["<b>QA & Segurança SAST</b><br/>CodeQL, Pentest OWASP, TDD/ODD"]
   engine_v3["<b>Codebase Engine (v3.0)</b><br/>AST & Flow Tracing Determinístico"]
@@ -165,14 +168,14 @@ graph TD
 
 ---
 
-## 4. Ciclo de Vida da Requisição e Interatividade
+## 4. Ciclo de Vida da Requisição e Guardrails
 
 Fluxo de ponta a ponta desde o acionamento (via IA ou Web Studio) até a renderização e exportação:
 
 ```mermaid
 flowchart TB
   input_source(["Entrada: IA (MCP stdio), Playground Web ou Editor Split-View"])
-  sec_filter["Filtro de Segurança (Anti-Path Traversal & Validação Zod)"]
+  sec_filter["Filtro de Segurança & Zod (Anti-Path Traversal, Max 50 nós, Rate Limit)"]
   valid_gate{"Payload Válido e Seguro?"}
   error_block["Retorna Erro Estruturado (McpErrorPayload)"]
   end_error(["Execução Interrompida com Erro"])

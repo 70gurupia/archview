@@ -1,3 +1,14 @@
+export function escapeMermaidHTML(input) {
+    if (!input)
+        return input;
+    // Basic escaping to prevent XSS payloads in mermaid syntax
+    return input
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/on\w+="[^"]*"/gi, '')
+        .replace(/on\w+='[^']*'/gi, '')
+        .replace(/on\w+=\S+/gi, '')
+        .replace(/javascript:/gi, '');
+}
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
@@ -43,7 +54,8 @@ export function saveDiagramWithMeta(options) {
     const mmdPath = path.join(outDir, mmdFilename);
     const metaPath = path.join(outDir, metaFilename);
     // Write .mmd file (raw mermaid code)
-    fs.writeFileSync(mmdPath, options.mermaidSyntax, 'utf-8');
+    const sanitizedSyntax = escapeMermaidHTML(options.mermaidSyntax);
+    fs.writeFileSync(mmdPath, sanitizedSyntax, 'utf-8');
     // Build meta object
     const now = new Date().toISOString();
     const meta = {

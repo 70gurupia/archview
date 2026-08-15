@@ -1,5 +1,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
+import rateLimit from 'express-rate-limit';
 import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
@@ -20,7 +21,14 @@ export function broadcastEvent(eventName, data) {
 }
 export function createSseApp() {
     const app = express();
-    app.use(cors());
+    app.use(cors({ origin: /^http:\/\/localhost:\d+$/ }));
+    // Basic Rate Limiting
+    const limiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 100, // limit each IP to 100 requests per windowMs
+        message: { error: "Too many requests from this IP, please try again after 15 minutes" }
+    });
+    app.use('/api/', limiter);
     const outDir = path.join(process.cwd(), 'output');
     const frontendDist = path.join(process.cwd(), 'frontend', 'dist');
     // Servir frontend estático compilado se existir
