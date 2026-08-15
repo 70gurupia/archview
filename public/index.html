@@ -70,13 +70,24 @@
                 const diagrams = await response.json();
                 
                 const gallery = document.getElementById('gallery');
-                gallery.innerHTML = ''; // limpa
-                
-                for (const diag of diagrams) {
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.innerHTML = `<h2>${diag.name}</h2><div class="mermaid">${diag.content}</div>`;
-                    gallery.appendChild(card);
+                if (gallery) {
+                  gallery.replaceChildren(); // limpa
+                  
+                  for (const diag of diagrams) {
+                      const card = document.createElement('div');
+                      card.className = 'card';
+                      
+                      const h2 = document.createElement('h2');
+                      h2.textContent = diag.name || diag.title || 'Diagrama';
+                      
+                      const mmdDiv = document.createElement('div');
+                      mmdDiv.className = 'mermaid';
+                      mmdDiv.textContent = diag.content;
+                      
+                      card.appendChild(h2);
+                      card.appendChild(mmdDiv);
+                      gallery.appendChild(card);
+                  }
                 }
                 
                 // Pede para o Mermaid renderizar os novos blocos inseridos

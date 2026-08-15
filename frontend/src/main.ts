@@ -4,6 +4,16 @@ import { THEMES, applyCssTheme } from './themes.js';
 import { postProcessSvg } from './post-processor.js';
 import { exportSvgToPng, exportSvg, copyToClipboard } from './export-helper.js';
 
+function setSafeSvg(target: HTMLElement, svgString: string): void {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgString, 'image/svg+xml');
+  const svg = doc.querySelector('svg');
+  target.replaceChildren();
+  if (svg) {
+    target.appendChild(svg);
+  }
+}
+
 export interface DiagramItem {
   id: string;
   type: 'mindmap' | 'orgchart' | 'architecture' | 'flowchart' | string;
@@ -169,14 +179,18 @@ document.addEventListener('alpine:init', () => {
           const uniqueId = `svg-thumb-${diag.id}-${Date.now()}`;
           const cleanMermaid = diag.content.replace(/```mermaid\n?/g, '').replace(/```/g, '').trim();
           const { svg } = await mermaid.render(uniqueId, cleanMermaid);
-          el.innerHTML = svg;
+          setSafeSvg(el, svg);
 
           const svgEl = el.querySelector('svg');
           if (svgEl) {
             postProcessSvg(svgEl, this.activeTheme);
           }
         } catch {
-          el.innerHTML = `<span style="font-size:0.8rem;color:var(--text-muted);">Prévia indisponível</span>`;
+          const span = document.createElement('span');
+          span.style.fontSize = '0.8rem';
+          span.style.color = 'var(--text-muted)';
+          span.textContent = 'Prévia indisponível';
+          el.replaceChildren(span);
         }
       }
     },
@@ -261,7 +275,11 @@ document.addEventListener('alpine:init', () => {
 
       this.isRendering = true;
       if (!fromEditor) {
-        targetEl.innerHTML = '<div style="color:var(--text-muted);padding:2rem;">Renderizando diagrama...</div>';
+        const loadingDiv = document.createElement('div');
+        loadingDiv.style.color = 'var(--text-muted)';
+        loadingDiv.style.padding = '2rem';
+        loadingDiv.textContent = 'Renderizando diagrama...';
+        targetEl.replaceChildren(loadingDiv);
       }
 
       try {
@@ -282,7 +300,7 @@ document.addEventListener('alpine:init', () => {
 
         const { svg } = await mermaid.render(uniqueId, cleanMermaid);
 
-        targetEl.innerHTML = svg;
+        setSafeSvg(targetEl, svg);
         const svgEl = targetEl.querySelector('svg');
         if (svgEl) {
           postProcessSvg(svgEl, this.activeTheme);
@@ -291,7 +309,11 @@ document.addEventListener('alpine:init', () => {
       } catch (err: any) {
         this.syntaxError = true;
         if (!fromEditor) {
-          targetEl.innerHTML = `<div style="color:#EF4444;padding:2rem;">Erro ao renderizar Mermaid: ${err.message}</div>`;
+          const errDiv = document.createElement('div');
+          errDiv.style.color = '#EF4444';
+          errDiv.style.padding = '2rem';
+          errDiv.textContent = `Erro ao renderizar Mermaid: ${err.message}`;
+          targetEl.replaceChildren(errDiv);
         }
       } finally {
         this.isRendering = false;

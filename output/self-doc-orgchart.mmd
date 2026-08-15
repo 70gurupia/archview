@@ -1,41 +1,49 @@
 graph TD
   core["<b>ArchView Core</b><br/>Orquestrador Central MCP (stdio)"]
-  tools_layer["<b>Camada de Tools (v2.0)</b><br/>Geradores Especializados"]
+  engine_v3["<b>Codebase Engine (v3.0)</b><br/>AST & Flow Tracing Determinístico"]
+  tools_layer["<b>Camada de Tools (9 Tools)</b><br/>Geradores Especializados"]
   infra_layer["<b>Infra & Streaming</b><br/>Express 5 + SSE Hub (3001)"]
   web_studio["<b>Web Studio SPA (Low-CPU)</b><br/>Alpine.js + Vite (5173)"]
   qa_sec["<b>QA & Segurança SAST</b><br/>CodeQL, Pentest OWASP, TDD/ODD"]
-  engine_v3["<b>Codebase Engine (v3.0)</b><br/>AST & Flow Tracing Determinístico"]
+  v3_ast_ts["<b>AST Parser TS/JS</b><br/>Extração de classes, rotas e métodos<br/><i>Engine</i>"]
+  v3_ast_lex["<b>Universal Lexical Parser</b><br/>Suporte Python, Go, Java, Rust, C#<br/><i>Engine</i>"]
+  v3_scanner["<b>Universal Scanner</b><br/>Varredura recursiva e resolução de deps<br/><i>Engine</i>"]
+  v3_trace_p["<b>Trace/Log Parser</b><br/>Transpilação para sequenceDiagram<br/><i>Engine</i>"]
   t_mind["<b>Mindmap Tool</b><br/>Mapas Mentais Radiais<br/><i>Tools</i>"]
   t_org["<b>Orgchart Tool</b><br/>Validador DFS e Árvore<br/><i>Tools</i>"]
-  t_arch["<b>Architecture Tool</b><br/>Modelo C4 (C1-C3)<br/><i>Tools</i>"]
+  t_arch["<b>Architecture Tool</b><br/>Modelo C4 com Subgrafos<br/><i>Tools</i>"]
   t_flow["<b>Flowchart Tool</b><br/>Processos e Decisões<br/><i>Tools</i>"]
-  t_exp["<b>Export Tool</b><br/>CLI Mermaid (SVG/PNG/4K)<br/><i>Tools</i>"]
+  t_scan_top["<b>scan_codebase_topology</b><br/>Topologia C4 de Diretórios<br/><i>Tools</i>"]
+  t_trace_call["<b>trace_call_graph</b><br/>Grafo de Chamadas Bidirecional<br/><i>Tools</i>"]
+  t_trace_exec["<b>trace_execution_flow</b><br/>Diagramas de Sequência<br/><i>Tools</i>"]
+  t_overview["<b>analyze_codebase_overview</b><br/>Raio-X 360 do Repositório<br/><i>Tools</i>"]
+  ui_explorer["<b>Codebase Explorer</b><br/>Painel de varredura e grafos<br/><i>UI</i>"]
   ui_editor["<b>Editor Split-View</b><br/>Edição ao vivo com preview<br/><i>UI</i>"]
   ui_play["<b>Playground MCP</b><br/>Gerador didático de prompts e JSON<br/><i>UI</i>"]
-  ui_tour["<b>Tour de Onboarding</b><br/>Guia interativo de 3 passos<br/><i>UI</i>"]
   ui_canvas["<b>GPU Canvas Pan/Zoom</b><br/>Aceleração por hardware CSS<br/><i>UI</i>"]
   ui_themes["<b>Motor de 4 Temas</b><br/>3 Camadas (Variables + CSS + SVG DOM)<br/><i>UI</i>"]
-  v3_scan["<b>scan_codebase_topology</b><br/>Varredura universal de pastas C4<br/><i>v3</i>"]
-  v3_call["<b>trace_call_graph</b><br/>Mapeamento de chamadas e imports<br/><i>v3</i>"]
-  v3_flow["<b>trace_execution_flow</b><br/>Diagramas de sequência de traces<br/><i>v3</i>"]
+  core --> engine_v3
   core --> tools_layer
   core --> infra_layer
   infra_layer --> web_studio
   core --> qa_sec
-  core --> engine_v3
+  engine_v3 --> v3_ast_ts
+  engine_v3 --> v3_ast_lex
+  engine_v3 --> v3_scanner
+  engine_v3 --> v3_trace_p
   tools_layer --> t_mind
   tools_layer --> t_org
   tools_layer --> t_arch
   tools_layer --> t_flow
-  tools_layer --> t_exp
+  tools_layer --> t_scan_top
+  tools_layer --> t_trace_call
+  tools_layer --> t_trace_exec
+  tools_layer --> t_overview
+  web_studio --> ui_explorer
   web_studio --> ui_editor
   web_studio --> ui_play
-  web_studio --> ui_tour
   web_studio --> ui_canvas
   web_studio --> ui_themes
-  engine_v3 --> v3_scan
-  engine_v3 --> v3_call
-  engine_v3 --> v3_flow
 
   classDef default fill:#F8FAFC,stroke:#64748B,stroke-width:1.5px,color:#1E293B,rx:6px,ry:6px;
   classDef lvl0 fill:#1E40AF,stroke:#1D4ED8,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
@@ -43,21 +51,25 @@ graph TD
   classDef lvl2 fill:#DBEAFE,stroke:#60A5FA,stroke-width:1.5px,color:#1E40AF,rx:6px,ry:6px;
   classDef lvl3 fill:#F1F5F9,stroke:#94A3B8,stroke-width:1.5px,color:#334155,rx:4px,ry:4px;
   class core lvl0;
+  class engine_v3 lvl1;
   class tools_layer lvl1;
   class infra_layer lvl1;
   class web_studio lvl1;
   class qa_sec lvl1;
-  class engine_v3 lvl1;
+  class v3_ast_ts lvl2;
+  class v3_ast_lex lvl2;
+  class v3_scanner lvl2;
+  class v3_trace_p lvl2;
   class t_mind lvl2;
   class t_org lvl2;
   class t_arch lvl2;
   class t_flow lvl2;
-  class t_exp lvl2;
+  class t_scan_top lvl2;
+  class t_trace_call lvl2;
+  class t_trace_exec lvl2;
+  class t_overview lvl2;
+  class ui_explorer lvl2;
   class ui_editor lvl2;
   class ui_play lvl2;
-  class ui_tour lvl2;
   class ui_canvas lvl2;
   class ui_themes lvl2;
-  class v3_scan lvl2;
-  class v3_call lvl2;
-  class v3_flow lvl2;

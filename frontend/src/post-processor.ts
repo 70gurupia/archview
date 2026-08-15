@@ -27,9 +27,13 @@ export function postProcessSvg(svgElement: SVGElement, themeId: string): void {
       const isDark = themeId === 'dark';
       const shadowColor = isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(15, 23, 42, 0.08)';
 
-      filter.innerHTML = `
-        <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="${shadowColor}" flood-opacity="1"/>
-      `;
+      const feDropShadow = document.createElementNS('http://www.w3.org/2000/svg', 'feDropShadow');
+      feDropShadow.setAttribute('dx', '0');
+      feDropShadow.setAttribute('dy', '2');
+      feDropShadow.setAttribute('stdDeviation', '3');
+      feDropShadow.setAttribute('flood-color', shadowColor);
+      feDropShadow.setAttribute('flood-opacity', '1');
+      filter.appendChild(feDropShadow);
       defs.appendChild(filter);
     }
 

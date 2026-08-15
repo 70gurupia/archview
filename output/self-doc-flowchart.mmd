@@ -1,31 +1,33 @@
 flowchart TB
   subgraph sg_1[" 1. Entrada e Segurança "]
-    input_source(["🚀 Entrada: IA (stdio) ou Web Studio"])
-    sec_filter["Filtro de Segurança (Anti-Traversal & Zod)"]
+    input_source(["🚀 Entrada: IA (stdio), Web Studio ou HTTP REST"])
+    sec_filter["Filtro de Segurança (assertSafePath & Zod)"]
     valid_gate{"❓ Payload Válido e Seguro?"}
     error_block["Retorna Erro Estruturado (McpError)"]
     end_error(["🏁 Execução com Erro"])
   end
 
-  subgraph sg_2[" 2. Motor Core & Persistência "]
-    build_mermaid["Gera Sintaxe Mermaid com Algoritmo DFS Anti-Ciclo"]
+  subgraph sg_2[" 2. Motor Core & Inteligência "]
+    select_engine["Seleciona Motor (Diagramação Core ou Codebase AST)"]
+    build_mermaid["Gera Sintaxe Mermaid (C4, Flowchart, Sequence ou Mindmap)"]
     write_meta[("💾 Grava .mmd e .meta.json no output/")]
     sse_emit[["📬 Dispara SSE (diagram.created / updated)"]]
     resp_client["Retorna JSON de Sucesso para IA/UI"]
   end
 
   subgraph sg_3[" 3. Experiência Web Reativa "]
-    fe_catch["Web Studio recebe evento sem polling"]
-    apply_themes["Aplica 3 Camadas de Estilo e Temas"]
-    user_actions["GPU Pan/Zoom, Live Edit ou Exportação 4K"]
-    end_done(["🏁 Diagrama Pronto e Interativo"])
+    fe_catch["Web Studio recebe evento SSE instantaneamente"]
+    apply_themes["Aplica Temas, Subgrafos e Estilização SVG"]
+    user_actions["Navegação Codebase, Zoom GPU ou Exportação 4K"]
+    end_done(["🏁 Visualização Interativa Concluída"])
   end
 
   input_source --> sec_filter
   sec_filter --> valid_gate
-  valid_gate -- "Sim" --> build_mermaid
+  valid_gate -- "Sim" --> select_engine
   valid_gate -- "Não" --> error_block
   error_block --> end_error
+  select_engine --> build_mermaid
   build_mermaid --> write_meta
   write_meta -.-> sse_emit
   sse_emit --> resp_client

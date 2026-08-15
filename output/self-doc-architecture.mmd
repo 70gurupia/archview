@@ -1,12 +1,13 @@
 flowchart TD
   subgraph sg_1[" Clientes e Consumidores "]
     ai_client(["<b>👤 IA / Desenvolvedor</b><br/>Claude Desktop, Cursor, Antigravity ou Terminal"])
-    browser_user(["<b>👤 Usuário no Navegador</b><br/>Edita diagramas, usa o playground e exporta em até 4K"])
+    browser_user(["<b>👤 Usuário no Navegador</b><br/>Codebase Explorer, Editor Split-View e Exportação 4K"])
   end
 
   subgraph sg_2[" Servidores e Backend "]
-    mcp_server["<b>📦 ArchView MCP Daemon</b><br/><i>TypeScript / Node.js 20</i><br/>Executa tools de diagramação e gerencia estado"]
-    sse_server["<b>📦 Express SSE & REST</b><br/><i>Express 5 / Porta 3001</i><br/>Transmissão de eventos em tempo real e API REST"]
+    mcp_server["<b>📦 ArchView MCP Server</b><br/><i>TypeScript / Node.js 20</i><br/>Orquestrador de 9 ferramentas MCP e motor de AST"]
+    engine_v3["<b>📦 Motor de Codebase Intelligence</b><br/><i>TypeScript Lexical Engine (< 200ms)</i><br/>Parsers AST TS/JS e léxico universal (Python, Go, Java, Rust)"]
+    sse_server["<b>📦 Express SSE & REST</b><br/><i>Express 5 / Porta 3001</i><br/>Transmissão em tempo real e endpoints de ingestão de traces"]
   end
 
   subgraph sg_3[" Camada de Persistência "]
@@ -14,16 +15,17 @@ flowchart TD
   end
 
   subgraph sg_4[" Interface Gráfica Web "]
-    web_studio["<b>📦 Web Studio SPA (Low-CPU)</b><br/><i>Alpine.js (~15KB) / Vite / CSS GPU</i><br/>Galeria reativa com Editor Split-View, Playground e 4 Temas"]
+    web_studio["<b>📦 Web Studio SPA (Low-CPU)</b><br/><i>Alpine.js (~15KB) / Vite / CSS GPU</i><br/>Codebase Explorer, Editor ao vivo e 4 Temas visuais"]
   end
 
-  ai_client -->|"Envia requisições MCP [JSON-RPC (stdio)]"| mcp_server
+  ai_client -->|"Envia comandos MCP [JSON-RPC (stdio)]"| mcp_server
+  mcp_server -->|"Executa varreduras de código [AST / Regex]"| engine_v3
   mcp_server -->|"Inicia em background [In-process]"| sse_server
   mcp_server -->|"Persiste .mmd e .meta.json [Filesystem]"| storage
-  sse_server -.->|"Lê e grava arquivos editados [fs / assertSafePath]"| storage
-  sse_server -.->|"Transmite stream /events [Server-Sent Events]"| web_studio
-  web_studio -->|"Renderiza interface com 0% CPU em repouso [HTML5 / SVG DOM]"| browser_user
-  web_studio -->|"Salva edições ao vivo (PUT /api/diagrams/:id) [REST JSON]"| sse_server
+  sse_server -->|"Lê e grava arquivos com assertSafePath [fs]"| storage
+  sse_server -.->|"Transmite eventos /events [Server-Sent Events]"| web_studio
+  web_studio -->|"Renderiza diagramas com 0% CPU em repouso [HTML5 / SVG DOM]"| browser_user
+  web_studio -->|"Dispara scans e salva edições [REST JSON]"| sse_server
 
   classDef default fill:#F8FAFC,stroke:#64748B,stroke-width:1.5px,color:#1E293B,rx:8px,ry:8px;
   classDef primary fill:#1E40AF,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
@@ -34,6 +36,7 @@ flowchart TD
   class ai_client accent;
   class browser_user accent;
   class mcp_server primary;
+  class engine_v3 primary;
   class sse_server primary;
   class storage success;
   class web_studio primary;
