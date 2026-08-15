@@ -1,12 +1,12 @@
 {
   "schema_version": "2.0",
-  "id": "mindmap-archview-v4-0-ecosystem-8c0258",
+  "id": "mindmap-archview-v4-0-ecosystem-0500e2",
   "type": "mindmap",
   "title": "ArchView v4.0 Ecosystem",
   "description": "Visão 360 graus do servidor MCP, inteligência de código e observabilidade corporativa",
   "source": "claude-mcp",
-  "created_at": "2026-08-15T20:50:20.897Z",
-  "updated_at": "2026-08-15T20:50:20.897Z",
+  "created_at": "2026-08-15T21:38:12.435Z",
+  "updated_at": "2026-08-15T21:38:12.435Z",
   "files": {
     "mermaid": "self-doc-mindmap.mmd",
     "meta": "self-doc-mindmap.meta.json",
@@ -20,7 +20,7 @@
   "stats": {
     "node_count": 36,
     "max_depth": 2,
-    "generation_time_ms": 11
+    "generation_time_ms": 2
   },
   "tags": [
     "mapa-mental",
