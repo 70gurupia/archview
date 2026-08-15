@@ -66,6 +66,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { DiagramMeta, DiagramType, ToolExecutionResult } from '../types/index.js';
 import { broadcastEvent } from './sse.js';
+import { recordDiagramCreated } from './metrics.js';
 
 export function sanitizeSlug(text: string): string {
   return text
@@ -160,6 +161,9 @@ export function saveDiagramWithMeta(options: SaveDiagramOptions): ToolExecutionR
     },
     tags: options.tags || [options.type]
   };
+
+  // Record Prometheus metrics
+  recordDiagramCreated(meta.type, 'success', meta.stats.generation_time_ms || 0);
 
   // Write meta.json
   fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf-8');

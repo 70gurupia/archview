@@ -1,4 +1,4 @@
-# 📋 Quadro Kanban: MCP Visual Server (ArchView) v3.0
+# 📋 Quadro Kanban: MCP Visual Server (ArchView) v4.0
 
 > WIP Limit: 1 tarefa ativa por vez.
 
@@ -6,7 +6,7 @@
 
 ## 📥 Backlog
 
-*(Todas as tarefas planejadas para as Fases 1.0, 2.0, 2.5 e 3.0 foram concluídas com 100% de sucesso)*
+*(Todas as tarefas planejadas para as Fases 1.0, 2.0, 2.5, 3.0 e 4.0 foram concluídas com 100% de sucesso)*
 
 ---
 
@@ -15,6 +15,15 @@
 ---
 
 ## ✅ Concluído (Done)
+
+- [x] **TASK-034 (v4.0)**: Criação da suíte de testes TDD da v4.0 (`tests/tdd-observability-v4.test.ts`), compilação TypeScript/Vite e passagem de todos os 13 gates.
+- [x] **TASK-033 (v4.0)**: Construção da aba "Observability Hub" no Web Studio com cards de saúde, métricas de memória, ingestão de traces e amostra Prometheus.
+- [x] **TASK-032 (v4.0)**: Registro da 10ª ferramenta `get_system_observability` no MCP Server dispatcher e schemas Zod.
+- [x] **TASK-031 (v4.0)**: Implementação da 10ª ferramenta MCP `get_system_observability` com suporte a gráficos Mermaid (`xychart-beta` e `quadrantChart`).
+- [x] **TASK-030 (v4.0)**: Atualização do Express com endpoint `GET /metrics`, middleware de medição HTTP e health checks enriquecidos no `/api/health`.
+- [x] **TASK-029 (v4.0)**: Implementação do módulo resiliente do OpenTelemetry SDK com exportador OTLP opcional (`src/utils/otel.ts`).
+- [x] **TASK-028 (v4.0)**: Implementação do registro Prometheus e métricas customizadas do ArchView (`src/utils/metrics.ts`).
+- [x] **TASK-027 (v4.0)**: Pinning e instalação de dependências de observabilidade (`prom-client`, `@opentelemetry/api`, `@opentelemetry/sdk-node`).
 
 - [x] **TASK-026 (v3.0)**: Criação da aba "Codebase Explorer" no Web Studio, integração com endpoints REST e validação completa dos 13 gates.
 - [x] **TASK-025 (v3.0)**: Implementação da tool `analyze_codebase_overview` (Raio-X completo 360 do repositório com mapa mental, topologia e métricas).

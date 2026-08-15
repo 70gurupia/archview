@@ -1,12 +1,12 @@
 {
   "schema_version": "2.0",
-  "id": "orgchart-estrutura-modular-do-archview-v3-0-6a3003",
+  "id": "orgchart-estrutura-modular-do-archview-v4-0-2e0bab",
   "type": "orgchart",
-  "title": "Estrutura Modular do ArchView v3.0",
-  "description": "Hierarquia de componentes do servidor, engine de inteligência e estúdio web",
+  "title": "Estrutura Modular do ArchView v4.0",
+  "description": "Hierarquia de componentes do servidor, engine de inteligência, observabilidade e estúdio web",
   "source": "claude-mcp",
-  "created_at": "2026-08-15T17:11:25.266Z",
-  "updated_at": "2026-08-15T17:11:25.266Z",
+  "created_at": "2026-08-15T20:50:20.899Z",
+  "updated_at": "2026-08-15T20:50:20.899Z",
   "files": {
     "mermaid": "self-doc-orgchart.mmd",
     "meta": "self-doc-orgchart.meta.json",
@@ -20,7 +20,7 @@
   "stats": {
     "node_count": 23,
     "max_depth": 3,
-    "generation_time_ms": 2
+    "generation_time_ms": 1
   },
   "tags": [
     "organograma",

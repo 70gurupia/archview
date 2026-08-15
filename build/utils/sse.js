@@ -8,6 +8,7 @@ import { assertSafePath } from './meta.js';
 import { executeTraceExecution } from '../tools/trace-execution.js';
 import { executeScanTopology } from '../tools/scan-topology.js';
 import { executeTraceCallGraph } from '../tools/trace-callgraph.js';
+import { getMetricsContentType, getMetricsAsText, recordHttpRequest, setSseConnections, getAggregatedStats } from './metrics.js';
 let clients = [];
 let clientIdCounter = 0;
 let httpServer = null;
@@ -25,6 +26,16 @@ export function broadcastEvent(eventName, data) {
 export function createSseApp() {
     const app = express();
     app.use(cors({ origin: /^http:\/\/localhost:\d+$/ }));
+    // Middleware de medição e telemetria HTTP Prometheus
+    app.use((req, res, next) => {
+        const start = Date.now();
+        res.on('finish', () => {
+            const duration = Date.now() - start;
+            const normalizedPath = req.route?.path || req.path;
+            recordHttpRequest(req.method, normalizedPath, res.statusCode, duration);
+        });
+        next();
+    });
     // Basic Rate Limiting
     const limiter = rateLimit({
         windowMs: 15 * 60 * 1000, // 15 minutes
@@ -38,6 +49,17 @@ export function createSseApp() {
     if (fs.existsSync(frontendDist)) {
         app.use(express.static(frontendDist));
     }
+    // Endpoint Padrão Prometheus (/metrics)
+    app.get('/metrics', async (_req, res) => {
+        try {
+            res.setHeader('Content-Type', getMetricsContentType());
+            const metricsText = await getMetricsAsText();
+            res.send(metricsText);
+        }
+        catch (err) {
+            res.status(500).send(err.message);
+        }
+    });
     // SSE Stream Endpoint
     app.get('/events', (req, res) => {
         res.writeHead(200, {
@@ -49,9 +71,11 @@ export function createSseApp() {
         const clientId = ++clientIdCounter;
         const newClient = { id: clientId, res };
         clients.push(newClient);
+        setSseConnections(clients.length);
         res.write(`event: connected\ndata: ${JSON.stringify({ clientId, timestamp: new Date().toISOString() })}\n\n`);
         req.on('close', () => {
             clients = clients.filter(c => c.id !== clientId);
+            setSseConnections(clients.length);
         });
     });
     // REST: List All Diagrams
@@ -99,61 +123,87 @@ export function createSseApp() {
             const files = fs.readdirSync(outDir);
             const metaFile = files.find(f => f.startsWith(`${id}.meta.json`) || f.includes(id));
             if (!metaFile) {
-                return res.status(404).json({ error: 'Diagram not found' });
+                return res.status(404).json({ error: 'Diagram metadata not found' });
             }
             const metaRaw = fs.readFileSync(path.join(outDir, metaFile), 'utf-8');
             const meta = JSON.parse(metaRaw);
             const mmdPath = path.join(outDir, meta.files.mermaid);
-            const content = fs.existsSync(mmdPath) ? fs.readFileSync(mmdPath, 'utf-8') : '';
-            res.json({ ...meta, content });
+            let content = '';
+            if (fs.existsSync(mmdPath)) {
+                content = fs.readFileSync(mmdPath, 'utf-8');
+            }
+            res.json({
+                ...meta,
+                content
+            });
         }
         catch (err) {
             res.status(500).json({ error: err.message });
         }
     });
-    // Parse JSON bodies
-    app.use(bodyParser.json());
-    // REST: Save diagram edits
-    app.put('/api/diagrams/:id', (req, res) => {
+    // REST: Update Diagram Content
+    app.put('/api/diagrams/:id', bodyParser.json(), (req, res) => {
         try {
             const id = String(req.params.id);
             const { content } = req.body;
+            if (!content || typeof content !== 'string') {
+                return res.status(400).json({ error: 'Field "content" is required and must be string' });
+            }
             if (!fs.existsSync(outDir)) {
                 return res.status(404).json({ error: 'Diagram not found' });
             }
             const files = fs.readdirSync(outDir);
             const metaFile = files.find(f => f.startsWith(`${id}.meta.json`) || f.includes(id));
             if (!metaFile) {
-                return res.status(404).json({ error: 'Diagram not found' });
+                return res.status(404).json({ error: 'Diagram metadata not found' });
             }
-            const metaRaw = fs.readFileSync(path.join(outDir, metaFile), 'utf-8');
+            const metaPath = path.join(outDir, metaFile);
+            const metaRaw = fs.readFileSync(metaPath, 'utf-8');
             const meta = JSON.parse(metaRaw);
-            const mmdFilename = meta.files.mermaid;
-            const mmdPath = path.join(outDir, mmdFilename);
-            assertSafePath(mmdFilename, outDir);
-            // Update modification time
-            meta.updated_at = new Date().toISOString();
-            fs.writeFileSync(path.join(outDir, metaFile), JSON.stringify(meta, null, 2), 'utf-8');
-            // Save content
+            assertSafePath(meta.files.mermaid, outDir);
+            const mmdPath = path.join(outDir, meta.files.mermaid);
+            // Salvar novo conteúdo
             fs.writeFileSync(mmdPath, content, 'utf-8');
-            res.json({ success: true });
+            meta.updated_at = new Date().toISOString();
+            fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
+            // Notificar clientes via SSE
+            broadcastEvent('diagram.updated', {
+                id: meta.id,
+                updated_at: meta.updated_at
+            });
+            res.json({ success: true, diagram: { ...meta, content } });
         }
         catch (err) {
             res.status(500).json({ error: err.message });
         }
     });
-    // REST: Health Check
-    app.get('/api/health', (_req, res) => {
+    // REST: Observability Stats Aggregated
+    app.get('/api/observability/stats', async (_req, res) => {
+        try {
+            const stats = await getAggregatedStats();
+            stats.sse_connections = clients.length;
+            res.json(stats);
+        }
+        catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+    // REST: Health Check & System Status Enriquecido
+    app.get('/api/health', async (_req, res) => {
+        const stats = await getAggregatedStats();
+        stats.sse_connections = clients.length;
         res.json({
-            status: 'ok',
+            status: stats.health,
             server: 'archview',
-            version: '3.0.0',
+            version: '4.0.0',
             connectedClients: clients.length,
-            uptime: process.uptime()
+            uptime: process.uptime(),
+            memory: stats.memory,
+            totalDiagrams: stats.total_diagrams
         });
     });
     // REST: Ingest Execution Trace
-    app.post('/api/ingest/trace', (req, res) => {
+    app.post('/api/ingest/trace', bodyParser.json(), (req, res) => {
         try {
             const result = executeTraceExecution(req.body);
             res.status(201).json({
@@ -166,7 +216,7 @@ export function createSseApp() {
         }
     });
     // REST: Scan Codebase Topology
-    app.post('/api/codebase/scan', (req, res) => {
+    app.post('/api/codebase/scan', bodyParser.json(), (req, res) => {
         try {
             const result = executeScanTopology(req.body);
             res.json({
@@ -179,7 +229,7 @@ export function createSseApp() {
         }
     });
     // REST: Trace Call Graph
-    app.post('/api/codebase/trace-call', (req, res) => {
+    app.post('/api/codebase/trace-call', bodyParser.json(), (req, res) => {
         try {
             const result = executeTraceCallGraph(req.body);
             res.json({

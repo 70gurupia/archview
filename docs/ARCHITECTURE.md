@@ -1,6 +1,6 @@
-# 🏗️ Arquitetura do Sistema: ArchView v3.0 (Codebase Intelligence & Flow Tracing)
+# 🏗️ Arquitetura do Sistema: ArchView v4.0 (Observability Hub, Prometheus & Codebase Engine)
 
-Documentação técnica da arquitetura, fluxo de dados, guardrails de segurança e subsistemas do **ArchView (MCP Visual Server, Web Studio & Codebase Engine)**.
+Documentação técnica da arquitetura, fluxo de dados, guardrails de segurança e subsistemas do **ArchView (MCP Visual Server, Web Studio, Observability Hub & Codebase Engine)**.
 
 ---
 
@@ -12,13 +12,13 @@ O diagrama abaixo ilustra os containers executáveis, limites de processo e cana
 flowchart TD
   subgraph sg_1[" Clientes e Consumidores "]
     ai_client(["<b>👤 IA / Desenvolvedor</b><br/>Claude Desktop, Cursor, Antigravity ou Terminal"])
-    browser_user(["<b>👤 Usuário no Navegador</b><br/>Codebase Explorer, Editor Split-View e Exportação 4K"])
+    browser_user(["<b>👤 Usuário no Navegador</b><br/>Observability Hub, Codebase Explorer e Editor ao Vivo"])
   end
 
   subgraph sg_2[" Servidores e Backend "]
-    mcp_server["<b>📦 ArchView MCP Server</b><br/><i>TypeScript / Node.js 20</i><br/>Orquestrador de 9 ferramentas MCP e motor de AST"]
+    mcp_server["<b>📦 ArchView MCP Server</b><br/><i>TypeScript / Node.js 20</i><br/>Orquestrador de 10 ferramentas MCP e motor de AST"]
     engine_v3["<b>📦 Motor de Codebase Intelligence</b><br/><i>TypeScript Lexical Engine (< 200ms)</i><br/>Parsers AST TS/JS e léxico universal (Python, Go, Java, Rust)"]
-    sse_server["<b>📦 Express SSE & REST</b><br/><i>Express 5 / Porta 3001</i><br/>Transmissão em tempo real e endpoints de ingestão de traces"]
+    sse_server["<b>📦 Express SSE & Prometheus Hub</b><br/><i>Express 5 / Porta 3001</i><br/>Transmissão SSE, exportador /metrics e endpoints de traces"]
   end
 
   subgraph sg_3[" Camada de Persistência "]
@@ -26,17 +26,17 @@ flowchart TD
   end
 
   subgraph sg_4[" Interface Gráfica Web "]
-    web_studio["<b>📦 Web Studio SPA (Low-CPU)</b><br/><i>Alpine.js (~15KB) / Vite / CSS GPU</i><br/>Codebase Explorer, Editor ao vivo e 4 Temas visuais"]
+    web_studio["<b>📦 Web Studio SPA (Low-CPU)</b><br/><i>Alpine.js (~15KB) / Vite / CSS GPU</i><br/>Observability Hub, Codebase Explorer, Editor e 4 Temas"]
   end
 
-  ai_client -->|"Envia comandos MCP [JSON-RPC (stdio)]"| mcp_server
+  ai_client -->|"Envia comandos MCP (10 Tools) [JSON-RPC (stdio)]"| mcp_server
   mcp_server -->|"Executa varreduras de código [AST / Regex]"| engine_v3
   mcp_server -->|"Inicia em background [In-process]"| sse_server
   mcp_server -->|"Persiste .mmd e .meta.json [Filesystem]"| storage
   sse_server -->|"Lê e grava arquivos com assertSafePath [fs]"| storage
   sse_server -.->|"Transmite eventos /events [Server-Sent Events]"| web_studio
   web_studio -->|"Renderiza diagramas com 0% CPU em repouso [HTML5 / SVG DOM]"| browser_user
-  web_studio -->|"Dispara scans e salva edições [REST JSON]"| sse_server
+  web_studio -->|"Dispara scans e consulta métricas [REST JSON]"| sse_server
 
   classDef default fill:#F8FAFC,stroke:#64748B,stroke-width:1.5px,color:#1E293B,rx:8px,ry:8px;
   classDef primary fill:#1E40AF,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;

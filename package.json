@@ -1,6 +1,6 @@
 {
   "name": "archview",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "ArchView: Servidor Model Context Protocol (MCP) local e reativo para diagramação arquitetural, inteligência de código e flow tracing",
   "repository": {
     "type": "git",
@@ -9,11 +9,11 @@
   "main": "build/server.js",
   "scripts": {
     "test": "npm run test:all",
-    "test:tdd": "npx tsx tests/tdd-unit.test.ts && npx tsx tests/tdd-v3.test.ts",
+    "test:tdd": "npx tsx tests/tdd-unit.test.ts && npx tsx tests/tdd-v3.test.ts && npx tsx tests/tdd-observability-v4.test.ts",
     "test:odd": "npx tsx tests/odd-observability.test.ts",
     "test:pentest": "npx tsx tests/pentest-security.test.ts",
     "test:sast": "npx tsx tests/sast-scanner.ts",
-    "test:all": "npx tsx tests/sast-scanner.ts && npx tsx tests/tdd-unit.test.ts && npx tsx tests/tdd-v3.test.ts && npx tsx tests/odd-observability.test.ts && npx tsx tests/pentest-security.test.ts && npx tsx test-v2.ts",
+    "test:all": "npx tsx tests/sast-scanner.ts && npx tsx tests/tdd-unit.test.ts && npx tsx tests/tdd-v3.test.ts && npx tsx tests/tdd-observability-v4.test.ts && npx tsx tests/odd-observability.test.ts && npx tsx tests/pentest-security.test.ts && npx tsx test-v2.ts",
     "build:server": "tsc",
     "build:frontend": "npm run build --prefix frontend",
     "build": "tsc && npm run build --prefix frontend",
@@ -33,21 +33,24 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
-    "body-parser": "^2.3.0",
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "express-rate-limit": "^8.6.2",
-    "zod": "^4.4.3"
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "@opentelemetry/api": "1.9.0",
+    "@opentelemetry/sdk-node": "0.57.2",
+    "body-parser": "2.3.0",
+    "cors": "2.8.6",
+    "express": "5.2.1",
+    "express-rate-limit": "8.6.2",
+    "prom-client": "15.1.3",
+    "zod": "4.4.3"
   },
   "devDependencies": {
-    "@types/body-parser": "^1.19.6",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/express-rate-limit": "^5.1.3",
-    "@types/node": "^26.2.0",
-    "tsx": "^4.19.3",
-    "typescript": "^5.7.3"
+    "@types/body-parser": "1.19.6",
+    "@types/cors": "2.8.19",
+    "@types/express": "5.0.6",
+    "@types/express-rate-limit": "5.1.3",
+    "@types/node": "26.2.0",
+    "tsx": "4.19.3",
+    "typescript": "5.7.3"
   },
   "type": "module"
 }

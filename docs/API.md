@@ -84,15 +84,24 @@ Gera o Raio-X completo 360 do repositório, combinando mapa mental modular, diag
 ## 9. `export_diagram` (Client-Side)
 - **Status:** Processamento delegado ao navegador cliente via botões na Web Studio (SVG, PNG, PNG 4K) para zero consumo de CPU no servidor.
 
+## 10. `get_system_observability` (v4.0)
+Consulta métricas do Prometheus, estado de saúde do runtime, latência e estatísticas agregadas, com geração opcional de gráficos Mermaid (`xychart-beta` ou `quadrantChart`).
+- **Input (Zod)**
+  - `include_prometheus_raw` (boolean, opcional): Se true, inclui o texto bruto das métricas Prometheus.
+  - `generate_chart` (enum, opcional): `"xychart"`, `"quadrant"` ou `"none"`.
+  - `output_path` (string, opcional): Caminho seguro para gravação do arquivo `.mmd` e `.meta.json`.
+
 ---
 
 ## 🌐 Endpoints HTTP REST (Porta 3001)
 
 * `GET /events`: Stream SSE para atualização de diagramas em tempo real.
+* `GET /metrics`: Endpoint padrão texto do Prometheus para scraping de telemetria, CPU, Heap e métricas de negócio.
+* `GET /api/observability/stats`: Estatísticas agregadas em JSON (uptime, consumo de memória, conexões SSE e saúde).
 * `GET /api/diagrams`: Lista todos os diagramas com metadados e conteúdo `.mmd`.
 * `GET /api/diagrams/:id`: Recupera metadados e conteúdo de um diagrama específico.
 * `PUT /api/diagrams/:id`: Atualiza o código Mermaid de um diagrama com revalidação de path traversal.
-* `GET /api/health`: Status operacional, uptime e contagem de clientes SSE conectados.
+* `GET /api/health`: Status operacional enriquecido (`healthy` | `degraded` | `unhealthy`), uptime, versão e memória.
 * `POST /api/ingest/trace`: Ingestão de traces via HTTP para geração de `sequenceDiagram`.
 * `POST /api/codebase/scan`: Disparo de varredura de topologia via HTTP.
 * `POST /api/codebase/trace-call`: Rastreamento de chamadas de símbolo via HTTP.

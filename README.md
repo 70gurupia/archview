@@ -1,6 +1,6 @@
-# 📐 ArchView: MCP Visual Server & Codebase Intelligence Engine v3.0
+# 📐 ArchView: MCP Visual Server & Codebase Intelligence Engine v4.0
 
-> Servidor **Model Context Protocol (MCP)** 100% local, determinístico e gratuito para análise estática de repositórios, grafos de chamadas, diagramas de sequência de traces, arquitetura C4, mapas mentais e organogramas.
+> Servidor **Model Context Protocol (MCP)** 100% local, determinístico e gratuito para análise estática de repositórios, grafos de chamadas, observabilidade Prometheus, traces OpenTelemetry, arquitetura C4, mapas mentais e organogramas.
 
 ---
 
@@ -10,13 +10,13 @@
 flowchart TD
   subgraph sg_1[" Clientes e Consumidores "]
     ai_client(["<b>👤 IA / Desenvolvedor</b><br/>Claude Desktop, Cursor, Antigravity ou Terminal"])
-    browser_user(["<b>👤 Usuário no Navegador</b><br/>Codebase Explorer, Editor Split-View e Exportação 4K"])
+    browser_user(["<b>👤 Usuário no Navegador</b><br/>Observability Hub, Codebase Explorer e Editor ao Vivo"])
   end
 
   subgraph sg_2[" Servidores e Backend "]
-    mcp_server["<b>📦 ArchView MCP Server</b><br/><i>TypeScript / Node.js 20</i><br/>Orquestrador de 9 ferramentas MCP e motor de AST"]
+    mcp_server["<b>📦 ArchView MCP Server</b><br/><i>TypeScript / Node.js 20</i><br/>Orquestrador de 10 ferramentas MCP e motor de AST"]
     engine_v3["<b>📦 Motor de Codebase Intelligence</b><br/><i>TypeScript Lexical Engine (< 200ms)</i><br/>Parsers AST TS/JS e léxico universal (Python, Go, Java, Rust)"]
-    sse_server["<b>📦 Express SSE & REST</b><br/><i>Express 5 / Porta 3001</i><br/>Transmissão em tempo real e endpoints de ingestão de traces"]
+    sse_server["<b>📦 Express SSE & Prometheus Hub</b><br/><i>Express 5 / Porta 3001</i><br/>Transmissão SSE, exportador /metrics e endpoints de traces"]
   end
 
   subgraph sg_3[" Camada de Persistência "]
@@ -24,17 +24,17 @@ flowchart TD
   end
 
   subgraph sg_4[" Interface Gráfica Web "]
-    web_studio["<b>📦 Web Studio SPA (Low-CPU)</b><br/><i>Alpine.js (~15KB) / Vite / CSS GPU</i><br/>Codebase Explorer, Editor ao vivo e 4 Temas visuais"]
+    web_studio["<b>📦 Web Studio SPA (Low-CPU)</b><br/><i>Alpine.js (~15KB) / Vite / CSS GPU</i><br/>Observability Hub, Codebase Explorer, Editor e 4 Temas"]
   end
 
-  ai_client -->|"Envia comandos MCP [JSON-RPC (stdio)]"| mcp_server
+  ai_client -->|"Envia comandos MCP (10 Tools) [JSON-RPC (stdio)]"| mcp_server
   mcp_server -->|"Executa varreduras de código [AST / Regex]"| engine_v3
   mcp_server -->|"Inicia em background [In-process]"| sse_server
   mcp_server -->|"Persiste .mmd e .meta.json [Filesystem]"| storage
   sse_server -->|"Lê e grava arquivos com assertSafePath [fs]"| storage
   sse_server -.->|"Transmite eventos /events [Server-Sent Events]"| web_studio
   web_studio -->|"Renderiza diagramas com 0% CPU em repouso [HTML5 / SVG DOM]"| browser_user
-  web_studio -->|"Dispara scans e salva edições [REST JSON]"| sse_server
+  web_studio -->|"Dispara scans e consulta métricas [REST JSON]"| sse_server
 
   classDef default fill:#F8FAFC,stroke:#64748B,stroke-width:1.5px,color:#1E293B,rx:8px,ry:8px;
   classDef primary fill:#1E40AF,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;
@@ -57,8 +57,8 @@ flowchart TD
 
 ```mermaid
 mindmap
-  root(("ArchView v3.0 Ecosystem"))
-    ("🛠️ Ferramentas MCP Nativas (9 Tools)")
+  root(("ArchView v4.0 Ecosystem"))
+    ("🛠️ Ferramentas MCP Nativas (10 Tools)")
       generate_mindmap (Mapas Mentais Radiais)
       generate_orgchart (Organogramas Hierárquicos DFS)
       generate_architecture_diagram (Modelo C4 com Subgrafos)
@@ -67,25 +67,26 @@ mindmap
       trace_call_graph (Grafo Bidirecional Inbound/Outbound)
       trace_execution_flow (Sequence Diagrams de Logs)
       analyze_codebase_overview (Raio-X 360 de Repositórios)
+      get_system_observability (Telemetria Prometheus & Charts)
       export_diagram (Exportação SVG/PNG/4K no Cliente)
-    ("🧠 Codebase Intelligence (v3.0 Engine)")
+    ("📈 Observabilidade e SRE (v4.0)")
+      Endpoint /metrics no padrão texto Prometheus
+      Métricas de Runtime Node.js (CPU, Heap, EventLoop)
+      Histogramas de latência e contadores por diagrama
+      Tracing com OpenTelemetry SDK e exportador OTLP
+      Health check enriquecido com níveis de degradação
+    ("🧠 Codebase Intelligence Engine")
       AST Léxica para TypeScript e JavaScript
       Parser Léxico Universal (Python, Go, Java, Rust, C#, PHP)
-      Detecção de Frameworks (Express, Nest, FastAPI, Fiber, Gin)
+      Detecção de Frameworks (Express, Nest, FastAPI, Fiber)
       Resolução Determinística de Chamadas Cruzadas
       Execução instantânea (< 200ms) sem IA e sem WASM
-    ("⚡ Comunicação e Streaming")
-      MCP Stdio JSON-RPC (Claude, Cursor, Antigravity)
-      Express 5 API REST na porta 3001
-      Server-Sent Events (/events em tempo real)
-      Endpoint POST /api/ingest/trace para logs HTTP
-      Endpoints POST /api/codebase/* para varreduras remotas
     ("🎨 Web Studio Interativo (Low-CPU)")
+      Aba Observability Hub com telemetria em tempo real
       Aba Codebase Explorer com disparo de scans
       Editor Split-View com live preview
       Playground Didático MCP
       GPU-Accelerated Pan e Zoom (0% CPU em repouso)
-      4 Temas (Educacional, Corporativo, Minimal, Dark)
     ("🛡️ Segurança e Governança")
       Anti-Path Traversal estrito (assertSafePath)
       Validação de Schemas Zod com guardrails

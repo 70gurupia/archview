@@ -61,6 +61,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { broadcastEvent } from './sse.js';
+import { recordDiagramCreated } from './metrics.js';
 export function sanitizeSlug(text) {
     return text
         .toLowerCase()
@@ -132,6 +133,8 @@ export function saveDiagramWithMeta(options) {
         },
         tags: options.tags || [options.type]
     };
+    // Record Prometheus metrics
+    recordDiagramCreated(meta.type, 'success', meta.stats.generation_time_ms || 0);
     // Write meta.json
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
     // Broadcast event to connected frontend clients via SSE

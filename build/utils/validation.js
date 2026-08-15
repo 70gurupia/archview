@@ -139,6 +139,11 @@ export const AnalyzeOverviewInputSchema = z.object({
     description: z.string().max(255).optional(),
     output_path: z.string().optional()
 });
+export const ObservabilityInputSchema = z.object({
+    include_prometheus_raw: z.boolean().optional(),
+    generate_chart: z.enum(['xychart', 'quadrant', 'none']).optional(),
+    output_path: z.string().optional()
+});
 // ---- GUARDRAILS ----
 export function validateMindmapGuardrails(branches) {
     let nodeCount = 1; // 1 for central topic

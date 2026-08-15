@@ -10,13 +10,16 @@ import { executeScanTopology } from './tools/scan-topology.js';
 import { executeTraceCallGraph } from './tools/trace-callgraph.js';
 import { executeTraceExecution } from './tools/trace-execution.js';
 import { executeAnalyzeOverview } from './tools/analyze-overview.js';
+import { executeGetObservability } from './tools/observability.js';
 import { startSseServer } from './utils/sse.js';
+import { initOpenTelemetry } from './utils/otel.js';
 class VisualServer {
     server;
     constructor() {
+        initOpenTelemetry();
         this.server = new Server({
             name: "mcp-visual-server",
-            version: "2.0.0",
+            version: "4.0.0",
         }, {
             capabilities: {
                 tools: {},
@@ -288,6 +291,18 @@ class VisualServer {
                             output_path: { type: "string", description: "Caminho opcional do arquivo de saída" }
                         }
                     }
+                },
+                {
+                    name: "get_system_observability",
+                    description: "Consulta métricas do Prometheus, estado de saúde do runtime, latência e estatísticas agregadas, com geração opcional de gráficos Mermaid (xychart ou quadrantChart).",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            include_prometheus_raw: { type: "boolean", description: "Se true, inclui as métricas brutas em formato texto Prometheus" },
+                            generate_chart: { type: "string", enum: ["xychart", "quadrant", "none"], description: "Tipo de gráfico Mermaid a ser gerado" },
+                            output_path: { type: "string", description: "Caminho opcional do arquivo de saída" }
+                        }
+                    }
                 }
             ],
         }));
@@ -323,6 +338,9 @@ class VisualServer {
                         break;
                     case "analyze_codebase_overview":
                         result = executeAnalyzeOverview(args);
+                        break;
+                    case "get_system_observability":
+                        result = await executeGetObservability(args);
                         break;
                     default:
                         throw new McpError(ErrorCode.MethodNotFound, `Ferramenta desconhecida: ${name}`);

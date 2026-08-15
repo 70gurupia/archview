@@ -70,6 +70,18 @@ document.addEventListener('alpine:init', () => {
     codebaseTargetSymbol: '',
     codebaseLoading: false,
 
+    // Observability Hub v4.0
+    obsStats: {
+      uptime_seconds: 0,
+      memory: { rss_mb: 0, heap_total_mb: 0, heap_used_mb: 0, heap_percent: 0 },
+      total_diagrams: 0,
+      sse_connections: 1,
+      health: 'healthy'
+    },
+    obsTraceInput: '',
+    obsTraceLoading: false,
+    prometheusRawPreview: '',
+
     // Pan & Zoom
     panX: 0,
     panY: 0,
@@ -83,6 +95,7 @@ document.addEventListener('alpine:init', () => {
     async init() {
       applyCssTheme(this.activeTheme);
       await this.loadDiagrams();
+      await this.fetchObservabilityStats();
       this.initSse();
 
       const tourSeen = localStorage.getItem('archview_tour_seen');
@@ -145,6 +158,9 @@ document.addEventListener('alpine:init', () => {
 
     setTab(tab: string) {
       this.activeTab = tab;
+      if (tab === 'observability') {
+        this.fetchObservabilityStats();
+      }
       this.$nextTick(() => {
         this.renderThumbnails();
       });
@@ -546,6 +562,74 @@ document.addEventListener('alpine:init', () => {
       } finally {
         this.codebaseLoading = false;
       }
+    },
+
+    async fetchObservabilityStats() {
+      try {
+        const res = await fetch('/api/observability/stats');
+        if (res.ok) {
+          this.obsStats = await res.json();
+        }
+      } catch (err) {
+        console.error('Erro ao buscar telemetria:', err);
+      }
+    },
+
+    async loadPrometheusPreview() {
+      try {
+        const res = await fetch('/metrics');
+        if (res.ok) {
+          const text = await res.text();
+          this.prometheusRawPreview = text.slice(0, 800) + (text.length > 800 ? '\n... (truncado)' : '');
+        }
+      } catch (err) {
+        this.prometheusRawPreview = 'Erro ao carregar /metrics';
+      }
+    },
+
+    async ingestTraceAndRender() {
+      if (!this.obsTraceInput) return;
+      this.obsTraceLoading = true;
+      try {
+        let payload: any = { raw_log: this.obsTraceInput };
+        try {
+          const parsed = JSON.parse(this.obsTraceInput);
+          if (Array.isArray(parsed) || typeof parsed === 'object') {
+            payload = { trace_data: parsed };
+          }
+        } catch {
+          // Usa raw_log como fallback
+        }
+
+        const res = await fetch('/api/ingest/trace', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          await this.loadDiagrams();
+          this.setTab('flowchart');
+          this.showToast('✅ Sequence Diagram gerado a partir do Trace!');
+        } else {
+          this.showToast(`❌ Erro: ${data.error}`);
+        }
+      } catch (err: any) {
+        this.showToast(`❌ Falha na requisição: ${err.message}`);
+      } finally {
+        this.obsTraceLoading = false;
+      }
+    },
+
+    formatUptime(seconds: number) {
+      if (!seconds) return '0s';
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      if (mins === 0) return `${secs}s`;
+      const hours = Math.floor(mins / 60);
+      const remMins = mins % 60;
+      if (hours === 0) return `${mins}m ${secs}s`;
+      return `${hours}h ${remMins}m`;
     },
 
     getTabEmoji(type: string) {

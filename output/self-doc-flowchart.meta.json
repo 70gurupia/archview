@@ -1,12 +1,12 @@
 {
   "schema_version": "2.0",
-  "id": "flowchart-ciclo-de-vida-mcp-codebase-intelligence--454365",
+  "id": "flowchart-ciclo-de-vida-mcp-codebase-intelligence--f18942",
   "type": "flowchart",
-  "title": "Ciclo de Vida: MCP, Codebase Intelligence e Traces",
-  "description": "Do comando da IA ou HTTP até a renderização do grafo e exportação",
+  "title": "Ciclo de Vida: MCP, Codebase Intelligence e Prometheus",
+  "description": "Do comando da IA até a telemetria do Prometheus e renderização web",
   "source": "claude-mcp",
-  "created_at": "2026-08-15T17:11:25.283Z",
-  "updated_at": "2026-08-15T17:11:25.283Z",
+  "created_at": "2026-08-15T20:50:20.903Z",
+  "updated_at": "2026-08-15T20:50:20.903Z",
   "files": {
     "mermaid": "self-doc-flowchart.mmd",
     "meta": "self-doc-flowchart.meta.json",
@@ -19,7 +19,7 @@
   },
   "stats": {
     "node_count": 14,
-    "generation_time_ms": 15
+    "generation_time_ms": 1
   },
   "tags": [
     "fluxograma",

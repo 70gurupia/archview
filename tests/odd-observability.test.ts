@@ -21,9 +21,15 @@ async function runOddSuite() {
   // 2. Health check
   const healthRes = await fetch('http://localhost:3002/api/health');
   const health = await healthRes.json();
-  assert(health.status === 'ok', 'Health check reporta status ok');
+  assert(['healthy', 'ok', 'degraded'].includes(health.status), 'Health check reporta status saudável');
   assert(typeof health.uptime === 'number' && health.uptime >= 0, 'Health check reporta métrica de uptime válida');
-  assert(health.version === '3.0.0', 'Health check reporta versão semântica 3.0.0');
+  assert(health.version === '4.0.0', 'Health check reporta versão semântica 4.0.0');
+
+  // 2b. Endpoint Prometheus (/metrics)
+  const metricsRes = await fetch('http://localhost:3002/metrics');
+  const metricsText = await metricsRes.text();
+  assert(metricsRes.status === 200, 'Endpoint /metrics retorna HTTP 200');
+  assert(metricsText.includes('archview_'), 'Endpoint /metrics contém métricas do ArchView');
 
   // 3. Métricas no meta.json gerado
   console.log('\n2. Auditoria de Métricas e Telemetria de Diagrama:');

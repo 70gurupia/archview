@@ -2,6 +2,25 @@
 
 Todas as alterações notáveis deste projeto serão documentadas neste arquivo.
 
+## [4.0.0] - 2026-08-15
+
+### Adicionado
+- **Métricas Padrão Prometheus (`src/utils/metrics.ts`)**:
+  - Exposição de `GET /metrics` no formato padrão texto do Prometheus via `prom-client` (pinado na v15.1.3).
+  - Coleta automática de métricas de runtime Node.js (CPU, Heap, Event Loop Lag, GC).
+  - Métricas customizadas do ArchView (`archview_diagrams_created_total`, `archview_generation_duration_seconds`, `archview_ast_scan_duration_seconds`, `archview_http_requests_total`, `archview_sse_active_connections`, `archview_health_status`).
+- **Instrumentação OpenTelemetry Resiliente (`src/utils/otel.ts`)**:
+  - Integração com `@opentelemetry/api` e inicialização assíncrona do `@opentelemetry/sdk-node` com exportador OTLP opcional via `OTEL_EXPORTER_OTLP_ENDPOINT`.
+  - Fallback local sem impacto de performance quando nenhum coletor remoto estiver presente.
+- **10ª Ferramenta MCP (`get_system_observability`)**:
+  - Consulta de métricas, diagnóstico de saúde e geração opcional de diagramas Mermaid (`xychart-beta` ou `quadrantChart`) diretamente via MCP.
+- **Aba "📈 Observability Hub" no Web Studio**:
+  - Dashboard interativo com cards de telemetria em tempo real (saúde, consumo de memória heap com barra visual, conexões SSE ativas e total de diagramas).
+  - Painel interativo de ingestão de Traces OTel para geração instantânea de Sequence Diagrams.
+  - Prévia ao vivo das métricas brutas do Prometheus.
+- **Suíte de Testes TDD v4.0 (`tests/tdd-observability-v4.test.ts`)**:
+  - Cobertura de scraping Prometheus, spans OTel, rotas Express e execução da ferramenta `get_system_observability` com 100% de aprovação.
+
 ## [3.0.0] - 2026-08-15
 
 ### Adicionado

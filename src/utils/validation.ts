@@ -157,6 +157,12 @@ export const AnalyzeOverviewInputSchema = z.object({
   output_path: z.string().optional()
 });
 
+export const ObservabilityInputSchema = z.object({
+  include_prometheus_raw: z.boolean().optional(),
+  generate_chart: z.enum(['xychart', 'quadrant', 'none']).optional(),
+  output_path: z.string().optional()
+});
+
 
 
 // ---- GUARDRAILS ----
