@@ -1,18 +1,29 @@
-# 🗺️ Roadmap de Evolução: ArchView v3.0 (Codebase Intelligence & Flow Tracing)
+# 🗺️ Roadmap de Evolução: ArchView
+
+> Planejamento das próximas versões do **ArchView**, priorizando melhorias visuais imediatas (Quick-Wins) antes do motor avançado de inteligência de código (v3.0).
+
+---
+
+## 🎨 Fase 2.5: Refinamento Visual e Semântica de Design (Quick-Wins)
+
+> **Objetivo:** Elevar o design e a clareza visual dos diagramas gerados automaticamente para o padrão profissional moderno, com zero sobrecarga de processador.
+
+- [ ] **TASK-014 (Design Semântico de Nós):** Integrar formas semânticas nativas do Mermaid nos geradores:
+  - Cilindros `[(...)]` para bancos de dados e pastas de armazenamento.
+  - Pílulas `([...])` para terminais de início/fim.
+  - Losangos `{"..."}` para decisões e rotas condicionais.
+  - Subprocessos `[[...]]` para filas, streaming e eventos SSE.
+- [ ] **TASK-015 (Direcionamento Widescreen Inteligente):** Otimizar a direção do fluxo (`LR` horizontal para processos/pipelines em telas 16:9 e `TD` vertical para hierarquias/organogramas).
+- [ ] **TASK-016 (Âncoras Visuais Padronizadas):** Inclusão automática de ícones semânticos de alto contraste (🤖 IA, ⚙️ Core, 📡 SSE, 💾 Disco, 🎨 UI, 🛡️ Segurança).
+- [ ] **TASK-017 (Tipos de Conexão com Intenção):** Diferenciação de setas sólidas `-->` para fluxo síncrono, tracejadas `-.->` para eventos assíncronos e rotuladas com destaque para tratamento de erros.
+- [ ] **TASK-018 (Design System com Bordas Arredondadas):** Aplicação de classes CSS com `rx:8px, ry:8px` e paleta HSL harmonizada (Azul Safira, Verde-Petróleo, Índigo e Âmbar).
+- [ ] **TASK-019 (Subgrafos de Limite Arquitetural):** Agrupamento automático de blocos relacionados dentro de contêineres `subgraph` visuais.
+
+---
+
+## 🗺️ Fase 3.0: Codebase Intelligence & Flow Tracing (Motor Determinístico)
 
 > **Objetivo da v3.0:** Transformar o ArchView na ferramenta definitiva e ultra-leve para desenvolvedores compreenderem novos codebases, rastrearem dependências e visualizarem fluxos de ponta a ponta ("o que faz o que, de onde veio e para onde vai") sem a lentidão ou complexidade de bancos de grafos pesados (Neo4j, Graphify, Gephi).
-
----
-
-## 🎯 Pilares da Arquitetura v3.0
-
-1. **Ultra Low-CPU & Zero Daemons:** Toda a análise roda em memória de forma assíncrona, consumindo menos de 60MB de RAM e sem exigir Docker, bancos Neo4j ou serviços externos em segundo plano.
-2. **Suporte Universal de Linguagens:** Analisadores baseados em árvores de diretórios, padrões de imports e AST leve para cobrir TypeScript, JavaScript, Python, Go, Java, Rust, PHP, C# e Elixir.
-3. **Mapeamento Estático + Rastreamento Dinâmico:** Capacidade de extrair a topologia estática de pastas e componentes, além de converter logs e traces de execução em diagramas de sequência.
-
----
-
-## 🛠️ Novas Ferramentas MCP Planejadas
 
 ```mermaid
 graph TD
@@ -37,52 +48,37 @@ graph TD
   class t4 tool;
 ```
 
-### 1. `scan_codebase_topology`
-- **Função:** Escaneia uma pasta ou repositório local e gera automaticamente um diagrama C4 Container/Component em Mermaid.
-- **Saídas:** Identificação de entrypoints (APIs, CLIs, jobs), pastas de regras de negócio (serviços, controladores, repositórios) e integrações externas (bancos de dados, filas, APIs terceiras).
-- **Parâmetros:**
-  - `project_path`: Caminho da pasta a ser analisada.
-  - `depth`: Profundidade máxima de pastas (padrão: 3).
-  - `ignore_patterns`: Lista de pastas ignoradas (`node_modules`, `.git`, `dist`, `build`, `__pycache__`).
+### 🛠️ Novas Ferramentas MCP Planejadas na v3.0
 
-### 2. `trace_call_graph`
-- **Função:** Dado um arquivo ou nome de função, rastreia quais funções ela invoca e quem a invoca.
-- **Saídas:** Grafo direcionado em Mermaid (`graph LR` ou `graph TD`) destacando o ponto de partida e o fluxo de chamadas internas.
-- **Parâmetros:**
-  - `entry_file`: Arquivo onde a função está localizada.
-  - `symbol_name`: Nome da função, método ou classe alvo.
-  - `direction`: `'inbound'` (quem chama), `'outbound'` (o que ela chama) ou `'both'` (ambos).
-
-### 3. `trace_execution_flow`
-- **Função:** Converte logs estruturados, payloads de tracing OpenTelemetry (JSON/OTLP simplificado) ou stack traces em um Diagrama de Sequência interativo.
-- **Saídas:** Mermaid `sequenceDiagram` demonstrando o fluxo da requisição passo a passo entre atores e microsserviços.
-- **Modos de Ingestão:**
-  - **Arquivo Local / Texto:** Passagem do arquivo `.json` ou log colado.
-  - **Endpoint HTTP Leve:** `POST http://localhost:3001/api/ingest/trace` para receber spans de debug em tempo real.
-
-### 4. `analyze_codebase_overview`
-- **Função:** Executa um raio-x completo do repositório, combinando topologia, principais fluxos de dados e gerando um relatório didático com mapa mental e organograma de módulos.
+1. **`scan_codebase_topology`:** Escaneia uma pasta local e gera automaticamente um diagrama C4 Container/Component em Mermaid.
+2. **`trace_call_graph`:** Rastreia a árvore de chamadas de uma função ou arquivo específico (*quem chama quem*, inbound e outbound).
+3. **`trace_execution_flow`:** Converte logs estruturados, payloads de tracing ou stack traces em um Diagrama de Sequência interativo.
+4. **`analyze_codebase_overview`:** Raio-X completo do repositório, combinando topologia, fluxos de dados e gerando um relatório didático com mapa mental e organograma de módulos.
 
 ---
 
-## 📅 Fases de Implementação
+## 📅 Cronograma de Entregas
 
-### Fase 1: Motor Universal de Varredura Estática (v3.1)
+### Etapa 1: Refinamento Visual (v2.5) — *Prioridade Imediata*
+- [ ] Implementar TASK-014 a TASK-019 nos geradores e temas.
+- [ ] Atualizar exemplos do Web Studio e documentação visual.
+
+### Etapa 2: Motor Universal de Varredura Estática (v3.1)
 - [ ] Implementação de analisador leve de diretórios e regex AST (`src/engine/codebase-scanner.ts`).
 - [ ] Suporte a detecção automática de frameworks (Express, Nest, Django, FastAPI, Spring, Go Fiber, Next.js).
 - [ ] Criação da tool `scan_codebase_topology`.
 
-### Fase 2: Análise de Chamadas e Dependências (v3.2)
+### Etapa 3: Análise de Chamadas e Dependências (v3.2)
 - [ ] Mapeamento de grafo de imports (`import ... from ...` e `require(...)`).
 - [ ] Criação da tool `trace_call_graph`.
 - [ ] Visualização interativa no Web Studio com destaque do nó selecionado.
 
-### Fase 3: Ingestão de Tracing Dinâmico e Endpoint HTTP (v3.3)
+### Etapa 4: Ingestão de Tracing Dinâmico e Endpoint HTTP (v3.3)
 - [ ] Endpoint `POST /api/ingest/trace` no servidor Express (porta 3001).
 - [ ] Conversor de traces/spans para Mermaid Sequence Diagram (`sequenceDiagram`).
 - [ ] Criação da tool `trace_execution_flow` e `analyze_codebase_overview`.
 
-### Fase 4: Integração com o Web Studio & Exportação (v3.4)
+### Etapa 5: Integração com o Web Studio & Exportação (v3.4)
 - [ ] Nova aba no frontend: **"🔍 Codebase Explorer"**.
 - [ ] Navegação em árvore de arquivos ao lado do preview do diagrama.
 - [ ] Suíte completa de testes TDD, ODD e Pentest para as novas ferramentas.

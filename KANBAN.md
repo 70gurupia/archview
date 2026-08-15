@@ -4,15 +4,24 @@
 
 ---
 
-## 📥 Backlog (v3.0 - Codebase Intelligence & Flow Tracing)
+## 📥 Backlog
 
-- [ ] **TASK-014 (v3.1)**: Desenvolver motor universal de análise de diretórios e frameworks (`codebase-scanner.ts`).
-- [ ] **TASK-015 (v3.1)**: Implementar a tool MCP `scan_codebase_topology` (C4 em Mermaid para repositórios).
-- [ ] **TASK-016 (v3.2)**: Implementar mapeamento de dependências e a tool `trace_call_graph`.
-- [ ] **TASK-017 (v3.3)**: Implementar ingestão de traces/logs e endpoint `POST /api/ingest/trace`.
-- [ ] **TASK-018 (v3.3)**: Implementar a tool `trace_execution_flow` (Diagramas de sequência a partir de traces).
-- [ ] **TASK-019 (v3.3)**: Implementar a tool unificada `analyze_codebase_overview`.
-- [ ] **TASK-020 (v3.4)**: Criar a aba "Codebase Explorer" no Web Studio e validar suíte de 13 gates.
+### 🎨 Fase 2.5: Refinamento Visual e Semântica de Design (Prioridade Imediata)
+- [ ] **TASK-014 (v2.5)**: Integrar formas semânticas nativas do Mermaid (cilindros, losangos, pílulas e subprocessos).
+- [ ] **TASK-015 (v2.5)**: Implementar otimização inteligente de direção (`LR` para fluxos/pipelines e `TD` para árvores).
+- [ ] **TASK-016 (v2.5)**: Padronizar âncoras visuais com ícones semânticos (🤖 IA, ⚙️ Core, 📡 SSE, 💾 Disco, 🎨 UI, 🛡️ Segurança).
+- [ ] **TASK-017 (v2.5)**: Diferenciar tipos de conexão (sólidas `-->`, tracejadas `-.->` e destacadas para erros).
+- [ ] **TASK-018 (v2.5)**: Aplicar classes de design system com bordas curvas (`rx:8px`) e paleta harmonizada.
+- [ ] **TASK-019 (v2.5)**: Implementar agrupamento automático de subgrafos nos geradores de arquitetura e fluxograma.
+
+### 🗺️ Fase 3.0: Codebase Intelligence & Flow Tracing (Motor Determinístico)
+- [ ] **TASK-020 (v3.1)**: Desenvolver motor universal de análise de diretórios e frameworks (`codebase-scanner.ts`).
+- [ ] **TASK-021 (v3.1)**: Implementar a tool MCP `scan_codebase_topology` (C4 em Mermaid para repositórios).
+- [ ] **TASK-022 (v3.2)**: Implementar mapeamento de dependências e a tool `trace_call_graph`.
+- [ ] **TASK-023 (v3.3)**: Implementar ingestão de traces/logs e endpoint `POST /api/ingest/trace`.
+- [ ] **TASK-024 (v3.3)**: Implementar a tool `trace_execution_flow` (Diagramas de sequência a partir de traces).
+- [ ] **TASK-025 (v3.3)**: Implementar a tool unificada `analyze_codebase_overview`.
+- [ ] **TASK-026 (v3.4)**: Criar a aba "Codebase Explorer" no Web Studio e validar suíte de 13 gates.
 
 ---
 
