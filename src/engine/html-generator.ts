@@ -1,4 +1,38 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { DiagramMeta } from '../types/index.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+let cachedMermaidBundle: string | null = null;
+
+export function getMermaidBundle(): string {
+  if (cachedMermaidBundle) {
+    return cachedMermaidBundle;
+  }
+
+  const possiblePaths = [
+    path.resolve(process.cwd(), 'frontend/node_modules/mermaid/dist/mermaid.min.js'),
+    path.resolve(process.cwd(), 'node_modules/mermaid/dist/mermaid.min.js'),
+    path.resolve(__dirname, '../../frontend/node_modules/mermaid/dist/mermaid.min.js'),
+    path.resolve(__dirname, '../node_modules/mermaid/dist/mermaid.min.js')
+  ];
+
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      try {
+        cachedMermaidBundle = fs.readFileSync(p, 'utf-8');
+        return cachedMermaidBundle;
+      } catch {
+        // Continue fallback
+      }
+    }
+  }
+
+  return '';
+}
 
 function escapeHtml(str: string): string {
   return str
@@ -17,6 +51,10 @@ export function generateStandaloneDiagramHtml(meta: DiagramMeta, mermaidCode: st
   const description = escapeHtml(meta.description || 'Visualização interativa offline gerada pelo ArchView');
   const cleanCode = mermaidCode.trim();
   const jsonMeta = JSON.stringify(meta, null, 2);
+  const bundle = getMermaidBundle();
+  const scriptTag = bundle
+    ? `<script>\n${bundle}\n</script>`
+    : `<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>`;
 
   return `<!DOCTYPE html>
 <html lang="pt-BR" data-theme="${meta.style?.suggested_theme || 'educational'}">
@@ -119,40 +157,53 @@ export function generateStandaloneDiagramHtml(meta: DiagramMeta, mermaidCode: st
     .brand-title h1 {
       font-size: 1.1rem;
       font-weight: 700;
+      color: var(--text-main);
     }
 
     .brand-title span {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      background: var(--bg-panel);
-      padding: 0.15rem 0.5rem;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
       border-radius: var(--radius-sm);
+      background: var(--bg-panel);
+      color: var(--accent-color);
+      font-weight: 600;
+      text-transform: uppercase;
     }
 
     .toolbar {
       display: flex;
-      align-items: center;
       gap: 0.5rem;
+      align-items: center;
+    }
+
+    .theme-select {
+      background: var(--bg-panel);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 0.35rem 0.65rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      cursor: pointer;
+      outline: none;
     }
 
     .btn {
       background: var(--bg-panel);
       color: var(--text-main);
       border: 1px solid var(--border-color);
-      padding: 0.4rem 0.75rem;
+      padding: 0.35rem 0.75rem;
       border-radius: var(--radius-sm);
-      font-size: 0.8rem;
+      font-size: 0.85rem;
+      font-weight: 500;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
       transition: all 150ms ease;
-      font-weight: 500;
     }
 
     .btn:hover {
       background: var(--border-color);
-      transform: translateY(-1px);
     }
 
     .btn.primary {
@@ -165,26 +216,15 @@ export function generateStandaloneDiagramHtml(meta: DiagramMeta, mermaidCode: st
       background: var(--accent-hover);
     }
 
-    select.theme-select {
-      background: var(--bg-panel);
-      color: var(--text-main);
-      border: 1px solid var(--border-color);
-      padding: 0.4rem 0.6rem;
-      border-radius: var(--radius-sm);
-      font-size: 0.8rem;
-      cursor: pointer;
-    }
-
     main {
       flex: 1;
       position: relative;
       overflow: hidden;
+      cursor: grab;
       display: flex;
       justify-content: center;
       align-items: center;
-      background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
-      background-size: 24px 24px;
-      cursor: grab;
+      background: var(--bg-body);
     }
 
     main:active {
@@ -192,10 +232,27 @@ export function generateStandaloneDiagramHtml(meta: DiagramMeta, mermaidCode: st
     }
 
     #viewport {
-      transform-origin: 0 0;
+      transform-origin: center center;
       transition: transform 50ms ease-out;
       will-change: transform;
-      user-select: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 3rem;
+      min-width: 100%;
+      min-height: 100%;
+    }
+
+    #diagramContainer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #diagramContainer svg {
+      max-width: none;
+      height: auto;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));
     }
 
     .meta-drawer {
@@ -206,16 +263,11 @@ export function generateStandaloneDiagramHtml(meta: DiagramMeta, mermaidCode: st
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
       padding: 0.75rem 1rem;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
       box-shadow: var(--shadow-lg);
-      max-width: 320px;
+      max-width: 380px;
       z-index: 5;
-      backdrop-filter: blur(8px);
-    }
-
-    .meta-drawer strong {
-      color: var(--text-main);
     }
 
     .zoom-controls {
@@ -259,7 +311,7 @@ export function generateStandaloneDiagramHtml(meta: DiagramMeta, mermaidCode: st
   <header>
     <div class="brand-title">
       <h1>${title}</h1>
-      <span>${escapeHtml(meta.type)}</span>
+      <span>${meta.type || 'diagram'}</span>
     </div>
 
     <div class="toolbar">
@@ -279,14 +331,12 @@ export function generateStandaloneDiagramHtml(meta: DiagramMeta, mermaidCode: st
 
   <main id="canvasContainer">
     <div id="viewport">
-      <div id="diagramContainer" class="mermaid">
-${cleanCode}
-      </div>
+      <div id="diagramContainer"></div>
     </div>
 
     <div class="meta-drawer">
       <div><strong>Descrição:</strong> ${description}</div>
-      <div style="margin-top: 0.35rem;"><strong>Nós:</strong> ${meta.stats?.node_count || '-'} • <strong>Render:</strong> ${meta.stats?.generation_time_ms || 0}ms • <strong>Criado:</strong> ${new Date(meta.created_at).toLocaleDateString('pt-BR')}</div>
+      <div style="margin-top: 0.35rem;"><strong>Nós:</strong> ${meta.stats?.node_count || '-'} • <strong>Render:</strong> ${meta.stats?.generation_time_ms || '-'}ms • <strong>Criado:</strong> ${meta.created_at ? new Date(meta.created_at).toLocaleDateString('pt-BR') : '-'}</div>
     </div>
 
     <div class="zoom-controls">
@@ -298,8 +348,8 @@ ${cleanCode}
     <div id="toast" class="toast">Código Mermaid copiado!</div>
   </main>
 
-  <!-- Runtime Mermaid Standalone -->
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <!-- Runtime Mermaid Standalone (100% Offline) -->
+  ${scriptTag}
   <script>
     const rawMermaidCode = ${JSON.stringify(cleanCode)};
     const metadata = ${jsonMeta};
@@ -399,9 +449,20 @@ ${cleanCode}
       });
 
       const diagEl = document.getElementById('diagramContainer');
-      diagEl.removeAttribute('data-processed');
-      diagEl.textContent = rawMermaidCode;
-      await mermaid.run({ nodes: [diagEl] });
+      try {
+        const id = 'mermaidSvg_' + Math.random().toString(36).substring(2, 9);
+        const { svg } = await mermaid.render(id, rawMermaidCode);
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svg, 'image/svg+xml');
+        diagEl.replaceChildren(doc.documentElement);
+      } catch (err) {
+        console.error('Erro ao renderizar Mermaid:', err);
+        diagEl.replaceChildren();
+        const errBox = document.createElement('div');
+        errBox.style.cssText = 'color: #EF4444; padding: 1.5rem; background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-color); font-family: monospace;';
+        errBox.textContent = '⚠️ Erro de renderização Mermaid: ' + (err && err.message ? err.message : err);
+        diagEl.appendChild(errBox);
+      }
     }
 
     function exportSvg() {
@@ -459,11 +520,17 @@ ${cleanCode}
       img.src = url;
     }
 
-    document.addEventListener('DOMContentLoaded', async () => {
+    function init() {
       if (typeof mermaid !== 'undefined') {
-        await reRender();
+        reRender();
       }
-    });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
   </script>
 </body>
 </html>`;
@@ -474,6 +541,10 @@ ${cleanCode}
  */
 export function generateDashboardHtml(diagrams: Array<{ meta: DiagramMeta; code: string }>): string {
   const jsonDiagrams = JSON.stringify(diagrams);
+  const bundle = getMermaidBundle();
+  const scriptTag = bundle
+    ? `<script>\n${bundle}\n</script>`
+    : `<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>`;
 
   return `<!DOCTYPE html>
 <html lang="pt-BR" data-theme="corporate">
@@ -551,10 +622,10 @@ export function generateDashboardHtml(diagrams: Array<{ meta: DiagramMeta; code:
 
     .search-input {
       width: 100%;
-      background: var(--bg-panel);
-      border: 1px solid var(--border-color);
       padding: 0.5rem 0.75rem;
       border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-panel);
       color: var(--text-main);
       font-size: 0.85rem;
       outline: none;
@@ -564,15 +635,19 @@ export function generateDashboardHtml(diagrams: Array<{ meta: DiagramMeta; code:
       flex: 1;
       overflow-y: auto;
       padding: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
     }
 
     .diagram-item {
-      padding: 0.75rem 1rem;
+      padding: 0.75rem;
       border-radius: var(--radius-sm);
-      margin-bottom: 0.25rem;
       cursor: pointer;
-      transition: all 150ms ease;
-      border: 1px solid transparent;
+      transition: background 150ms ease;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
     }
 
     .diagram-item:hover {
@@ -580,15 +655,20 @@ export function generateDashboardHtml(diagrams: Array<{ meta: DiagramMeta; code:
     }
 
     .diagram-item.active {
-      background: var(--bg-panel);
-      border-color: var(--accent-color);
+      background: var(--accent-color);
+      color: #FFFFFF;
+    }
+
+    .diagram-item.active .diagram-item-meta {
+      color: rgba(255,255,255,0.8);
     }
 
     .diagram-item-title {
       font-weight: 600;
-      font-size: 0.85rem;
-      margin-bottom: 0.2rem;
-      color: var(--text-main);
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .diagram-item-meta {
@@ -603,7 +683,6 @@ export function generateDashboardHtml(diagrams: Array<{ meta: DiagramMeta; code:
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      position: relative;
     }
 
     header {
@@ -613,18 +692,18 @@ export function generateDashboardHtml(diagrams: Array<{ meta: DiagramMeta; code:
       display: flex;
       justify-content: space-between;
       align-items: center;
+      z-index: 10;
     }
 
     .canvas-area {
       flex: 1;
       position: relative;
       overflow: hidden;
+      cursor: grab;
       display: flex;
       justify-content: center;
       align-items: center;
-      background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
-      background-size: 24px 24px;
-      cursor: grab;
+      background: var(--bg-body);
     }
 
     .canvas-area:active {
@@ -632,39 +711,44 @@ export function generateDashboardHtml(diagrams: Array<{ meta: DiagramMeta; code:
     }
 
     #viewport {
-      transform-origin: 0 0;
+      transform-origin: center center;
       transition: transform 50ms ease-out;
       will-change: transform;
-      user-select: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 3rem;
+      min-width: 100%;
+      min-height: 100%;
+    }
+
+    #diagramContainer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #diagramContainer svg {
+      max-width: none;
+      height: auto;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));
     }
 
     .btn {
       background: var(--bg-panel);
       color: var(--text-main);
       border: 1px solid var(--border-color);
-      padding: 0.4rem 0.75rem;
+      padding: 0.35rem 0.75rem;
       border-radius: var(--radius-sm);
-      font-size: 0.8rem;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      transition: all 150ms ease;
+      font-size: 0.85rem;
       font-weight: 500;
-    }
-
-    .btn:hover {
-      background: var(--border-color);
+      cursor: pointer;
     }
 
     .btn.primary {
       background: var(--accent-color);
       color: #FFFFFF;
       border-color: var(--accent-color);
-    }
-
-    .btn.primary:hover {
-      background: var(--accent-hover);
     }
   </style>
 </head>
@@ -673,7 +757,6 @@ export function generateDashboardHtml(diagrams: Array<{ meta: DiagramMeta; code:
   <aside>
     <div class="aside-header">
       <h1>📐 ArchView Dashboard</h1>
-      <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Relatório Consolidado de Arquitetura</p>
     </div>
 
     <div class="aside-search">
@@ -703,12 +786,13 @@ export function generateDashboardHtml(diagrams: Array<{ meta: DiagramMeta; code:
 
     <div class="canvas-area" id="canvasContainer">
       <div id="viewport">
-        <div id="diagramContainer" class="mermaid"></div>
+        <div id="diagramContainer"></div>
       </div>
     </div>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <!-- Runtime Mermaid Standalone (100% Offline) -->
+  ${scriptTag}
   <script>
     const diagrams = ${jsonDiagrams};
     let activeIndex = 0;
@@ -794,16 +878,33 @@ export function generateDashboardHtml(diagrams: Array<{ meta: DiagramMeta; code:
       document.getElementById('currentDesc').textContent = selected.meta.description || '';
 
       const diagEl = document.getElementById('diagramContainer');
-      diagEl.removeAttribute('data-processed');
-      diagEl.textContent = selected.code;
-
       zoom = 1.0; panX = 0; panY = 0; updateTransform();
-      await mermaid.run({ nodes: [diagEl] });
+
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'corporate';
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'loose',
+        theme: currentTheme === 'dark' ? 'dark' : (currentTheme === 'educational' ? 'default' : 'neutral')
+      });
+
+      try {
+        const id = 'dashMermaidSvg_' + Math.random().toString(36).substring(2, 9);
+        const { svg } = await mermaid.render(id, selected.code);
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svg, 'image/svg+xml');
+        diagEl.replaceChildren(doc.documentElement);
+      } catch (err) {
+        console.error('Erro ao renderizar Mermaid:', err);
+        diagEl.replaceChildren();
+        const errBox = document.createElement('div');
+        errBox.style.cssText = 'color: #EF4444; padding: 1.5rem; background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-color); font-family: monospace;';
+        errBox.textContent = '⚠️ Erro de renderização: ' + (err && err.message ? err.message : err);
+        diagEl.appendChild(errBox);
+      }
     }
 
     function changeTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
-      mermaid.initialize({ startOnLoad: false, theme: theme === 'dark' ? 'dark' : 'neutral' });
       selectDiagram(activeIndex);
     }
 
@@ -838,13 +939,20 @@ export function generateDashboardHtml(diagrams: Array<{ meta: DiagramMeta; code:
       img.src = url;
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
-      renderList();
-      if (diagrams.length > 0) {
-        selectDiagram(0);
+    function init() {
+      if (typeof mermaid !== 'undefined') {
+        renderList();
+        if (diagrams.length > 0) {
+          selectDiagram(0);
+        }
       }
-    });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
   </script>
 </body>
 </html>`;

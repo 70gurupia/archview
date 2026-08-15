@@ -1,12 +1,12 @@
 {
   "schema_version": "2.0",
-  "id": "architecture-topologia-real-do-codigo-do-archview-v5--7d6b47",
+  "id": "architecture-topologia-real-do-codigo-do-archview-v5--4fe739",
   "type": "architecture",
   "title": "Topologia Real do Código do ArchView v5.0",
-  "description": "Mapeamento de 43 arquivos e 7541 linhas de código [Express]",
+  "description": "Mapeamento de 43 arquivos e 7650 linhas de código [Express]",
   "source": "claude-mcp",
-  "created_at": "2026-08-15T22:11:29.145Z",
-  "updated_at": "2026-08-15T22:11:29.145Z",
+  "created_at": "2026-08-15T23:42:15.194Z",
+  "updated_at": "2026-08-15T23:42:15.194Z",
   "files": {
     "mermaid": "self-doc-topology.mmd",
     "meta": "self-doc-topology.meta.json",
@@ -20,7 +20,7 @@
   },
   "stats": {
     "node_count": 43,
-    "generation_time_ms": 52
+    "generation_time_ms": 41
   },
   "tags": [
     "codebase",

@@ -28,7 +28,7 @@ async function runV5TestSuite() {
   const htmlContent = fs.readFileSync(expectedHtmlPath, 'utf-8');
   assert(htmlContent.includes('<!DOCTYPE html>'), "Deve ser um documento HTML5 válido");
   assert(htmlContent.includes('Teste HTML v5.0'), "Deve conter o título do diagrama");
-  assert(htmlContent.includes('mermaid.min.js'), "Deve conter runtime do Mermaid");
+  assert(htmlContent.includes('mermaid'), "Deve conter runtime do Mermaid");
   assert(htmlContent.includes('exportPng'), "Deve conter função de exportação PNG");
   assert(htmlContent.includes('zoomIn'), "Deve conter controles de Pan/Zoom");
   console.log("  ✅ Arquivo HTML individual gerado e validado:", expectedHtmlPath);

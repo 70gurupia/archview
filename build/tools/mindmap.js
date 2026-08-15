@@ -10,10 +10,11 @@ export function generateMindmapMermaid(input) {
             maxBranchDepth = depth;
         const indent = '  '.repeat(depth + 1);
         if (typeof branch === 'string') {
-            mermaid += `${indent}${branch}\n`;
+            const sanitized = branch.replace(/"/g, "'");
+            mermaid += `${indent}["${sanitized}"]\n`;
         }
         else {
-            let nodeText = branch.title;
+            let nodeText = branch.title.replace(/"/g, "'");
             if (input.style?.show_icons !== false && branch.icons && branch.icons.length > 0) {
                 nodeText = `${branch.icons.join(' ')} ${nodeText}`;
             }
