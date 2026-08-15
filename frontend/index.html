@@ -82,6 +82,9 @@
         <button class="tab-btn" :class="{ 'active': activeTab === 'flowchart' }" @click="setTab('flowchart')">
           🔄 Fluxogramas (<span x-text="diagrams.filter(d => d.type === 'flowchart').length"></span>)
         </button>
+        <button class="tab-btn" :class="{ 'active': activeTab === 'codebase' }" @click="setTab('codebase')">
+          🔍 Codebase Explorer
+        </button>
         <button class="tab-btn" :class="{ 'active': activeTab === 'playground' }" @click="setTab('playground')">
           🧪 Playground MCP
         </button>
@@ -98,6 +101,48 @@
         >
       </div>
     </div>
+
+    <!-- Seção Codebase Explorer (v3.0) -->
+    <section class="playground-section" x-show="activeTab === 'codebase'" style="display: none;">
+      <div class="playground-header" style="margin-bottom: 1.5rem;">
+        <h2>🔍 Codebase Intelligence & Flow Tracing</h2>
+        <p>Varra repositórios locais para gerar diagramas de arquitetura C4, rastrear grafos de chamadas bidirecionais e inspecionar fluxos de execução.</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <!-- Card 1: Varredura de Topologia -->
+        <div style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+          <h3 style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>📐</span> Mapear Topologia C4
+          </h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Analisa pastas, frameworks (Express, Nest, FastAPI, Fiber) e conexões entre camadas.</p>
+          
+          <label style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">Caminho da Pasta / Repositório:</label>
+          <input type="text" class="search-input" style="width: 100%; margin-bottom: 1rem; display: block;" x-model="codebaseScanPath" placeholder=". ou /caminho/do/projeto">
+          
+          <button class="action-btn primary" @click="scanCodebaseTopology()" :disabled="codebaseLoading" style="width: 100%;">
+            <span x-show="!codebaseLoading">🚀 Gerar Topologia de Módulos</span>
+            <span x-show="codebaseLoading">⏳ Analisando AST e Módulos...</span>
+          </button>
+        </div>
+
+        <!-- Card 2: Grafo de Chamadas -->
+        <div style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+          <h3 style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🎯</span> Rastrear Grafo de Chamadas
+          </h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Rastreamento bidirecional: descobre quem chama (Inbound) e o que a função chama (Outbound).</p>
+          
+          <label style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">Nome da Função, Classe ou Símbolo:</label>
+          <input type="text" class="search-input" style="width: 100%; margin-bottom: 1rem; display: block;" x-model="codebaseTargetSymbol" placeholder="ex: executeFlowchart, UserService, loginHandler">
+          
+          <button class="action-btn" @click="traceSymbolCallGraph()" :disabled="codebaseLoading || !codebaseTargetSymbol" style="width: 100%;">
+            <span x-show="!codebaseLoading">🔍 Rastrear Inbound & Outbound</span>
+            <span x-show="codebaseLoading">⏳ Mapeando Grafo...</span>
+          </button>
+        </div>
+      </div>
+    </section>
 
     <!-- Seção Playground MCP -->
     <section class="playground-section" x-show="activeTab === 'playground'" style="display: none;">

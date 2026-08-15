@@ -1,4 +1,4 @@
-# 📋 Quadro Kanban: MCP Visual Server v2.0
+# 📋 Quadro Kanban: MCP Visual Server (ArchView) v3.0
 
 > WIP Limit: 1 tarefa ativa por vez.
 
@@ -6,22 +6,23 @@
 
 ## 📥 Backlog
 
-### 🗺️ Fase 3.0: Codebase Intelligence & Flow Tracing (Motor Determinístico)
-- [ ] **TASK-021 (v3.1)**: Implementar a tool MCP `scan_codebase_topology` (C4 em Mermaid para repositórios).
-- [ ] **TASK-022 (v3.2)**: Implementar mapeamento de dependências e a tool `trace_call_graph`.
-- [ ] **TASK-023 (v3.3)**: Implementar ingestão de traces/logs e endpoint `POST /api/ingest/trace`.
-- [ ] **TASK-024 (v3.3)**: Implementar a tool `trace_execution_flow` (Diagramas de sequência a partir de traces).
-- [ ] **TASK-025 (v3.3)**: Implementar a tool unificada `analyze_codebase_overview`.
-- [ ] **TASK-026 (v3.4)**: Criar a aba "Codebase Explorer" no Web Studio e validar suíte de 13 gates.
+*(Todas as tarefas planejadas para as Fases 1.0, 2.0, 2.5 e 3.0 foram concluídas com 100% de sucesso)*
 
 ---
 
-## ⏳ Em Progresso (WIP: 1/1)
-- [ ] **TASK-020 (v3.1)**: Desenvolver motor universal de análise de diretórios e frameworks (`codebase-scanner.ts`).
+## ⏳ Em Progresso (WIP: 0/1)
 
 ---
 
 ## ✅ Concluído (Done)
+
+- [x] **TASK-026 (v3.0)**: Criação da aba "Codebase Explorer" no Web Studio, integração com endpoints REST e validação completa dos 13 gates.
+- [x] **TASK-025 (v3.0)**: Implementação da tool `analyze_codebase_overview` (Raio-X completo 360 do repositório com mapa mental, topologia e métricas).
+- [x] **TASK-024 (v3.0)**: Implementação da tool `trace_execution_flow` (Diagramas de sequência a partir de logs/traces com blocos alt/else).
+- [x] **TASK-023 (v3.0)**: Ingestão de traces/logs via HTTP e criação do endpoint `POST /api/ingest/trace` na porta 3001.
+- [x] **TASK-022 (v3.0)**: Implementação do mapeamento bidirecional de dependências e da tool `trace_call_graph`.
+- [x] **TASK-021 (v3.0)**: Implementação da tool MCP `scan_codebase_topology` (Topologia C4 com subgrafos e camadas semânticas).
+- [x] **TASK-020 (v3.0)**: Desenvolvimento do motor universal de análise de diretórios, frameworks e AST léxica (`src/engine/`).
 
 - [x] **TASK-019 (v2.5)**: Implementação de agrupamento automático e explícito por subgrafos nomeados (`subgraph [Nome] ... end`) nos geradores de arquitetura e fluxograma.
 - [x] **TASK-018 (v2.5)**: Aplicação de classes de design system com bordas curvas (`rx:8px, ry:8px`) e paleta de cores semântica harmonizada (Azul Safira, Verde-Petróleo, Índigo e Âmbar).

@@ -55,6 +55,11 @@ document.addEventListener('alpine:init', () => {
     syntaxError: false,
     exportTransparent: false,
 
+    // Codebase Explorer v3.0
+    codebaseScanPath: '.',
+    codebaseTargetSymbol: '',
+    codebaseLoading: false,
+
     // Pan & Zoom
     panX: 0,
     panY: 0,
@@ -471,8 +476,54 @@ document.addEventListener('alpine:init', () => {
       }, null, 2);
     },
 
-    testPlayground() {
-       this.showToast('No modo local/estúdio, você deve usar um cliente MCP real (Claude/Cursor) enviando requisições ao servidor. Esta interface apenas simula e ajuda a criar os prompts.');
+    async scanCodebaseTopology() {
+      this.codebaseLoading = true;
+      try {
+        const res = await fetch('/api/codebase/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: this.codebaseScanPath })
+        });
+        const data = await res.json();
+        if (data.success) {
+          await this.loadDiagrams();
+          this.setTab('architecture');
+          this.showToast('✅ Topologia C4 mapeada com sucesso!');
+        } else {
+          this.showToast(`❌ Erro: ${data.error}`);
+        }
+      } catch (err: any) {
+        this.showToast(`❌ Falha na requisição: ${err.message}`);
+      } finally {
+        this.codebaseLoading = false;
+      }
+    },
+
+    async traceSymbolCallGraph() {
+      if (!this.codebaseTargetSymbol) return;
+      this.codebaseLoading = true;
+      try {
+        const res = await fetch('/api/codebase/trace-call', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            path: this.codebaseScanPath,
+            symbol_name: this.codebaseTargetSymbol
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          await this.loadDiagrams();
+          this.setTab('flowchart');
+          this.showToast(`✅ Grafo de chamadas de "${this.codebaseTargetSymbol}" gerado!`);
+        } else {
+          this.showToast(`❌ Erro: ${data.error}`);
+        }
+      } catch (err: any) {
+        this.showToast(`❌ Falha na requisição: ${err.message}`);
+      } finally {
+        this.codebaseLoading = false;
+      }
     },
 
     getTabEmoji(type: string) {

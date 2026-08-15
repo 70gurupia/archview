@@ -1,6 +1,6 @@
-# Documentação da API MCP - ArchView v2.0
+# Documentação da API MCP - ArchView v3.0
 
-O ArchView expõe 5 ferramentas principais via Model Context Protocol.
+O ArchView expõe 9 ferramentas principais via Model Context Protocol, além de endpoints REST para ingestão em tempo real.
 
 ## 1. `generate_mindmap`
 Gera mapas mentais. Implementa guardrails rígidos de máximo de 50 nós e 5 níveis de profundidade.
@@ -49,7 +49,51 @@ Fluxogramas lógicos, pipelines de validação e processos de negócio.
     - `direction` (enum): `"TB"`, `"LR"` (horizontal widescreen automático para pipelines lineares), `"BT"`, `"RL"`.
     - `palette` (enum): `"educational"`, `"corporate"`, `"minimal"`, `"dark"`.
 
-## 5. `export_diagram` (Backend Export Disabled)
-- **Status:** **DESATIVADO NO BACKEND**.
-- **Motivo:** Restrições de Low-CPU da máquina hospedeira. O Node.js não invoca Puppeteer/mmdc.
-- **Alternativa:** O usuário deve usar os botões nativos da UI Web (Client-side export para SVG, PNG, PNG 4K).
+## 5. `scan_codebase_topology` (v3.0)
+Varredura determinística de diretórios e geração de diagrama de topologia C4 com subgrafos e camadas de software.
+- **Input (Zod)**
+  - `path` (string, opcional): Caminho do diretório raiz do repositório (padrão: diretório atual).
+  - `title` (string, opcional): Título do diagrama.
+  - `view_mode` (enum, opcional): `"hybrid"` (pastas + camadas), `"layered"` (camadas puras) ou `"folders"` (árvore de pastas).
+  - `direction` (enum, opcional): `"TD"` ou `"LR"`.
+  - `max_depth` (number, opcional): Profundidade máxima de diretórios a varrer (padrão: 6).
+
+## 6. `trace_call_graph` (v3.0)
+Rastreamento bidirecional do grafo de chamadas de uma função, método ou classe com escopo de arquivo.
+- **Input (Zod)**
+  - `symbol_name` (string, obrigatório): Nome do símbolo a rastrear.
+  - `path` (string, opcional): Caminho do repositório.
+  - `file_path` (string, opcional): Arquivo específico de origem do símbolo.
+  - `depth` (number, opcional): Profundidade da árvore de chamadas (1 a 4, padrão: 2).
+  - `direction` (enum, opcional): `"LR"` (widescreen) ou `"TD"`.
+
+## 7. `trace_execution_flow` (v3.0)
+Ingestão polimórfica de logs e traces para geração de Diagrama de Sequência Mermaid interativo.
+- **Input (Zod)**
+  - `title` (string, opcional): Título do fluxo.
+  - `trace_data` (any, opcional): Array de spans JSON ou formato OpenTelemetry.
+  - `raw_log` (string, opcional): Texto bruto de logs com padrões `ServiceA -> ServiceB: action` ou HTTP access logs.
+  - `log_file_path` (string, opcional): Caminho de arquivo local (`.log`).
+
+## 8. `analyze_codebase_overview` (v3.0)
+Gera o Raio-X completo 360 do repositório, combinando mapa mental modular, diagrama C4 de topologia e relatório de métricas.
+- **Input (Zod)**
+  - `path` (string, opcional): Diretório do projeto.
+  - `title` (string, opcional): Título da análise.
+
+## 9. `export_diagram` (Client-Side)
+- **Status:** Processamento delegado ao navegador cliente via botões na Web Studio (SVG, PNG, PNG 4K) para zero consumo de CPU no servidor.
+
+---
+
+## 🌐 Endpoints HTTP REST (Porta 3001)
+
+* `GET /events`: Stream SSE para atualização de diagramas em tempo real.
+* `GET /api/diagrams`: Lista todos os diagramas com metadados e conteúdo `.mmd`.
+* `GET /api/diagrams/:id`: Recupera metadados e conteúdo de um diagrama específico.
+* `PUT /api/diagrams/:id`: Atualiza o código Mermaid de um diagrama com revalidação de path traversal.
+* `GET /api/health`: Status operacional, uptime e contagem de clientes SSE conectados.
+* `POST /api/ingest/trace`: Ingestão de traces via HTTP para geração de `sequenceDiagram`.
+* `POST /api/codebase/scan`: Disparo de varredura de topologia via HTTP.
+* `POST /api/codebase/trace-call`: Rastreamento de chamadas de símbolo via HTTP.
+

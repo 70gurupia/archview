@@ -6,6 +6,10 @@ import { executeOrgchart } from './tools/orgchart.js';
 import { executeArchitecture } from './tools/architecture.js';
 import { executeFlowchart } from './tools/flowchart.js';
 import { executeExport } from './tools/export.js';
+import { executeScanTopology } from './tools/scan-topology.js';
+import { executeTraceCallGraph } from './tools/trace-callgraph.js';
+import { executeTraceExecution } from './tools/trace-execution.js';
+import { executeAnalyzeOverview } from './tools/analyze-overview.js';
 import { startSseServer } from './utils/sse.js';
 class VisualServer {
     server;
@@ -224,6 +228,66 @@ class VisualServer {
                         },
                         required: ["source_path", "target_format"]
                     }
+                },
+                {
+                    name: "scan_codebase_topology",
+                    description: "Varre repositórios locais (TypeScript, Python, Go, Java, Rust) e gera um diagrama de topologia C4 com subgrafos de pastas e camadas de software.",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            path: { type: "string", description: "Caminho do diretório raiz do repositório (padrão: diretório atual)" },
+                            title: { type: "string", description: "Título do diagrama de topologia" },
+                            description: { type: "string", description: "Descrição opcional" },
+                            view_mode: { type: "string", enum: ["hybrid", "layered", "folders"], description: "Modo de agrupamento: híbrido (pastas + camadas), camadas puras ou pastas" },
+                            direction: { type: "string", enum: ["TD", "LR", "BT", "RL"], description: "Direção do diagrama" },
+                            max_depth: { type: "number", description: "Profundidade máxima de diretórios a varrer (padrão: 6)" },
+                            output_path: { type: "string", description: "Caminho opcional do arquivo de saída" }
+                        }
+                    }
+                },
+                {
+                    name: "trace_call_graph",
+                    description: "Rastreia o grafo de chamadas bidirecional de uma função, método ou classe (quem chama e o que ela chama) com escopo por arquivos.",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            symbol_name: { type: "string", description: "Nome da função, método ou classe a rastrear" },
+                            path: { type: "string", description: "Caminho do repositório (padrão: diretório atual)" },
+                            file_path: { type: "string", description: "Caminho do arquivo específico onde o símbolo reside" },
+                            depth: { type: "number", description: "Profundidade da árvore de chamadas (1 a 4, padrão: 2)" },
+                            direction: { type: "string", enum: ["LR", "TD", "RL", "BT"], description: "Direção do fluxo (padrão: LR widescreen)" },
+                            title: { type: "string", description: "Título do grafo de chamadas" },
+                            output_path: { type: "string", description: "Caminho opcional do arquivo de saída" }
+                        },
+                        required: ["symbol_name"]
+                    }
+                },
+                {
+                    name: "trace_execution_flow",
+                    description: "Ingere traces estruturados (JSON/OpenTelemetry), logs textuais ou stack traces e gera um Diagrama de Sequência Mermaid interativo.",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            title: { type: "string", description: "Título do fluxo de execução" },
+                            description: { type: "string", description: "Descrição do cenário de teste ou requisição" },
+                            trace_data: { description: "Array JSON de eventos/spans ou objeto OpenTelemetry" },
+                            raw_log: { type: "string", description: "Texto bruto de logs ou stack traces" },
+                            log_file_path: { type: "string", description: "Caminho de arquivo local (.log) para leitura" },
+                            output_path: { type: "string", description: "Caminho opcional do arquivo de saída" }
+                        }
+                    }
+                },
+                {
+                    name: "analyze_codebase_overview",
+                    description: "Gera um Raio-X completo do repositório, combinando mapa mental de módulos, diagrama C4 de topologia e métricas de código.",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            path: { type: "string", description: "Caminho do repositório (padrão: diretório atual)" },
+                            title: { type: "string", description: "Título da análise geral" },
+                            output_path: { type: "string", description: "Caminho opcional do arquivo de saída" }
+                        }
+                    }
                 }
             ],
         }));
@@ -247,6 +311,18 @@ class VisualServer {
                         break;
                     case "export_diagram":
                         result = await executeExport(args);
+                        break;
+                    case "scan_codebase_topology":
+                        result = executeScanTopology(args);
+                        break;
+                    case "trace_call_graph":
+                        result = executeTraceCallGraph(args);
+                        break;
+                    case "trace_execution_flow":
+                        result = executeTraceExecution(args);
+                        break;
+                    case "analyze_codebase_overview":
+                        result = executeAnalyzeOverview(args);
                         break;
                     default:
                         throw new McpError(ErrorCode.MethodNotFound, `Ferramenta desconhecida: ${name}`);

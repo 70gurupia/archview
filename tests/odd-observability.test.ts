@@ -23,7 +23,7 @@ async function runOddSuite() {
   const health = await healthRes.json();
   assert(health.status === 'ok', 'Health check reporta status ok');
   assert(typeof health.uptime === 'number' && health.uptime >= 0, 'Health check reporta métrica de uptime válida');
-  assert(health.version === '2.0.0', 'Health check reporta versão semântica 2.0.0');
+  assert(health.version === '3.0.0', 'Health check reporta versão semântica 3.0.0');
 
   // 3. Métricas no meta.json gerado
   console.log('\n2. Auditoria de Métricas e Telemetria de Diagrama:');

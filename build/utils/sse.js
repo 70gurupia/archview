@@ -5,6 +5,9 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { assertSafePath } from './meta.js';
+import { executeTraceExecution } from '../tools/trace-execution.js';
+import { executeScanTopology } from '../tools/scan-topology.js';
+import { executeTraceCallGraph } from '../tools/trace-callgraph.js';
 let clients = [];
 let clientIdCounter = 0;
 let httpServer = null;
@@ -143,11 +146,50 @@ export function createSseApp() {
     app.get('/api/health', (_req, res) => {
         res.json({
             status: 'ok',
-            server: 'mcp-visual-server',
-            version: '2.0.0',
+            server: 'archview',
+            version: '3.0.0',
             connectedClients: clients.length,
             uptime: process.uptime()
         });
+    });
+    // REST: Ingest Execution Trace
+    app.post('/api/ingest/trace', (req, res) => {
+        try {
+            const result = executeTraceExecution(req.body);
+            res.status(201).json({
+                success: true,
+                diagram: result
+            });
+        }
+        catch (err) {
+            res.status(400).json({ success: false, error: err.message });
+        }
+    });
+    // REST: Scan Codebase Topology
+    app.post('/api/codebase/scan', (req, res) => {
+        try {
+            const result = executeScanTopology(req.body);
+            res.json({
+                success: true,
+                diagram: result
+            });
+        }
+        catch (err) {
+            res.status(400).json({ success: false, error: err.message });
+        }
+    });
+    // REST: Trace Call Graph
+    app.post('/api/codebase/trace-call', (req, res) => {
+        try {
+            const result = executeTraceCallGraph(req.body);
+            res.json({
+                success: true,
+                diagram: result
+            });
+        }
+        catch (err) {
+            res.status(400).json({ success: false, error: err.message });
+        }
     });
     return app;
 }

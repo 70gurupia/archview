@@ -106,6 +106,39 @@ export const ExportInputSchema = z.object({
         theme: z.string().optional()
     }).optional()
 });
+export const ScanTopologyInputSchema = z.object({
+    path: z.string().optional(),
+    title: z.string().max(100).optional(),
+    description: z.string().max(255).optional(),
+    view_mode: z.enum(['hybrid', 'layered', 'folders']).optional(),
+    direction: z.enum(['TD', 'LR', 'BT', 'RL']).optional(),
+    max_depth: z.number().min(1).max(10).optional(),
+    output_path: z.string().optional()
+});
+export const TraceCallGraphInputSchema = z.object({
+    path: z.string().optional(),
+    symbol_name: z.string().min(1).max(100),
+    file_path: z.string().optional(),
+    depth: z.number().min(1).max(5).optional(),
+    direction: z.enum(['LR', 'TD', 'RL', 'BT']).optional(),
+    title: z.string().max(100).optional(),
+    description: z.string().max(255).optional(),
+    output_path: z.string().optional()
+});
+export const TraceExecutionInputSchema = z.object({
+    title: z.string().max(100).optional(),
+    description: z.string().max(255).optional(),
+    trace_data: z.any().optional(),
+    raw_log: z.string().optional(),
+    log_file_path: z.string().optional(),
+    output_path: z.string().optional()
+});
+export const AnalyzeOverviewInputSchema = z.object({
+    path: z.string().optional(),
+    title: z.string().max(100).optional(),
+    description: z.string().max(255).optional(),
+    output_path: z.string().optional()
+});
 // ---- GUARDRAILS ----
 export function validateMindmapGuardrails(branches) {
     let nodeCount = 1; // 1 for central topic

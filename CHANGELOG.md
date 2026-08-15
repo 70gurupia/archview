@@ -2,6 +2,28 @@
 
 Todas as alterações notáveis deste projeto serão documentadas neste arquivo.
 
+## [3.0.0] - 2026-08-15
+
+### Adicionado
+- **Motor Universal de Análise Léxica de AST (`src/engine/`)**:
+  - `ast-parser-ts.ts`: Extração ultra-rápida de classes, interfaces, métodos, rotas Express/Nest/Fastify e chamadas cruzadas em TypeScript/JavaScript sem dependências externas.
+  - `ast-parser-lexical.ts`: Parser léxico universal para Python, Go, Java, Kotlin, Rust, PHP e C#, com mapeamento de imports, structs, decorators e chamadas de métodos.
+  - `universal-scanner.ts`: Varredura recursiva de diretórios com filtro de `.gitignore`, detecção automática de frameworks e resolução determinística de chamadas entre módulos.
+  - `trace-parser.ts`: Parser polimórfico de logs (JSON estruturado, OpenTelemetry spans, texto de logs e stack traces) com transpilação para Mermaid `sequenceDiagram`.
+- **4 Novas Ferramentas MCP**:
+  - `scan_codebase_topology`: Mapeamento de repositórios em C4 com subgrafos e camadas semânticas (`view_mode: 'hybrid' | 'layered' | 'folders'`).
+  - `trace_call_graph`: Rastreamento bidirecional widescreen (`LR`) de chamadas de funções/símbolos com agrupamento por arquivos de origem.
+  - `trace_execution_flow`: Ingestão de traces e geração de diagramas de sequência com atores, participantes e blocos `alt/else` de erro.
+  - `analyze_codebase_overview`: Raio-X completo 360 com mapa mental modular, topologia e relatório de métricas.
+- **Endpoints REST HTTP (`src/utils/sse.ts`)**:
+  - `POST /api/ingest/trace`: Ingestão de logs/traces via HTTP.
+  - `POST /api/codebase/scan`: Varredura remota de diretórios.
+  - `POST /api/codebase/trace-call`: Rastreamento de chamadas via HTTP.
+- **Aba "Codebase Explorer" no Web Studio**:
+  - Painel interativo para disparo de varreduras de topologia e rastreamento de símbolos diretamente pela interface web.
+- **Suíte de Testes TDD v3.0 (`tests/tdd-v3.test.ts`)**:
+  - Cobertura de parsers, scanner universal, resolução de chamadas cruzadas e execução das 4 novas ferramentas MCP com 100% de aprovação.
+
 ## [2.5.0] - 2026-08-15
 
 ### Adicionado

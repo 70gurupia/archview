@@ -7,6 +7,9 @@ import path from 'path';
 import { Server } from 'http';
 import { DiagramMeta } from '../types/index.js';
 import { assertSafePath } from './meta.js';
+import { executeTraceExecution } from '../tools/trace-execution.js';
+import { executeScanTopology } from '../tools/scan-topology.js';
+import { executeTraceCallGraph } from '../tools/trace-callgraph.js';
 
 interface SseClient {
   id: number;
@@ -174,11 +177,50 @@ export function createSseApp(): express.Express {
   app.get('/api/health', (_req: Request, res: Response) => {
     res.json({
       status: 'ok',
-      server: 'mcp-visual-server',
-      version: '2.0.0',
+      server: 'archview',
+      version: '3.0.0',
       connectedClients: clients.length,
       uptime: process.uptime()
     });
+  });
+
+  // REST: Ingest Execution Trace
+  app.post('/api/ingest/trace', (req: Request, res: Response) => {
+    try {
+      const result = executeTraceExecution(req.body);
+      res.status(201).json({
+        success: true,
+        diagram: result
+      });
+    } catch (err: any) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  });
+
+  // REST: Scan Codebase Topology
+  app.post('/api/codebase/scan', (req: Request, res: Response) => {
+    try {
+      const result = executeScanTopology(req.body);
+      res.json({
+        success: true,
+        diagram: result
+      });
+    } catch (err: any) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  });
+
+  // REST: Trace Call Graph
+  app.post('/api/codebase/trace-call', (req: Request, res: Response) => {
+    try {
+      const result = executeTraceCallGraph(req.body);
+      res.json({
+        success: true,
+        diagram: result
+      });
+    } catch (err: any) {
+      res.status(400).json({ success: false, error: err.message });
+    }
   });
 
   return app;
