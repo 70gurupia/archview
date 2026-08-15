@@ -1,6 +1,17 @@
+# Dependencies
 node_modules/
 frontend/node_modules/
+package-lock.json
+
+# Builds
+build/
 dist/
 frontend/dist/
-.DS_Store
+
+# Artifacts & Output
+output/
 *.log
+
+# Env
+.env
+.DS_Store

@@ -1,3 +1,4 @@
+import { ArchitectureInputSchema } from '../utils/validation.js';
 import { ToolExecutionResult } from '../types/index.js';
 import { saveDiagramWithMeta } from '../utils/meta.js';
 
