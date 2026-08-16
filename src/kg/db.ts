@@ -154,8 +154,9 @@ export class KnowledgeGraphDB {
         updated_at = datetime('now')
     `);
 
-    const res = stmt.run(node.label, node.name, qName, props, prov, node.source || null);
-    const id = res.lastInsertRowid ? Number(res.lastInsertRowid) : (this.getNodeByQualifiedName(qName)?.id || 0);
+    stmt.run(node.label, node.name, qName, props, prov, node.source || null);
+    const fetched = this.getNodeByQualifiedName(qName);
+    const id = fetched?.id || 0;
 
     this.logAudit('node_upsert', 'node', id, node.label, qName, node.source);
     return { ...node, id, qualified_name: qName };
