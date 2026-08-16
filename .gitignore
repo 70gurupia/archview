@@ -3,15 +3,29 @@ node_modules/
 frontend/node_modules/
 package-lock.json
 
-# Builds
+# Builds & Transpiled Code
 build/
 dist/
 frontend/dist/
 
-# Artifacts & Output
-output/
+# Artifacts & Output (Directory preserved via .gitkeep, runtime artifacts ignored)
+output/*
+!output/.gitkeep
 *.log
 
-# Env
+# Scratch, Temporary & Office Files
+*.docx
+*.xlsx
+*.pptx
+*.tmp
+*PROMPT*.md
+patch_*.py
+scratch/
+temp/
+.temp/
+
+# Environment & OS
 .env
+.env.*
 .DS_Store
+Thumbs.db

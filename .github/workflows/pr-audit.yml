@@ -16,6 +16,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Gate: Verify No Non-Essential Files in PR
+        run: |
+          echo "🔍 Verificando se o PR contém apenas arquivos essenciais..."
+          FORBIDDEN=$(git ls-files | grep -E '(\.docx$|\.xlsx$|\.pptx$|\.log$|\.tmp$|patch_.*\.py$|^build/|^output/.*(\.html|\.mmd|\.meta\.json)$|PROMPT.*\.md$|(^|/)test\.ts$|(^|/)test-v2\.ts$)' || true)
+          if [ -n "$FORBIDDEN" ]; then
+            echo "❌ ERRO NO GATE: Arquivos não-essenciais ou de rascunho detectados no PR:"
+            echo "$FORBIDDEN"
+            exit 1
+          fi
+          echo "✅ Gate de Limpeza aprovado no PR."
+
       - name: Validate Conventional Commit / PR Title
         uses: amannn/action-semantic-pull-request@v5
         env:
@@ -50,7 +61,7 @@ jobs:
               if (file.filename.startsWith('src/')) labels.add('backend');
               if (file.filename.startsWith('frontend/')) labels.add('frontend');
               if (file.filename.startsWith('docs/') || file.filename.endsWith('.md')) labels.add('documentation');
-              if (file.filename.startsWith('tests/') || file.filename.includes('test')) labels.add('testing');
+              if (file.filename.startsWith('tests/')) labels.add('testing');
               if (file.filename.startsWith('.github/')) labels.add('ci/cd');
             }
 

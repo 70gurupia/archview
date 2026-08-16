@@ -1,7 +1,7 @@
 {
   "name": "archview",
   "version": "5.0.0",
-  "description": "ArchView: Servidor Model Context Protocol (MCP) local e reativo para diagramação arquitetural, inteligência de código e flow tracing",
+  "description": "ArchView: Servidor Model Context Protocol (MCP) local e reativo para diagramação arquitetural, inteligência de código e observabilidade",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/70gurupia/archview.git"
@@ -13,13 +13,12 @@
     "test:odd": "npx tsx tests/odd-observability.test.ts",
     "test:pentest": "npx tsx tests/pentest-security.test.ts",
     "test:sast": "npx tsx tests/sast-scanner.ts",
-    "test:all": "npx tsx tests/sast-scanner.ts && npx tsx tests/tdd-unit.test.ts && npx tsx tests/tdd-v3.test.ts && npx tsx tests/tdd-observability-v4.test.ts && npx tsx tests/tdd-html-generator-v5.test.ts && npx tsx tests/odd-observability.test.ts && npx tsx tests/pentest-security.test.ts && npx tsx test-v2.ts",
+    "test:all": "npx tsx tests/sast-scanner.ts && npx tsx tests/tdd-unit.test.ts && npx tsx tests/tdd-v3.test.ts && npx tsx tests/tdd-observability-v4.test.ts && npx tsx tests/tdd-html-generator-v5.test.ts && npx tsx tests/odd-observability.test.ts && npx tsx tests/pentest-security.test.ts",
     "build:server": "tsc",
     "build:frontend": "npm run build --prefix frontend",
     "build": "tsc && npm run build --prefix frontend",
     "start": "node build/server.js",
-    "dev:frontend": "npm run dev --prefix frontend",
-    "jules:dispatch": "cat JULES_PROMPT.md | jules new --repo 70gurupia/archview"
+    "dev:frontend": "npm run dev --prefix frontend"
   },
   "keywords": [
     "mcp",
@@ -28,7 +27,10 @@
     "diagrams",
     "mindmap",
     "orgchart",
-    "architecture-c4"
+    "architecture-c4",
+    "observability",
+    "opentelemetry",
+    "prometheus"
   ],
   "author": "",
   "license": "ISC",
