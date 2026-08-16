@@ -278,7 +278,7 @@
 
     <div class="meta-drawer">
       <div><strong>Descrição:</strong> Rastreamento bidirecional (4 chamadores inbound, 6 dependências outbound)</div>
-      <div style="margin-top: 0.35rem;"><strong>Nós:</strong> 11 • <strong>Render:</strong> 37ms • <strong>Criado:</strong> 16/08/2026</div>
+      <div style="margin-top: 0.35rem;"><strong>Nós:</strong> 11 • <strong>Render:</strong> 52ms • <strong>Criado:</strong> 16/08/2026</div>
     </div>
 
     <div class="zoom-controls">
@@ -3885,13 +3885,13 @@ globalThis["mermaid"] = globalThis.__esbuild_esm_mermaid_nm["mermaid"].default;
     const rawMermaidCode = "flowchart LR\n  subgraph sg_in_1[\" ⬅️ De onde veio: analyze-overview.ts \"]\n    in_src_tools_analyze_overview_ts_AnalyzeOverviewInput[\"⚙️ AnalyzeOverviewInput\"]\n  end\n\n  subgraph sg_in_2[\" ⬅️ De onde veio: scan-topology.ts \"]\n    in_src_tools_scan_topology_ts_ScanTopologyInput[\"⚙️ ScanTopologyInput\"]\n  end\n\n  subgraph sg_in_3[\" ⬅️ De onde veio: trace-callgraph.ts \"]\n    in_src_tools_trace_callgraph_ts_TraceCallGraphInput[\"⚙️ TraceCallGraphInput\"]\n  end\n\n  subgraph sg_in_4[\" ⬅️ De onde veio: tdd-v3.test.ts \"]\n    in_tests_tdd_v3_test_ts_runV3TestSuite[\"⚙️ runV3TestSuite\"]\n  end\n\n  subgraph sg_target[\" 🎯 Símbolo em Foco \"]\n    target_scanCodebase{{\"<b>🌟 scanCodebase<br/><i>📄 universal-scanner.ts</i></b>\"}}\n  end\n\n  subgraph sg_out_1[\" ➡️ Para onde vai: types.ts \"]\n    out_src_engine_types_ts_CodebaseTopology[\"🧩 CodebaseTopology\"]\n    out_src_engine_types_ts_ParsedFile[\"🧩 ParsedFile\"]\n    out_src_engine_types_ts_DirectoryNode[\"🧩 DirectoryNode\"]\n    out_src_engine_types_ts_CrossModuleCall[\"🧩 CrossModuleCall\"]\n  end\n\n  subgraph sg_out_2[\" ➡️ Para onde vai: ast-parser-ts.ts \"]\n    out_src_engine_ast_parser_ts_ts_parseTypeScriptFile[\"🧩 parseTypeScriptFile\"]\n  end\n\n  subgraph sg_out_3[\" ➡️ Para onde vai: ast-parser-lexical.ts \"]\n    out_src_engine_ast_parser_lexical_ts_parseLexicalFile[\"🧩 parseLexicalFile\"]\n  end\n\n  in_src_tools_analyze_overview_ts_AnalyzeOverviewInput -->|\"chama\"| target_scanCodebase\n  in_src_tools_scan_topology_ts_ScanTopologyInput -->|\"chama\"| target_scanCodebase\n  in_src_tools_trace_callgraph_ts_TraceCallGraphInput -->|\"chama\"| target_scanCodebase\n  in_tests_tdd_v3_test_ts_runV3TestSuite -->|\"chama\"| target_scanCodebase\n  target_scanCodebase -->|\"executa\"| out_src_engine_types_ts_CodebaseTopology\n  target_scanCodebase -->|\"executa\"| out_src_engine_types_ts_ParsedFile\n  target_scanCodebase -->|\"executa\"| out_src_engine_types_ts_DirectoryNode\n  target_scanCodebase -->|\"executa\"| out_src_engine_types_ts_CrossModuleCall\n  target_scanCodebase -->|\"executa\"| out_src_engine_ast_parser_ts_ts_parseTypeScriptFile\n  target_scanCodebase -->|\"executa\"| out_src_engine_ast_parser_lexical_ts_parseLexicalFile\n\n  classDef default fill:#F8FAFC,stroke:#64748B,stroke-width:1.5px,color:#1E293B,rx:8px,ry:8px;\n  classDef primary fill:#1E40AF,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef success fill:#0F766E,stroke:#14B8A6,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef accent fill:#3730A3,stroke:#818CF8,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef warning fill:#D97706,stroke:#F59E0B,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  classDef danger fill:#B91C1C,stroke:#EF4444,stroke-width:2px,color:#FFFFFF,rx:8px,ry:8px;\n  class target_scanCodebase primary;\n  class in_src_tools_analyze_overview_ts_AnalyzeOverviewInput warning;\n  class in_src_tools_scan_topology_ts_ScanTopologyInput warning;\n  class in_src_tools_trace_callgraph_ts_TraceCallGraphInput warning;\n  class in_tests_tdd_v3_test_ts_runV3TestSuite warning;\n  class out_src_engine_types_ts_CodebaseTopology success;\n  class out_src_engine_types_ts_ParsedFile success;\n  class out_src_engine_types_ts_DirectoryNode success;\n  class out_src_engine_types_ts_CrossModuleCall success;\n  class out_src_engine_ast_parser_ts_ts_parseTypeScriptFile success;\n  class out_src_engine_ast_parser_lexical_ts_parseLexicalFile success;";
     const metadata = {
   "schema_version": "2.0",
-  "id": "flowchart-grafo-de-chamadas-scancodebase-c9aea5",
+  "id": "flowchart-grafo-de-chamadas-scancodebase-5727da",
   "type": "flowchart",
   "title": "Grafo de Chamadas: scanCodebase",
   "description": "Rastreamento bidirecional (4 chamadores inbound, 6 dependências outbound)",
   "source": "claude-mcp",
-  "created_at": "2026-08-16T21:37:44.620Z",
-  "updated_at": "2026-08-16T21:37:44.620Z",
+  "created_at": "2026-08-16T21:44:19.586Z",
+  "updated_at": "2026-08-16T21:44:19.586Z",
   "files": {
     "mermaid": "self-doc-callgraph.mmd",
     "meta": "self-doc-callgraph.meta.json",
@@ -3905,7 +3905,7 @@ globalThis["mermaid"] = globalThis.__esbuild_esm_mermaid_nm["mermaid"].default;
   },
   "stats": {
     "node_count": 11,
-    "generation_time_ms": 37
+    "generation_time_ms": 52
   },
   "tags": [
     "callgraph",

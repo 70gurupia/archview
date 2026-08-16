@@ -1,12 +1,12 @@
 {
   "schema_version": "2.0",
-  "id": "architecture-arquitetura-do-archview-v5-0-043b9f",
+  "id": "architecture-arquitetura-do-archview-v5-0-c565f1",
   "type": "architecture",
   "title": "Arquitetura do ArchView v5.0",
   "description": "Visão dos containers executáveis, motor de AST, gerador HTML e observabilidade",
   "source": "claude-mcp",
-  "created_at": "2026-08-16T21:37:44.406Z",
-  "updated_at": "2026-08-16T21:37:44.406Z",
+  "created_at": "2026-08-16T21:44:19.399Z",
+  "updated_at": "2026-08-16T21:44:19.399Z",
   "files": {
     "mermaid": "self-doc-architecture.mmd",
     "meta": "self-doc-architecture.meta.json",
@@ -20,7 +20,7 @@
   },
   "stats": {
     "node_count": 8,
-    "generation_time_ms": 1
+    "generation_time_ms": 2
   },
   "tags": [
     "c4-model",
