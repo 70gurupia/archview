@@ -23,3 +23,4 @@
 - [x] **Task 3:** Implementar as Novas Ferramentas MCP de Knowledge Graph e Integrar com Scanner de Código e rotas REST (`/api/kg/*`).
 - [x] **Task 4:** Desenvolver Studio Web Dual-Mode no Frontend (Abas Mermaid + Knowledge Graph Explorer com busca FTS5 e métricas PageRank).
 - [x] **Task 5:** Suíte Completa de Testes TDD/ODD/Pentest com 9 vetores OWASP (incluindo SQLi) e compilação limpa do Vite e TypeScript.
+- [x] **Task 6:** Suítes Avançadas de Teste e 100% dos Quality Gates de CI/SAST/Complexidade (`gate-cleanliness`, `gate-secrets`, `gate-dependencies`, `gate-complexity <= 15`, `gate-dep-structure`, `gate-sast`).
