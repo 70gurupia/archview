@@ -22,16 +22,23 @@ import { executeExportHtmlReport, ExportHtmlInput } from './tools/export-html.js
 import { startSseServer } from './utils/sse.js';
 import { initOpenTelemetry } from './utils/otel.js';
 
+import { KnowledgeGraphDB } from './kg/db.js';
+import { handleAddNode, handleUpsertNode, handleAddNodesBatch, handleDeleteNode, handleGetNode, handleSearchGraph } from './tools/kg/nodes.js';
+import { handleAddEdge, handleAddEdgesBatch, handleTracePath, handleTracePaths } from './tools/kg/edges.js';
+import { handleDetectCommunities, handleGetCentrality, handleGetImpact, handleWhatIfRemove, handleFindOrphans, handleKgHealthCheck } from './tools/kg/analytics.js';
+
 class VisualServer {
   private server: Server;
+  private kg: KnowledgeGraphDB;
 
   constructor() {
     initOpenTelemetry();
+    this.kg = new KnowledgeGraphDB();
 
     this.server = new Server(
       {
-        name: "mcp-visual-server",
-        version: "5.0.0",
+        name: "archview",
+        version: "6.0.0",
       },
       {
         capabilities: {
@@ -42,9 +49,9 @@ class VisualServer {
 
     this.setupToolHandlers();
 
-    // Error handling
     this.server.onerror = (error) => console.error("[MCP Error]", error);
     process.on("SIGINT", async () => {
+      this.kg.close();
       await this.server.close();
       process.exit(0);
     });
@@ -52,351 +59,20 @@ class VisualServer {
 
   private setupToolHandlers() {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: [
-        {
-          name: "generate_mindmap",
-          description: "Gera mapas mentais otimizados para aulas, estudos e documentação técnica.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              central_topic: { type: "string", description: "Tópico central do mapa mental" },
-              description: { type: "string", description: "Descrição ou contexto opcional" },
-              branches: {
-                type: "array",
-                description: "Ramos principais do mapa mental",
-                items: {
-                  type: "object",
-                  properties: {
-                    title: { type: "string" },
-                    color: { type: "string" },
-                    sub_branches: { type: "array" },
-                    icons: { type: "array", items: { type: "string" } }
-                  },
-                  required: ["title"]
-                }
-              },
-              style: {
-                type: "object",
-                properties: {
-                  palette: { type: "string", enum: ["educational", "corporate", "minimal", "dark"] },
-                  layout: { type: "string", enum: ["radial", "tree-left", "tree-right"] },
-                  show_icons: { type: "boolean" }
-                }
-              },
-              output_path: { type: "string", description: "Caminho opcional do arquivo de saída" }
-            },
-            required: ["central_topic", "branches"]
-          }
-        },
-        {
-          name: "generate_orgchart",
-          description: "Gera organogramas hierárquicos profissionais com validação de ciclos e níveis.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              title: { type: "string", description: "Título do organograma" },
-              description: { type: "string", description: "Descrição opcional da estrutura" },
-              nodes: {
-                type: "array",
-                description: "Membros ou departamentos da hierarquia",
-                items: {
-                  type: "object",
-                  properties: {
-                    id: { type: "string", description: "ID único do nó (ex: ceo, dev_lead)" },
-                    label: { type: "string", description: "Nome da pessoa ou departamento" },
-                    role: { type: "string", description: "Cargo ou função" },
-                    department: { type: "string", description: "Departamento" },
-                    level: { type: "number", description: "Nível hierárquico (0=C-level, 1=Gerente, 2=Lead, 3=Dev)" },
-                    reports_to: { type: "string", description: "ID do supervisor a quem se reporta" },
-                    metadata: {
-                      type: "object",
-                      properties: {
-                        email: { type: "string" },
-                        team_size: { type: "number" }
-                      }
-                    }
-                  },
-                  required: ["id", "label", "role"]
-                }
-              },
-              style: {
-                type: "object",
-                properties: {
-                  color_by_level: { type: "boolean" },
-                  show_metadata: { type: "boolean" },
-                  layout: { type: "string", enum: ["vertical", "horizontal"] },
-                  palette: { type: "string", enum: ["educational", "corporate", "minimal", "dark"] }
-                }
-              },
-              output_path: { type: "string", description: "Caminho opcional do arquivo de saída" }
-            },
-            required: ["title", "nodes"]
-          }
-        },
-        {
-          name: "generate_architecture_diagram",
-          description: "Gera diagramas de arquitetura de software seguindo o Modelo C4 (C1, C2, C3).",
-          inputSchema: {
-            type: "object",
-            properties: {
-              c4_level: {
-                type: "string",
-                enum: ["C1-context", "C2-container", "C3-component", "C4-code"],
-                description: "Nível do modelo C4"
-              },
-              system_name: { type: "string", description: "Nome do sistema ou container" },
-              description: { type: "string", description: "Descrição do sistema" },
-              elements: {
-                type: "array",
-                description: "Elementos do sistema (atores, containers, componentes)",
-                items: {
-                  type: "object",
-                  properties: {
-                    id: { type: "string" },
-                    type: {
-                      type: "string",
-                      enum: ["person", "system", "container", "component", "database", "queue", "external"]
-                    },
-                    name: { type: "string" },
-                    description: { type: "string" },
-                    technology: { type: "string" },
-                    relationships: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          target: { type: "string" },
-                          description: { type: "string" },
-                          technology: { type: "string" }
-                        },
-                        required: ["target", "description"]
-                      }
-                    }
-                  },
-                  required: ["id", "type", "name", "description"]
-                }
-              },
-              style: {
-                type: "object",
-                properties: {
-                  show_technology: { type: "boolean" },
-                  palette: { type: "string", enum: ["educational", "corporate", "minimal", "dark"] }
-                }
-              },
-              output_path: { type: "string", description: "Caminho opcional do arquivo de saída" }
-            },
-            required: ["c4_level", "system_name", "elements"]
-          }
-        },
-        {
-          name: "generate_flowchart",
-          description: "Gera fluxogramas, processos e árvores de decisão lógicas.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              title: { type: "string", description: "Título do fluxograma" },
-              description: { type: "string", description: "Descrição do fluxo" },
-              steps: {
-                type: "array",
-                description: "Passos e nós do fluxo",
-                items: {
-                  type: "object",
-                  properties: {
-                    id: { type: "string" },
-                    type: {
-                      type: "string",
-                      enum: ["start", "end", "process", "decision", "input", "output", "subprocess"]
-                    },
-                    label: { type: "string" },
-                    next: { type: "array", description: "Conexões para outros passos (IDs ou objetos rotulados)" },
-                    details: { type: "string" }
-                  },
-                  required: ["id", "type", "label"]
-                }
-              },
-              style: {
-                type: "object",
-                properties: {
-                  direction: { type: "string", enum: ["TB", "LR", "BT", "RL"] },
-                  palette: { type: "string", enum: ["educational", "corporate", "minimal", "dark"] }
-                }
-              },
-              output_path: { type: "string", description: "Caminho opcional do arquivo de saída" }
-            },
-            required: ["title", "steps"]
-          }
-        },
-        {
-          name: "export_diagram",
-          description: "Exporta diagramas Mermaid para SVG ou PNG em alta resolução.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              source_path: { type: "string", description: "Caminho do arquivo .mmd ou .md na pasta output/" },
-              target_format: { type: "string", enum: ["svg", "png", "pdf"] },
-              target_path: { type: "string" },
-              options: {
-                type: "object",
-                properties: {
-                  width: { type: "number" },
-                  height: { type: "number" },
-                  scale: { type: "number" },
-                  background: { type: "string" },
-                  theme: { type: "string" }
-                }
-              }
-            },
-            required: ["source_path", "target_format"]
-          }
-        },
-        {
-          name: "scan_codebase_topology",
-          description: "Varre repositórios locais (TypeScript, Python, Go, Java, Rust) e gera um diagrama de topologia C4 com subgrafos de pastas e camadas de software.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              path: { type: "string", description: "Caminho do diretório raiz do repositório (padrão: diretório atual)" },
-              title: { type: "string", description: "Título do diagrama de topologia" },
-              description: { type: "string", description: "Descrição opcional" },
-              view_mode: { type: "string", enum: ["hybrid", "layered", "folders"], description: "Modo de agrupamento: híbrido (pastas + camadas), camadas puras ou pastas" },
-              direction: { type: "string", enum: ["TD", "LR", "BT", "RL"], description: "Direção do diagrama" },
-              max_depth: { type: "number", description: "Profundidade máxima de diretórios a varrer (padrão: 6)" },
-              output_path: { type: "string", description: "Caminho opcional do arquivo de saída" }
-            }
-          }
-        },
-        {
-          name: "trace_call_graph",
-          description: "Rastreia o grafo de chamadas bidirecional de uma função, método ou classe (quem chama e o que ela chama) com escopo por arquivos.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              symbol_name: { type: "string", description: "Nome da função, método ou classe a rastrear" },
-              path: { type: "string", description: "Caminho do repositório (padrão: diretório atual)" },
-              file_path: { type: "string", description: "Caminho do arquivo específico onde o símbolo reside" },
-              depth: { type: "number", description: "Profundidade da árvore de chamadas (1 a 4, padrão: 2)" },
-              direction: { type: "string", enum: ["LR", "TD", "RL", "BT"], description: "Direção do fluxo (padrão: LR widescreen)" },
-              title: { type: "string", description: "Título do grafo de chamadas" },
-              output_path: { type: "string", description: "Caminho opcional do arquivo de saída" }
-            },
-            required: ["symbol_name"]
-          }
-        },
-        {
-          name: "trace_execution_flow",
-          description: "Ingere traces estruturados (JSON/OpenTelemetry), logs textuais ou stack traces e gera um Diagrama de Sequência Mermaid interativo.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              title: { type: "string", description: "Título do fluxo de execução" },
-              description: { type: "string", description: "Descrição do cenário de teste ou requisição" },
-              trace_data: { description: "Array JSON de eventos/spans ou objeto OpenTelemetry" },
-              raw_log: { type: "string", description: "Texto bruto de logs ou stack traces" },
-              log_file_path: { type: "string", description: "Caminho de arquivo local (.log) para leitura" },
-              output_path: { type: "string", description: "Caminho opcional do arquivo de saída" }
-            }
-          }
-        },
-        {
-          name: "analyze_codebase_overview",
-          description: "Gera um Raio-X completo do repositório, combinando mapa mental de módulos, diagrama C4 de topologia e métricas de código.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              path: { type: "string", description: "Caminho do repositório (padrão: diretório atual)" },
-              title: { type: "string", description: "Título da análise geral" },
-              output_path: { type: "string", description: "Caminho opcional do arquivo de saída" }
-            }
-          }
-        },
-        {
-          name: "get_system_observability",
-          description: "Consulta métricas do Prometheus, estado de saúde do runtime, latência e estatísticas agregadas, com geração opcional de gráficos Mermaid (xychart ou quadrantChart).",
-          inputSchema: {
-            type: "object",
-            properties: {
-              include_prometheus_raw: { type: "boolean", description: "Se true, inclui as métricas brutas em formato texto Prometheus" },
-              generate_chart: { type: "string", enum: ["xychart", "quadrant", "none"], description: "Tipo de gráfico Mermaid a ser gerado" },
-              output_path: { type: "string", description: "Caminho opcional do arquivo de saída" }
-            }
-          }
-        },
-        {
-          name: "export_html_report",
-          description: "Gera arquivo HTML autocontido e interativo de um diagrama específico ou um Dashboard consolidado com todos os diagramas do projeto (100% offline).",
-          inputSchema: {
-            type: "object",
-            properties: {
-              diagram_id: { type: "string", description: "ID ou slug do diagrama a exportar (ignorado se mode for dashboard)" },
-              mode: { type: "string", enum: ["single", "dashboard"], description: "Modo de exportação: diagrama individual ou dashboard consolidado" },
-              theme: { type: "string", enum: ["educational", "corporate", "minimal", "dark"], description: "Tema visual inicial do HTML" },
-              output_path: { type: "string", description: "Caminho opcional do arquivo .html gerado" }
-            }
-          }
-        }
-      ],
+      tools: this.getToolDefinitions()
     }));
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const name = request.params.name;
+      const args = (request.params.arguments || {}) as any;
+
       try {
-        let result: any;
-        const name = request.params.name;
-        const args = request.params.arguments as any;
-
-        switch (name) {
-          case "generate_mindmap":
-            result = executeMindmap(args as MindmapInput);
-            break;
-          case "generate_orgchart":
-            result = executeOrgchart(args as OrgchartInput);
-            break;
-          case "generate_architecture_diagram":
-            result = executeArchitecture(args as ArchitectureInput);
-            break;
-          case "generate_flowchart":
-            result = executeFlowchart(args as FlowchartInput);
-            break;
-          case "export_diagram":
-            result = await executeExport(args as ExportInput);
-            break;
-          case "scan_codebase_topology":
-            result = executeScanTopology(args as ScanTopologyInput);
-            break;
-          case "trace_call_graph":
-            result = executeTraceCallGraph(args as TraceCallGraphInput);
-            break;
-          case "trace_execution_flow":
-            result = executeTraceExecution(args as TraceExecutionInput);
-            break;
-          case "analyze_codebase_overview":
-            result = executeAnalyzeOverview(args as AnalyzeOverviewInput);
-            break;
-          case "get_system_observability":
-            result = await executeGetObservability(args as ObservabilityInput);
-            break;
-          case "export_html_report":
-            result = executeExportHtmlReport(args as ExportHtmlInput);
-            break;
-          default:
-            throw new McpError(ErrorCode.MethodNotFound, `Ferramenta desconhecida: ${name}`);
-        }
-
+        const result = await this.dispatchTool(name, args);
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify({
-                success: true,
-                tool: name,
-                output: {
-                  file_path: result.file_path,
-                  meta_path: result.meta_path,
-                  html_path: result.html_path || (result.meta?.files?.html ? path.join(path.dirname(result.file_path), result.meta.files.html) : undefined),
-                  format: result.format
-                },
-                metadata: result.meta || undefined,
-                preview: result.markdown || undefined
-              }, null, 2)
+              text: JSON.stringify({ success: true, tool: name, ...result }, null, 2)
             }
           ]
         };
@@ -408,7 +84,7 @@ class VisualServer {
               type: "text",
               text: JSON.stringify({
                 success: false,
-                tool: request.params.name,
+                tool: name,
                 error: {
                   code: error.message.includes('Path traversal') ? 'PATH_TRAVERSAL' : 'VALIDATION_ERROR',
                   message: error.message
@@ -422,8 +98,381 @@ class VisualServer {
     });
   }
 
+  private getHandlers(): Record<string, (args: any) => Promise<any> | any> {
+    return {
+      generate_mindmap: (args) => this.formatVisualResult(executeMindmap(args as MindmapInput)),
+      generate_orgchart: (args) => this.formatVisualResult(executeOrgchart(args as OrgchartInput)),
+      generate_architecture_diagram: (args) => this.formatVisualResult(executeArchitecture(args as ArchitectureInput)),
+      generate_flowchart: (args) => this.formatVisualResult(executeFlowchart(args as FlowchartInput)),
+      export_diagram: async (args) => this.formatVisualResult(await executeExport(args as ExportInput)),
+      scan_codebase_topology: (args) => this.formatVisualResult(executeScanTopology(args as ScanTopologyInput)),
+      trace_call_graph: (args) => this.formatVisualResult(executeTraceCallGraph(args as TraceCallGraphInput)),
+      trace_execution_flow: (args) => this.formatVisualResult(executeTraceExecution(args as TraceExecutionInput)),
+      analyze_codebase_overview: (args) => this.formatVisualResult(executeAnalyzeOverview(args as AnalyzeOverviewInput)),
+      get_system_observability: async (args) => this.formatVisualResult(await executeGetObservability(args as ObservabilityInput)),
+      export_html_report: (args) => this.formatVisualResult(executeExportHtmlReport(args as ExportHtmlInput)),
+      add_node: (args) => handleAddNode(this.kg, args),
+      upsert_node: (args) => handleUpsertNode(this.kg, args),
+      add_nodes_batch: (args) => handleAddNodesBatch(this.kg, args),
+      delete_node: (args) => handleDeleteNode(this.kg, args),
+      get_node: (args) => handleGetNode(this.kg, args),
+      search_graph: (args) => handleSearchGraph(this.kg, args),
+      add_edge: (args) => handleAddEdge(this.kg, args),
+      add_edges_batch: (args) => handleAddEdgesBatch(this.kg, args),
+      trace_path: (args) => handleTracePath(this.kg, args),
+      trace_paths: (args) => handleTracePaths(this.kg, args),
+      detect_communities: (args) => handleDetectCommunities(this.kg, args),
+      get_centrality: (args) => handleGetCentrality(this.kg, args),
+      get_impact: (args) => handleGetImpact(this.kg, args),
+      what_if_remove: (args) => handleWhatIfRemove(this.kg, args),
+      find_orphans: (args) => handleFindOrphans(this.kg, args),
+      health_check: () => handleKgHealthCheck(this.kg),
+    };
+  }
+
+  private async dispatchTool(name: string, args: any): Promise<any> {
+    const handlers = this.getHandlers();
+    const handler = handlers[name];
+    if (!handler) {
+      throw new McpError(ErrorCode.MethodNotFound, `Ferramenta desconhecida: ${name}`);
+    }
+    return await handler(args);
+  }
+
+  private formatVisualResult(result: any) {
+    return {
+      output: {
+        file_path: result.file_path,
+        meta_path: result.meta_path,
+        html_path: result.html_path || (result.meta?.files?.html ? path.join(path.dirname(result.file_path), result.meta.files.html) : undefined),
+        format: result.format
+      },
+      metadata: result.meta || undefined,
+      preview: result.markdown || undefined
+    };
+  }
+
+  private getToolDefinitions(): any[] {
+    return [
+      {
+        name: "generate_mindmap",
+        description: "Gera mapas mentais otimizados para aulas, estudos e documentação técnica.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            central_topic: { type: "string", description: "Tópico central" },
+            branches: { type: "array", description: "Ramos principais" }
+          },
+          required: ["central_topic", "branches"]
+        }
+      },
+      {
+        name: "generate_orgchart",
+        description: "Gera organogramas hierárquicos com estilização por níveis.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            nodes: { type: "array" }
+          },
+          required: ["title", "nodes"]
+        }
+      },
+      {
+        name: "generate_architecture_diagram",
+        description: "Gera diagramas arquiteturais C4 (Context, Container) ou Flowchart.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            components: { type: "array" },
+            connections: { type: "array" }
+          },
+          required: ["title", "components", "connections"]
+        }
+      },
+      {
+        name: "generate_flowchart",
+        description: "Gera fluxogramas de processos com nós de decisão, banco e filas.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            nodes: { type: "array" },
+            transitions: { type: "array" }
+          },
+          required: ["title", "nodes", "transitions"]
+        }
+      },
+      {
+        name: "export_diagram",
+        description: "Exporta diagramas para SVG, PNG ou JSON.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            diagram_id: { type: "string" },
+            format: { type: "string", enum: ["svg", "png", "json"] }
+          },
+          required: ["diagram_id", "format"]
+        }
+      },
+      {
+        name: "scan_codebase_topology",
+        description: "Analisa a topologia do repositório e agrupa componentes por camadas.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            path: { type: "string", description: "Caminho do repositório" }
+          }
+        }
+      },
+      {
+        name: "trace_call_graph",
+        description: "Gera grafo de chamadas bidirecional centrado em uma função ou classe.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            symbol_name: { type: "string" }
+          },
+          required: ["symbol_name"]
+        }
+      },
+      {
+        name: "trace_execution_flow",
+        description: "Gera diagrama de sequência a partir de logs ou spans de execução.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            trace_data: { type: "string" }
+          },
+          required: ["title", "trace_data"]
+        }
+      },
+      {
+        name: "analyze_codebase_overview",
+        description: "Raio-X 360 do projeto com mapa mental e métricas consolidadas.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            path: { type: "string" }
+          }
+        }
+      },
+      {
+        name: "get_system_observability",
+        description: "Métricas do Prometheus e gráficos xychart/quadrant.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            generate_chart: { type: "string", enum: ["xychart", "quadrant", "none"] }
+          }
+        }
+      },
+      {
+        name: "export_html_report",
+        description: "Gera relatório HTML autocontido individual ou dashboard 100% offline.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            diagram_id: { type: "string" },
+            mode: { type: "string", enum: ["single", "dashboard"] }
+          }
+        }
+      },
+      // Knowledge Graph Tools
+      {
+        name: "add_node",
+        description: "Adiciona um nó ao Knowledge Graph SQLite.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            label: { type: "string", description: "Tipo da entidade (ex: Customer, Service, Class)" },
+            name: { type: "string", description: "Nome legível" },
+            qualified_name: { type: "string" },
+            properties: { type: "object" }
+          },
+          required: ["label", "name"]
+        }
+      },
+      {
+        name: "upsert_node",
+        description: "Insere ou atualiza um nó no Knowledge Graph baseado no qualified_name.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            label: { type: "string" },
+            name: { type: "string" },
+            qualified_name: { type: "string" },
+            properties: { type: "object" }
+          },
+          required: ["label", "name"]
+        }
+      },
+      {
+        name: "add_nodes_batch",
+        description: "Adiciona múltiplos nós em uma única transação SQLite.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            nodes: { type: "array" }
+          },
+          required: ["nodes"]
+        }
+      },
+      {
+        name: "delete_node",
+        description: "Remove um nó do Knowledge Graph e todas as suas arestas em cascata.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: { type: "number" },
+            qualified_name: { type: "string" }
+          }
+        }
+      },
+      {
+        name: "get_node",
+        description: "Consulta um nó específico por ID ou qualified_name.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: { type: "number" },
+            qualified_name: { type: "string" }
+          }
+        }
+      },
+      {
+        name: "search_graph",
+        description: "Busca textual Full-Text Search (FTS5) em nós do Knowledge Graph.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: { type: "string", description: "Termo de busca" },
+            label: { type: "string", description: "Filtro opcional por label" },
+            limit: { type: "number" }
+          }
+        }
+      },
+      {
+        name: "add_edge",
+        description: "Cria uma aresta direcionada conectando dois nós no Knowledge Graph.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            source_id: { type: "number" },
+            target_id: { type: "number" },
+            type: { type: "string", description: "Tipo da relação (ex: CALLS, DEPENDS_ON)" },
+            weight: { type: "number" }
+          },
+          required: ["source_id", "target_id", "type"]
+        }
+      },
+      {
+        name: "add_edges_batch",
+        description: "Adiciona múltiplas arestas em uma única transação.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            edges: { type: "array" }
+          },
+          required: ["edges"]
+        }
+      },
+      {
+        name: "trace_path",
+        description: "Encontra o menor caminho entre dois nós no grafo.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            source_id: { type: "number" },
+            target_id: { type: "number" },
+            max_depth: { type: "number" }
+          },
+          required: ["source_id", "target_id"]
+        }
+      },
+      {
+        name: "trace_paths",
+        description: "Encontra múltiplos caminhos entre dois nós no grafo.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            source_id: { type: "number" },
+            target_id: { type: "number" },
+            max_paths: { type: "number" },
+            max_depth: { type: "number" }
+          },
+          required: ["source_id", "target_id"]
+        }
+      },
+      {
+        name: "detect_communities",
+        description: "Executa o algoritmo de Louvain para detectar comunidades no grafo.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            label: { type: "string" },
+            max_iterations: { type: "number" }
+          }
+        }
+      },
+      {
+        name: "get_centrality",
+        description: "Calcula métricas de centralidade (PageRank, Betweenness, Closeness).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            label: { type: "string" },
+            limit: { type: "number" }
+          }
+        }
+      },
+      {
+        name: "get_impact",
+        description: "Calcula o Blast Radius (raio de impacto) ao alterar ou remover um nó.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: { type: "number" },
+            qualified_name: { type: "string" },
+            max_depth: { type: "number" }
+          }
+        }
+      },
+      {
+        name: "what_if_remove",
+        description: "Simula o impacto da remoção de um nó (arestas perdidas e nós isolados).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: { type: "number" },
+            qualified_name: { type: "string" }
+          }
+        }
+      },
+      {
+        name: "find_orphans",
+        description: "Identifica nós sem nenhuma aresta de entrada ou saída no grafo.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            label: { type: "string" }
+          }
+        }
+      },
+      {
+        name: "health_check",
+        description: "Verifica a integridade do banco SQLite e retorna estatísticas do grafo.",
+        inputSchema: {
+          type: "object",
+          properties: {}
+        }
+      }
+    ];
+  }
+
   async run() {
-    // Inicia o servidor HTTP/SSE na porta 3001 em background
     try {
       await startSseServer(3001);
     } catch (err) {
@@ -432,7 +481,7 @@ class VisualServer {
 
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error("[MCP Server] MCP Visual Server v2.0 rodando em stdio.");
+    console.error("[MCP Server] ArchView v6.0 unificado rodando em stdio.");
   }
 }
 

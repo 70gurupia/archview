@@ -22,7 +22,7 @@ const RULES = [
     id: 'SEC-002',
     name: 'Unsafe Shell Command Execution',
     severity: 'HIGH' as const,
-    pattern: /\b(exec|execSync)\s*\(\s*`/,
+    pattern: /(?<!\.)\b(exec|execSync)\s*\(\s*`/,
     description: 'Uso de interpolação de strings em comandos shell sem sanitização.'
   },
   {

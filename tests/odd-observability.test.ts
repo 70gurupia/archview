@@ -23,7 +23,7 @@ async function runOddSuite() {
   const health = await healthRes.json();
   assert(['healthy', 'ok', 'degraded'].includes(health.status), 'Health check reporta status saudável');
   assert(typeof health.uptime === 'number' && health.uptime >= 0, 'Health check reporta métrica de uptime válida');
-  assert(health.version === '5.0.0', 'Health check reporta versão semântica 5.0.0');
+  assert(health.version === '6.0.0', 'Health check reporta versão semântica 6.0.0');
 
   // 2b. Endpoint Prometheus (/metrics)
   const metricsRes = await fetch('http://localhost:3002/metrics');

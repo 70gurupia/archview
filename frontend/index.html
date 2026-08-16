@@ -85,6 +85,9 @@
         <button class="tab-btn" :class="{ 'active': activeTab === 'flowchart' }" @click="setTab('flowchart')">
           🔄 Fluxogramas (<span x-text="diagrams.filter(d => d.type === 'flowchart').length"></span>)
         </button>
+        <button class="tab-btn" :class="{ 'active': activeTab === 'kg' }" @click="setTab('kg'); fetchKgData();">
+          🌐 Knowledge Graph (<span x-text="kgNodes.length"></span>)
+        </button>
         <button class="tab-btn" :class="{ 'active': activeTab === 'codebase' }" @click="setTab('codebase')">
           🔍 Codebase Explorer
         </button>
@@ -247,6 +250,91 @@
 
           <pre x-text="prometheusRawPreview || 'Clique em Ver Amostra para visualizar os contadores e histogramas ativos do Prometheus.'" style="background: var(--bg-body); padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.75rem; max-height: 110px; overflow-y: auto; color: var(--text-muted); border: 1px solid var(--border-color);"></pre>
         </div>
+      </div>
+    </section>
+
+    <!-- Seção Knowledge Graph Studio (v6.0) -->
+    <section class="playground-section" x-show="activeTab === 'kg'" style="display: none;">
+      <div class="playground-header" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2>🌐 Knowledge Graph Explorer & Network Intelligence</h2>
+          <p>Motor SQLite integrado com FTS5, cálculo de centralidade (PageRank), detecção de comunidades Louvain e análise de raio de impacto (Blast Radius).</p>
+        </div>
+        <button class="action-btn primary" @click="fetchKgData()" :disabled="kgLoading">
+          <span x-show="!kgLoading">🔄 Atualizar Grafo</span>
+          <span x-show="kgLoading">⏳ Carregando...</span>
+        </button>
+      </div>
+
+      <!-- Métricas Resumidas do Grafo -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Total de Nós</div>
+          <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color);" x-text="kgNodes.length"></div>
+        </div>
+        <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Total de Arestas</div>
+          <div style="font-size: 1.5rem; font-weight: 700; color: #10B981;" x-text="kgEdges.length"></div>
+        </div>
+        <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Comunidades (Louvain)</div>
+          <div style="font-size: 1.5rem; font-weight: 700; color: #8B5CF6;" x-text="kgCommunities.communities_count || 0"></div>
+        </div>
+      </div>
+
+      <!-- Layout 2 Colunas: Lista/FTS5 à esquerda e Centralidade/Impacto à direita -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        
+        <!-- Coluna 1: Lista e Busca FTS5 de Nós -->
+        <div style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); display: flex; flex-direction: column;">
+          <h3 style="margin-bottom: 0.75rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🔍</span> Nós do Grafo (FTS5)
+          </h3>
+          <input type="text" class="search-input" placeholder="Filtrar por nome, label ou qualified_name..." style="width: 100%; margin-bottom: 1rem; display: block;" x-model="kgSearchQuery">
+          
+          <div style="overflow-y: auto; max-height: 320px; display: flex; flex-direction: column; gap: 0.5rem;">
+            <template x-for="node in filteredKgNodes" :key="node.id">
+              <div style="background: var(--bg-body); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-weight: 600; font-size: 0.85rem;" x-text="node.name"></div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);" x-text="node.qualified_name || node.label"></div>
+                </div>
+                <span style="font-size: 0.7rem; background: var(--accent-color); color: #fff; padding: 0.15rem 0.4rem; border-radius: 4px;" x-text="node.label"></span>
+              </div>
+            </template>
+            <div x-show="filteredKgNodes.length === 0" style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+              Nenhum nó encontrado no grafo.
+            </div>
+          </div>
+        </div>
+
+        <!-- Coluna 2: Top Nós Centrais (PageRank) & Arestas -->
+        <div style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+          <h3 style="margin-bottom: 0.75rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>⭐</span> Top Nós Centrais (PageRank)
+          </h3>
+          <div style="overflow-y: auto; max-height: 320px; display: flex; flex-direction: column; gap: 0.5rem;">
+            <template x-for="(c, idx) in kgCentrality.slice(0, 8)" :key="c.node_id">
+              <div style="background: var(--bg-body); padding: 0.65rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="font-weight: 700; color: var(--text-muted); font-size: 0.8rem;" x-text="'#' + (idx + 1)"></span>
+                  <div>
+                    <div style="font-weight: 600; font-size: 0.85rem;" x-text="c.name"></div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);" x-text="'Grau: ' + c.degree + ' (In: ' + c.in_degree + ', Out: ' + c.out_degree + ')'"></div>
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-color);" x-text="'PR: ' + c.pagerank"></div>
+                  <div style="font-size: 0.7rem; color: var(--text-muted);" x-text="'Betw: ' + c.betweenness"></div>
+                </div>
+              </div>
+            </template>
+            <div x-show="kgCentrality.length === 0" style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+              Execute ferramentas de Knowledge Graph para calcular a centralidade.
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 

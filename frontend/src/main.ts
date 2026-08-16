@@ -82,6 +82,16 @@ document.addEventListener('alpine:init', () => {
     obsTraceLoading: false,
     prometheusRawPreview: '',
 
+    // Knowledge Graph Studio v6.0
+    kgNodes: [] as any[],
+    kgEdges: [] as any[],
+    kgCentrality: [] as any[],
+    kgCommunities: { communities_count: 0, assignments: [] } as any,
+    kgSearchQuery: '',
+    kgLoading: false,
+    kgImpactTarget: '',
+    kgImpactResult: null as any,
+
     // Pan & Zoom
     panX: 0,
     panY: 0,
@@ -96,6 +106,7 @@ document.addEventListener('alpine:init', () => {
       applyCssTheme(this.activeTheme);
       await this.loadDiagrams();
       await this.fetchObservabilityStats();
+      await this.fetchKgData();
       this.initSse();
 
       const tourSeen = localStorage.getItem('archview_tour_seen');
@@ -619,6 +630,34 @@ document.addEventListener('alpine:init', () => {
       } finally {
         this.obsTraceLoading = false;
       }
+    },
+
+    async fetchKgData() {
+      this.kgLoading = true;
+      try {
+        const res = await fetch('/api/kg/graph');
+        if (res.ok) {
+          const data = await res.json();
+          this.kgNodes = data.nodes || [];
+          this.kgEdges = data.edges || [];
+          this.kgCentrality = data.centrality || [];
+          this.kgCommunities = data.communities || { communities_count: 0, assignments: [] };
+        }
+      } catch (err: any) {
+        console.error('Erro ao carregar Knowledge Graph:', err);
+      } finally {
+        this.kgLoading = false;
+      }
+    },
+
+    get filteredKgNodes() {
+      if (!this.kgSearchQuery.trim()) return this.kgNodes;
+      const q = this.kgSearchQuery.toLowerCase();
+      return this.kgNodes.filter((n: any) =>
+        (n.name && n.name.toLowerCase().includes(q)) ||
+        (n.label && n.label.toLowerCase().includes(q)) ||
+        (n.qualified_name && n.qualified_name.toLowerCase().includes(q))
+      );
     },
 
     formatUptime(seconds: number) {

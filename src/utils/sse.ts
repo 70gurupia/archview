@@ -19,6 +19,8 @@ import {
   setSseConnections,
   getAggregatedStats
 } from './metrics.js';
+import { KnowledgeGraphDB } from '../kg/db.js';
+import { calculateCentrality, detectLouvainCommunities } from '../kg/algorithms.js';
 
 interface SseClient {
   id: number;
@@ -236,12 +238,50 @@ export function createSseApp(): express.Express {
     res.json({
       status: stats.health,
       server: 'archview',
-      version: '5.0.0',
+      version: '6.0.0',
       connectedClients: clients.length,
       uptime: process.uptime(),
       memory: stats.memory,
       totalDiagrams: stats.total_diagrams
     });
+  });
+
+  // REST: Knowledge Graph Full Topology & Analytics
+  app.get('/api/kg/graph', (_req: Request, res: Response) => {
+    try {
+      const kg = new KnowledgeGraphDB();
+      const nodes = kg.getAllNodes();
+      const edges = kg.getAllEdges();
+      const centrality = calculateCentrality(nodes, edges);
+      const communities = detectLouvainCommunities(nodes, edges);
+      res.json({ nodes, edges, centrality, communities });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // REST: Knowledge Graph Nodes
+  app.get('/api/kg/nodes', (req: Request, res: Response) => {
+    try {
+      const kg = new KnowledgeGraphDB();
+      const label = req.query.label ? String(req.query.label) : undefined;
+      const nodes = kg.getAllNodes(label);
+      res.json({ count: nodes.length, nodes });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // REST: Knowledge Graph Edges
+  app.get('/api/kg/edges', (req: Request, res: Response) => {
+    try {
+      const kg = new KnowledgeGraphDB();
+      const type = req.query.type ? String(req.query.type) : undefined;
+      const edges = kg.getAllEdges(type);
+      res.json({ count: edges.length, edges });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // REST: Get Standalone HTML for a Diagram
