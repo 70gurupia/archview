@@ -11,29 +11,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  cleanliness-gate:
-    name: Gate 0: Repository Cleanliness & Essential Files Audit
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Validate No Temporary or Non-Essential Files Committed
-        run: |
-          echo "🔍 Verificando se apenas arquivos essenciais estão versionados no Git..."
-          FORBIDDEN=$(git ls-files | grep -E '(\.docx$|\.xlsx$|\.pptx$|\.log$|\.tmp$|patch_.*\.py$|^build/|^output/.*(\.html|\.mmd|\.meta\.json)$|PROMPT.*\.md$|(^|/)test\.ts$|(^|/)test-v2\.ts$)' || true)
-          if [ -n "$FORBIDDEN" ]; then
-            echo "❌ ERRO NO GATE DE LIMPEZA: Arquivos não-essenciais ou temporários encontrados no Git:"
-            echo "$FORBIDDEN"
-            echo "💡 Regra de Governança: Apenas código-fonte, testes oficiais e documentações essenciais são permitidos."
-            echo "💡 Remova esses arquivos do Git e garanta que estejam cobertos pelo .gitignore."
-            exit 1
-          fi
-          echo "✅ Gate de Limpeza aprovado com sucesso! Repositório enxuto e sem ruído."
+  quality-gates:
+    name: Central Quality & Security Gates
+    uses: 70gurupia/quality-gates/.github/workflows/reusable-gates.yml@main
+    with:
+      max_complexity: '10'
+      check_secrets: true
+      check_dependencies: true
+      check_cleanliness: true
+      post_pr_comment: true
 
   build-and-test:
     name: Build & Test (Node ${{ matrix.node-version }})
-    needs: cleanliness-gate
+    needs: quality-gates
     runs-on: ubuntu-latest
     strategy:
       matrix:
