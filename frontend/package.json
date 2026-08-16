@@ -9,12 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "alpinejs": "^3.14.8",
-    "mermaid": "^11.4.1"
+    "alpinejs": "3.14.8",
+    "mermaid": "11.4.1"
   },
   "devDependencies": {
-    "@types/alpinejs": "^3.13.11",
-    "typescript": "^5.7.3",
-    "vite": "^6.1.0"
+    "@types/alpinejs": "3.13.11",
+    "typescript": "5.7.3",
+    "vite": "6.1.0"
   }
 }
