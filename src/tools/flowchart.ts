@@ -20,6 +20,7 @@ export interface FlowchartInput {
     shape_style?: string;
   };
   output_path?: string;
+  target_dir?: string;
 }
 
 const FLOWCHART_SHAPES: Record<string, [string, string]> = {
@@ -127,6 +128,7 @@ export function executeFlowchart(input: FlowchartInput): ToolExecutionResult {
     nodeCount: input.steps.length,
     startTime,
     tags: ['flowchart', 'processo', 'fluxo', 'decisao'],
-    outputPath: input.output_path
+    outputPath: input.output_path,
+    targetDir: input.target_dir
   });
 }

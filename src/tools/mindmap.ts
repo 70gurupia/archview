@@ -20,6 +20,7 @@ export interface MindmapInput {
     show_icons?: boolean;
   };
   output_path?: string;
+  target_dir?: string;
 }
 
 export function generateMindmapMermaid(input: MindmapInput): { syntax: string, nodeCount: number, maxDepth: number } {
@@ -72,6 +73,7 @@ export function executeMindmap(input: MindmapInput): ToolExecutionResult {
     maxDepth,
     startTime,
     tags: ['mapa-mental', 'educacional', 'resumo'],
-    outputPath: input.output_path
+    outputPath: input.output_path,
+    targetDir: input.target_dir
   });
 }

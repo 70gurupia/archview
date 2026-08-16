@@ -26,6 +26,7 @@ export interface OrgchartInput {
     palette?: 'educational' | 'corporate' | 'minimal' | 'dark';
   };
   output_path?: string;
+  target_dir?: string;
 }
 
 export function detectCycle(nodes: OrgchartNode[]): boolean {
@@ -107,6 +108,7 @@ export function executeOrgchart(input: OrgchartInput): ToolExecutionResult {
     maxDepth: maxLevel + 1,
     startTime,
     tags: ['organograma', 'hierarquia', 'equipe'],
-    outputPath: input.output_path
+    outputPath: input.output_path,
+    targetDir: input.target_dir
   });
 }

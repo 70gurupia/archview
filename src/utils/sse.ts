@@ -121,13 +121,29 @@ function registerDiagramListRoute(app: express.Express, outDir: string): void {
   });
 }
 
+function findDiagramMetaFile(outDir: string, id: string): string | undefined {
+  if (!fs.existsSync(outDir)) return undefined;
+  const metaFiles = fs.readdirSync(outDir).filter(f => f.endsWith('.meta.json'));
+  let decoded = id;
+  try { decoded = decodeURIComponent(id); } catch {}
+
+  const match = metaFiles.find(f => f.includes(id) || f.includes(decoded) || f.replace(/\.meta\.json$/, '') === id || f.replace(/\.meta\.json$/, '') === decoded);
+  if (match) return match;
+
+  for (const f of metaFiles) {
+    try {
+      const meta = JSON.parse(fs.readFileSync(path.join(outDir, f), 'utf-8'));
+      if (meta.id === id || meta.id === decoded) return f;
+    } catch {}
+  }
+  return undefined;
+}
+
 function registerDiagramItemRoutes(app: express.Express, outDir: string): void {
   app.get('/api/diagrams/:id', (req: Request, res: Response) => {
     try {
       const id = String(req.params.id);
-      if (!fs.existsSync(outDir)) return res.status(404).json({ error: 'Diretório output não encontrado' });
-      const metaFiles = fs.readdirSync(outDir).filter(f => f.endsWith('.meta.json'));
-      const targetMeta = metaFiles.find(f => f.includes(id));
+      const targetMeta = findDiagramMetaFile(outDir, id);
       if (!targetMeta) return res.status(404).json({ error: 'Diagrama não encontrado' });
 
       const meta: DiagramMeta = JSON.parse(fs.readFileSync(path.join(outDir, targetMeta), 'utf-8'));
@@ -145,8 +161,7 @@ function registerDiagramItemRoutes(app: express.Express, outDir: string): void {
       const { content } = req.body;
       if (!content) return res.status(400).json({ error: 'Campo "content" obrigatório' });
 
-      const metaFiles = fs.readdirSync(outDir).filter(f => f.endsWith('.meta.json'));
-      const targetMeta = metaFiles.find(f => f.includes(id));
+      const targetMeta = findDiagramMetaFile(outDir, id);
       if (!targetMeta) return res.status(404).json({ error: 'Diagrama não encontrado' });
 
       const metaPath = path.join(outDir, targetMeta);
@@ -169,9 +184,7 @@ function registerDiagramHtmlRoutes(app: express.Express, outDir: string): void {
   app.get('/api/diagrams/:id/html', (req: Request, res: Response) => {
     try {
       const id = String(req.params.id);
-      if (!fs.existsSync(outDir)) return res.status(404).send('Output directory not found');
-
-      const metaFile = fs.readdirSync(outDir).find(f => f.endsWith('.meta.json') && f.includes(id));
+      const metaFile = findDiagramMetaFile(outDir, id);
       if (!metaFile) return res.status(404).send('Diagram metadata not found');
 
       const meta: DiagramMeta = JSON.parse(fs.readFileSync(path.join(outDir, metaFile), 'utf-8'));

@@ -150,6 +150,7 @@ export function executeScanTopology(input: ScanTopologyInput): ToolExecutionResu
     nodeCount: topology.totalFiles,
     startTime,
     tags: ['codebase', 'topology', 'c4', 'architecture', 'scanner'],
-    outputPath: input.output_path
+    outputPath: input.output_path,
+    targetDir: targetPath
   });
 }

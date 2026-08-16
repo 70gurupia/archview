@@ -38,7 +38,8 @@ export function executeAnalyzeOverview(input: AnalyzeOverviewInput): ToolExecuti
     description: `Visão Geral Modular: ${topology.totalFiles} arquivos e ${topology.totalLinesOfCode} linhas de código`,
     branches: topBranches.slice(0, 10),
     style: { palette: 'educational' },
-    output_path: input.output_path ? `overview-mindmap-${input.output_path}` : undefined
+    output_path: input.output_path ? `overview-mindmap-${input.output_path}` : undefined,
+    target_dir: targetDir
   });
 
   // 2. Generate Topology Diagram
@@ -56,7 +57,8 @@ export function executeAnalyzeOverview(input: AnalyzeOverviewInput): ToolExecuti
     nodeCount: topology.totalFiles,
     startTime,
     tags: ['overview', 'codebase', 'raio-x', 'topology', ...topology.frameworks.map(f => f.toLowerCase())],
-    outputPath: input.output_path
+    outputPath: input.output_path,
+    targetDir: targetDir
   });
 
   // Append rich markdown summary

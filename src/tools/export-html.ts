@@ -9,6 +9,7 @@ export interface ExportHtmlInput {
   mode?: 'single' | 'dashboard';
   theme?: 'educational' | 'corporate' | 'minimal' | 'dark';
   output_path?: string;
+  target_dir?: string;
 }
 
 export interface ExportHtmlResult {
@@ -112,7 +113,7 @@ function exportSingleDiagram(input: ExportHtmlInput, outDir: string): ExportHtml
 }
 
 export function executeExportHtmlReport(input: ExportHtmlInput = {}): ExportHtmlResult {
-  const outDir = path.resolve(process.cwd(), 'output');
+  const outDir = input.target_dir ? path.resolve(input.target_dir, 'output') : path.resolve(process.cwd(), 'output');
   if (!fs.existsSync(outDir)) {
     fs.mkdirSync(outDir, { recursive: true });
   }

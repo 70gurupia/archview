@@ -112,20 +112,40 @@ export interface SaveDiagramOptions {
   startTime: number;
   tags?: string[];
   outputPath?: string;
+  targetDir?: string;
 }
 
-export function saveDiagramWithMeta(options: SaveDiagramOptions): ToolExecutionResult {
-  const outDir = path.join(process.cwd(), 'output');
+export function resolveOutputDir(options: SaveDiagramOptions): { outDir: string; mmdFilename: string } {
+  let outDir: string;
+  let mmdFilename: string;
+
+  const defaultBaseDir = options.targetDir ? path.resolve(options.targetDir) : process.cwd();
+  const defaultOutDir = path.join(defaultBaseDir, 'output');
+
+  if (options.outputPath) {
+    const parsed = path.parse(options.outputPath);
+    if (parsed.dir && parsed.dir !== '.' && parsed.dir !== '') {
+      outDir = path.resolve(process.cwd(), parsed.dir);
+    } else {
+      outDir = defaultOutDir;
+    }
+    mmdFilename = parsed.name + '.mmd';
+  } else {
+    outDir = defaultOutDir;
+    const { baseFilename } = generateId(options.type, options.title);
+    mmdFilename = `${baseFilename}.mmd`;
+  }
+
   if (!fs.existsSync(outDir)) {
     fs.mkdirSync(outDir, { recursive: true });
   }
 
-  if (options.outputPath) {
-    assertSafePath(options.outputPath, outDir);
-  }
+  return { outDir, mmdFilename };
+}
 
-  const { id, baseFilename } = generateId(options.type, options.title);
-  const mmdFilename = options.outputPath ? path.basename(options.outputPath, path.extname(options.outputPath)) + '.mmd' : `${baseFilename}.mmd`;
+export function saveDiagramWithMeta(options: SaveDiagramOptions): ToolExecutionResult {
+  const { outDir, mmdFilename } = resolveOutputDir(options);
+  const { id } = generateId(options.type, options.title);
   const metaFilename = mmdFilename.replace(/\.mmd$/, '.meta.json');
   const htmlFilename = mmdFilename.replace(/\.mmd$/, '.html');
 

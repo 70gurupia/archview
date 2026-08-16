@@ -4,6 +4,7 @@ import { saveDiagramWithMeta } from '../utils/meta.js';
 
 export interface TraceExecutionInput extends TraceInput {
   output_path?: string;
+  target_dir?: string;
 }
 
 export function executeTraceExecution(input: TraceExecutionInput): ToolExecutionResult {
@@ -23,6 +24,7 @@ export function executeTraceExecution(input: TraceExecutionInput): ToolExecution
     nodeCount: flow.spans.length,
     startTime,
     tags: ['sequence', 'trace', 'logs', 'execucao', flow.hasErrors ? 'erro' : 'sucesso'],
-    outputPath: input.output_path
+    outputPath: input.output_path,
+    targetDir: input.target_dir
   });
 }

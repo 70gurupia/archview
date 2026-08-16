@@ -168,7 +168,8 @@ export function executeTraceCallGraph(input: TraceCallGraphInput): ToolExecution
     nodeCount: inbound.length + outbound.length + 1,
     startTime,
     tags: ['callgraph', 'trace', 'dependencias', targetSymbol.toLowerCase()],
-    outputPath: input.output_path
+    outputPath: input.output_path,
+    targetDir: path.resolve(process.cwd(), targetDir)
   });
 }
 

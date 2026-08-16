@@ -23,7 +23,8 @@ export const MindmapInputSchema = z.object({
     layout: z.enum(['radial', 'tree-left', 'tree-right']).optional(),
     show_icons: z.boolean().optional()
   }).optional(),
-  output_path: z.string().optional()
+  output_path: z.string().optional(),
+  target_dir: z.string().optional()
 });
 
 export const OrgchartNodeSchema = z.object({
@@ -49,7 +50,8 @@ export const OrgchartInputSchema = z.object({
     layout: z.enum(['vertical', 'horizontal']).optional(),
     palette: z.enum(['educational', 'corporate', 'minimal', 'dark']).optional()
   }).optional(),
-  output_path: z.string().optional()
+  output_path: z.string().optional(),
+  target_dir: z.string().optional()
 });
 
 export const ArchitectureElementSchema = z.object({
@@ -77,7 +79,8 @@ export const ArchitectureInputSchema = z.object({
     direction: z.enum(['TB', 'LR', 'BT', 'RL']).optional(),
     palette: z.enum(['educational', 'corporate', 'minimal', 'dark']).optional()
   }).optional(),
-  output_path: z.string().optional()
+  output_path: z.string().optional(),
+  target_dir: z.string().optional()
 });
 
 export const FlowchartStepSchema = z.object({
@@ -104,7 +107,8 @@ export const FlowchartInputSchema = z.object({
     direction: z.enum(["TB", "LR", "BT", "RL"]).optional(),
     palette: z.enum(['educational', 'corporate', 'minimal', 'dark']).optional()
   }).optional(),
-  output_path: z.string().optional()
+  output_path: z.string().optional(),
+  target_dir: z.string().optional()
 });
 
 export const ExportInputSchema = z.object({
@@ -147,7 +151,8 @@ export const TraceExecutionInputSchema = z.object({
   trace_data: z.any().optional(),
   raw_log: z.string().optional(),
   log_file_path: z.string().optional(),
-  output_path: z.string().optional()
+  output_path: z.string().optional(),
+  target_dir: z.string().optional()
 });
 
 export const AnalyzeOverviewInputSchema = z.object({
@@ -160,14 +165,16 @@ export const AnalyzeOverviewInputSchema = z.object({
 export const ObservabilityInputSchema = z.object({
   include_prometheus_raw: z.boolean().optional(),
   generate_chart: z.enum(['xychart', 'quadrant', 'none']).optional(),
-  output_path: z.string().optional()
+  output_path: z.string().optional(),
+  target_dir: z.string().optional()
 });
 
 export const ExportHtmlInputSchema = z.object({
   diagram_id: z.string().optional(),
   mode: z.enum(['single', 'dashboard']).optional(),
   theme: z.enum(['educational', 'corporate', 'minimal', 'dark']).optional(),
-  output_path: z.string().optional()
+  output_path: z.string().optional(),
+  target_dir: z.string().optional()
 });
 
 

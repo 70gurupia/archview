@@ -29,6 +29,7 @@ export interface ArchitectureInput {
     palette?: 'educational' | 'corporate' | 'minimal' | 'dark';
   };
   output_path?: string;
+  target_dir?: string;
 }
 
 const ELEMENT_SHAPES: Record<string, [string, string]> = {
@@ -172,6 +173,7 @@ export function executeArchitecture(input: ArchitectureInput): ToolExecutionResu
     nodeCount: input.elements.length,
     startTime,
     tags: ['c4-model', input.c4_level, 'arquitetura', 'software'],
-    outputPath: input.output_path
+    outputPath: input.output_path,
+    targetDir: input.target_dir
   });
 }

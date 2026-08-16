@@ -6,6 +6,7 @@ export interface ObservabilityInput {
   include_prometheus_raw?: boolean;
   generate_chart?: 'xychart' | 'quadrant' | 'none';
   output_path?: string;
+  target_dir?: string;
 }
 
 export interface ObservabilityResult extends ToolExecutionResult {
@@ -82,7 +83,8 @@ export async function executeGetObservability(input: ObservabilityInput = {}): P
     suggestedTheme: 'corporate',
     tags: ['observability', 'metrics', 'prometheus'],
     startTime,
-    outputPath: input.output_path
+    outputPath: input.output_path,
+    targetDir: input.target_dir
   });
 
   return {

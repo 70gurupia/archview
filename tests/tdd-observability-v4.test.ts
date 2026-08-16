@@ -52,13 +52,13 @@ async function runV4TestSuite() {
   console.log("  ✅ Tool MCP (modo JSON puro) validada.");
 
   // 3b. Modo Gráfico xychart-beta
-  const xychartRes = await executeGetObservability({ generate_chart: 'xychart', output_path: 'test-obs-xychart.md' });
+  const xychartRes = await executeGetObservability({ generate_chart: 'xychart', output_path: 'output/test-obs-xychart.md' });
   assert(xychartRes.markdown.includes('xychart-beta'), "Markdown deve conter sintaxe xychart-beta");
   assert(fs.existsSync(xychartRes.file_path), "Arquivo .mmd do xychart deve ter sido gravado");
   console.log("  ✅ Tool MCP (gráfico xychart-beta) gerada:", xychartRes.file_path);
 
   // 3c. Modo Gráfico quadrantChart
-  const quadrantRes = await executeGetObservability({ generate_chart: 'quadrant', output_path: 'test-obs-quadrant.md' });
+  const quadrantRes = await executeGetObservability({ generate_chart: 'quadrant', output_path: 'output/test-obs-quadrant.md' });
   assert(quadrantRes.markdown.includes('quadrantChart'), "Markdown deve conter sintaxe quadrantChart");
   assert(fs.existsSync(quadrantRes.file_path), "Arquivo .mmd do quadrantChart deve ter sido gravado");
   console.log("  ✅ Tool MCP (gráfico quadrantChart) gerada:", quadrantRes.file_path);
