@@ -84,8 +84,15 @@ export function generateId(type: DiagramType, title: string): { id: string, base
 }
 
 export function assertSafePath(targetPath: string, outDir: string): void {
-  const normalized = targetPath.replace(/\\/g, '/');
-  if (normalized.includes('..') || /\.{2,}/.test(normalized)) {
+  let decoded = targetPath;
+  try {
+    decoded = decodeURIComponent(targetPath);
+  } catch {
+    // Mantém original se decode falhar
+  }
+
+  const normalized = decoded.replace(/\\/g, '/');
+  if (normalized.includes('..') || /\.{2,}/.test(normalized) || targetPath.includes('%2e') || targetPath.includes('%2E')) {
     throw new Error(`Path traversal attempt detected. Multi-dot sequences are not allowed.`);
   }
   const resolved = path.resolve(outDir, normalized);

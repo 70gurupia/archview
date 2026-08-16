@@ -33,193 +33,25 @@ let httpServer: Server | null = null;
 
 export function broadcastEvent(eventName: string, data: any): void {
   const payload = `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`;
-  clients.forEach(client => {
+  for (const client of clients) {
     try {
       client.res.write(payload);
     } catch {
       // Ignora erro de socket fechado
     }
-  });
+  }
 }
 
-export function createSseApp(): express.Express {
-  const app = express();
-  app.use(cors({ origin: /^http:\/\/localhost:\d+$/ }));
-
-  // Middleware de medição e telemetria HTTP Prometheus
-  app.use((req: Request, res: Response, next) => {
-    const start = Date.now();
-    res.on('finish', () => {
-      const duration = Date.now() - start;
-      const normalizedPath = req.route?.path || req.path;
-      recordHttpRequest(req.method, normalizedPath, res.statusCode, duration);
-    });
-    next();
-  });
-
-  // Basic Rate Limiting
-  const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    message: { error: "Too many requests from this IP, please try again after 15 minutes" }
-  });
-  app.use('/api/', limiter);
-  const outDir = path.join(process.cwd(), 'output');
-  const frontendDist = path.join(process.cwd(), 'frontend', 'dist');
-
-  // Servir frontend estático compilado se existir
-  if (fs.existsSync(frontendDist)) {
-    app.use(express.static(frontendDist));
-  }
-
-  // Endpoint Padrão Prometheus (/metrics)
+function registerObservabilityRoutes(app: express.Express): void {
   app.get('/metrics', async (_req: Request, res: Response) => {
     try {
       res.setHeader('Content-Type', getMetricsContentType());
-      const metricsText = await getMetricsAsText();
-      res.send(metricsText);
+      res.send(await getMetricsAsText());
     } catch (err: any) {
       res.status(500).send(err.message);
     }
   });
 
-  // SSE Stream Endpoint
-  app.get('/events', (req: Request, res: Response) => {
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': '*'
-    });
-
-    const clientId = ++clientIdCounter;
-    const newClient: SseClient = { id: clientId, res };
-    clients.push(newClient);
-    setSseConnections(clients.length);
-
-    res.write(`event: connected\ndata: ${JSON.stringify({ clientId, timestamp: new Date().toISOString() })}\n\n`);
-
-    req.on('close', () => {
-      clients = clients.filter(c => c.id !== clientId);
-      setSseConnections(clients.length);
-    });
-  });
-
-  // REST: List All Diagrams
-  app.get('/api/diagrams', async (req: Request, res: Response) => {
-    try {
-      if (!fs.existsSync(outDir)) {
-        return res.json([]);
-      }
-
-      const files = fs.readdirSync(outDir);
-      const metaFiles = files.filter(f => f.endsWith('.meta.json'));
-
-      const diagrams = [];
-      for (const metaFile of metaFiles) {
-        try {
-          const metaRaw = fs.readFileSync(path.join(outDir, metaFile), 'utf-8');
-          const meta: DiagramMeta = JSON.parse(metaRaw);
-          const mmdPath = path.join(outDir, meta.files.mermaid);
-          let content = '';
-          if (fs.existsSync(mmdPath)) {
-            content = fs.readFileSync(mmdPath, 'utf-8');
-          }
-
-          diagrams.push({
-            ...meta,
-            content
-          });
-        } catch {
-          // Ignora arquivos corrompidos
-        }
-      }
-
-      // Ordenar mais recentes primeiro
-      diagrams.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      res.json(diagrams);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  // REST: Get Single Diagram by ID
-  app.get('/api/diagrams/:id', (req: Request, res: Response) => {
-    try {
-      const id = String(req.params.id);
-      if (!fs.existsSync(outDir)) {
-        return res.status(404).json({ error: 'Diagram not found' });
-      }
-
-      const files = fs.readdirSync(outDir);
-      const metaFile = files.find(f => f.endsWith('.meta.json') && (f.startsWith(`${id}.meta.json`) || f.includes(id)));
-      if (!metaFile) {
-        return res.status(404).json({ error: 'Diagram metadata not found' });
-      }
-
-      const metaRaw = fs.readFileSync(path.join(outDir, metaFile), 'utf-8');
-      const meta: DiagramMeta = JSON.parse(metaRaw);
-      const mmdPath = path.join(outDir, meta.files.mermaid);
-      let content = '';
-      if (fs.existsSync(mmdPath)) {
-        content = fs.readFileSync(mmdPath, 'utf-8');
-      }
-
-      res.json({
-        ...meta,
-        content
-      });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  // REST: Update Diagram Content
-  app.put('/api/diagrams/:id', bodyParser.json(), (req: Request, res: Response) => {
-    try {
-      const id = String(req.params.id);
-      const { content } = req.body;
-
-      if (!content || typeof content !== 'string') {
-        return res.status(400).json({ error: 'Field "content" is required and must be string' });
-      }
-
-      if (!fs.existsSync(outDir)) {
-        return res.status(404).json({ error: 'Diagram not found' });
-      }
-
-      const files = fs.readdirSync(outDir);
-      const metaFile = files.find(f => f.endsWith('.meta.json') && (f.startsWith(`${id}.meta.json`) || f.includes(id)));
-      if (!metaFile) {
-        return res.status(404).json({ error: 'Diagram metadata not found' });
-      }
-
-      const metaPath = path.join(outDir, metaFile);
-      const metaRaw = fs.readFileSync(metaPath, 'utf-8');
-      const meta: DiagramMeta = JSON.parse(metaRaw);
-
-      assertSafePath(meta.files.mermaid, outDir);
-      const mmdPath = path.join(outDir, meta.files.mermaid);
-
-      // Salvar novo conteúdo
-      fs.writeFileSync(mmdPath, content, 'utf-8');
-
-      meta.updated_at = new Date().toISOString();
-      fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
-
-      // Notificar clientes via SSE
-      broadcastEvent('diagram.updated', {
-        id: meta.id,
-        updated_at: meta.updated_at
-      });
-
-      res.json({ success: true, diagram: { ...meta, content } });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  // REST: Observability Stats Aggregated
   app.get('/api/observability/stats', async (_req: Request, res: Response) => {
     try {
       const stats = await getAggregatedStats();
@@ -230,11 +62,9 @@ export function createSseApp(): express.Express {
     }
   });
 
-  // REST: Health Check & System Status Enriquecido
   app.get('/api/health', async (_req: Request, res: Response) => {
     const stats = await getAggregatedStats();
     stats.sse_connections = clients.length;
-
     res.json({
       status: stats.health,
       server: 'archview',
@@ -245,8 +75,134 @@ export function createSseApp(): express.Express {
       totalDiagrams: stats.total_diagrams
     });
   });
+}
 
-  // REST: Knowledge Graph Full Topology & Analytics
+function registerSseStreamRoute(app: express.Express): void {
+  app.get('/events', (req: Request, res: Response) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*'
+    });
+
+    const clientId = ++clientIdCounter;
+    clients.push({ id: clientId, res });
+    setSseConnections(clients.length);
+
+    res.write(`event: connected\ndata: ${JSON.stringify({ clientId, timestamp: new Date().toISOString() })}\n\n`);
+
+    req.on('close', () => {
+      clients = clients.filter(c => c.id !== clientId);
+      setSseConnections(clients.length);
+    });
+  });
+}
+
+function registerDiagramListRoute(app: express.Express, outDir: string): void {
+  app.get('/api/diagrams', (_req: Request, res: Response) => {
+    if (!fs.existsSync(outDir)) return res.json([]);
+    const metaFiles = fs.readdirSync(outDir).filter(f => f.endsWith('.meta.json'));
+    const diagrams = [];
+
+    for (const metaFile of metaFiles) {
+      try {
+        const metaRaw = fs.readFileSync(path.join(outDir, metaFile), 'utf-8');
+        const meta: DiagramMeta = JSON.parse(metaRaw);
+        const mmdPath = path.join(outDir, meta.files.mermaid);
+        const content = fs.existsSync(mmdPath) ? fs.readFileSync(mmdPath, 'utf-8') : '';
+        diagrams.push({ ...meta, content });
+      } catch {
+        // Ignora arquivos corrompidos
+      }
+    }
+    diagrams.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    res.json(diagrams);
+  });
+}
+
+function registerDiagramItemRoutes(app: express.Express, outDir: string): void {
+  app.get('/api/diagrams/:id', (req: Request, res: Response) => {
+    try {
+      const id = String(req.params.id);
+      if (!fs.existsSync(outDir)) return res.status(404).json({ error: 'Diretório output não encontrado' });
+      const metaFiles = fs.readdirSync(outDir).filter(f => f.endsWith('.meta.json'));
+      const targetMeta = metaFiles.find(f => f.includes(id));
+      if (!targetMeta) return res.status(404).json({ error: 'Diagrama não encontrado' });
+
+      const meta: DiagramMeta = JSON.parse(fs.readFileSync(path.join(outDir, targetMeta), 'utf-8'));
+      const mmdPath = path.join(outDir, meta.files.mermaid);
+      const content = fs.existsSync(mmdPath) ? fs.readFileSync(mmdPath, 'utf-8') : '';
+      res.json({ ...meta, content });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.put('/api/diagrams/:id', bodyParser.json(), (req: Request, res: Response) => {
+    try {
+      const id = String(req.params.id);
+      const { content } = req.body;
+      if (!content) return res.status(400).json({ error: 'Campo "content" obrigatório' });
+
+      const metaFiles = fs.readdirSync(outDir).filter(f => f.endsWith('.meta.json'));
+      const targetMeta = metaFiles.find(f => f.includes(id));
+      if (!targetMeta) return res.status(404).json({ error: 'Diagrama não encontrado' });
+
+      const metaPath = path.join(outDir, targetMeta);
+      const meta: DiagramMeta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
+      const mmdPath = path.join(outDir, meta.files.mermaid);
+
+      fs.writeFileSync(mmdPath, content, 'utf-8');
+      meta.updated_at = new Date().toISOString();
+      fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
+
+      broadcastEvent('diagram.updated', { id: meta.id, updated_at: meta.updated_at });
+      res.json({ success: true, diagram: { ...meta, content } });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+}
+
+function registerDiagramHtmlRoutes(app: express.Express, outDir: string): void {
+  app.get('/api/diagrams/:id/html', (req: Request, res: Response) => {
+    try {
+      const id = String(req.params.id);
+      if (!fs.existsSync(outDir)) return res.status(404).send('Output directory not found');
+
+      const metaFile = fs.readdirSync(outDir).find(f => f.endsWith('.meta.json') && f.includes(id));
+      if (!metaFile) return res.status(404).send('Diagram metadata not found');
+
+      const meta: DiagramMeta = JSON.parse(fs.readFileSync(path.join(outDir, metaFile), 'utf-8'));
+      const mmdPath = path.join(outDir, meta.files.mermaid);
+      const code = fs.existsSync(mmdPath) ? fs.readFileSync(mmdPath, 'utf-8') : '';
+
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(generateStandaloneDiagramHtml(meta, code));
+    } catch (err: any) {
+      res.status(500).send(`Error generating HTML: ${err.message}`);
+    }
+  });
+
+  app.get('/api/export/dashboard-html', (_req: Request, res: Response) => {
+    try {
+      const result = executeExportHtmlReport({ mode: 'dashboard' });
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(fs.readFileSync(result.file_path, 'utf-8'));
+    } catch (err: any) {
+      res.status(500).send(`Error generating Dashboard HTML: ${err.message}`);
+    }
+  });
+}
+
+function registerDiagramRoutes(app: express.Express, outDir: string): void {
+  registerDiagramListRoute(app, outDir);
+  registerDiagramItemRoutes(app, outDir);
+  registerDiagramHtmlRoutes(app, outDir);
+}
+
+function registerKgRoutes(app: express.Express): void {
   app.get('/api/kg/graph', (_req: Request, res: Response) => {
     try {
       const kg = new KnowledgeGraphDB();
@@ -260,7 +216,6 @@ export function createSseApp(): express.Express {
     }
   });
 
-  // REST: Knowledge Graph Nodes
   app.get('/api/kg/nodes', (req: Request, res: Response) => {
     try {
       const kg = new KnowledgeGraphDB();
@@ -272,7 +227,6 @@ export function createSseApp(): express.Express {
     }
   });
 
-  // REST: Knowledge Graph Edges
   app.get('/api/kg/edges', (req: Request, res: Response) => {
     try {
       const kg = new KnowledgeGraphDB();
@@ -283,84 +237,70 @@ export function createSseApp(): express.Express {
       res.status(500).json({ error: err.message });
     }
   });
+}
 
-  // REST: Get Standalone HTML for a Diagram
-  app.get('/api/diagrams/:id/html', (req: Request, res: Response) => {
-    try {
-      const id = String(req.params.id);
-      if (!fs.existsSync(outDir)) {
-        return res.status(404).send('Output directory not found');
-      }
-
-      const files = fs.readdirSync(outDir);
-      const metaFile = files.find(f => f.endsWith('.meta.json') && (f.startsWith(`${id}.meta.json`) || f.includes(id)));
-      if (!metaFile) {
-        return res.status(404).send('Diagram metadata not found');
-      }
-
-      const metaRaw = fs.readFileSync(path.join(outDir, metaFile), 'utf-8');
-      const meta: DiagramMeta = JSON.parse(metaRaw);
-      const mmdPath = path.join(outDir, meta.files.mermaid);
-      const code = fs.existsSync(mmdPath) ? fs.readFileSync(mmdPath, 'utf-8') : '';
-
-      const html = generateStandaloneDiagramHtml(meta, code);
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.send(html);
-    } catch (err: any) {
-      res.status(500).send(`Error generating HTML: ${err.message}`);
-    }
-  });
-
-  // REST: Get Consolidated Dashboard HTML
-  app.get('/api/export/dashboard-html', (_req: Request, res: Response) => {
-    try {
-      const result = executeExportHtmlReport({ mode: 'dashboard' });
-      const htmlContent = fs.readFileSync(result.file_path, 'utf-8');
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.send(htmlContent);
-    } catch (err: any) {
-      res.status(500).send(`Error generating Dashboard HTML: ${err.message}`);
-    }
-  });
-
-  // REST: Ingest Execution Trace
+function registerCodebaseRoutes(app: express.Express): void {
   app.post('/api/ingest/trace', bodyParser.json(), (req: Request, res: Response) => {
     try {
       const result = executeTraceExecution(req.body);
-      res.status(201).json({
-        success: true,
-        diagram: result
-      });
+      res.status(201).json({ success: true, diagram: result });
     } catch (err: any) {
       res.status(400).json({ success: false, error: err.message });
     }
   });
 
-  // REST: Scan Codebase Topology
   app.post('/api/codebase/scan', bodyParser.json(), (req: Request, res: Response) => {
     try {
       const result = executeScanTopology(req.body);
-      res.json({
-        success: true,
-        diagram: result
-      });
+      res.json({ success: true, diagram: result });
     } catch (err: any) {
       res.status(400).json({ success: false, error: err.message });
     }
   });
 
-  // REST: Trace Call Graph
   app.post('/api/codebase/trace-call', bodyParser.json(), (req: Request, res: Response) => {
     try {
       const result = executeTraceCallGraph(req.body);
-      res.json({
-        success: true,
-        diagram: result
-      });
+      res.json({ success: true, diagram: result });
     } catch (err: any) {
       res.status(400).json({ success: false, error: err.message });
     }
   });
+}
+
+export function createSseApp(): express.Express {
+  const app = express();
+  app.use(cors({ origin: /^http:\/\/localhost:\d+$/ }));
+
+  app.use((req: Request, res: Response, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+      const duration = Date.now() - start;
+      const normalizedPath = req.route?.path || req.path;
+      recordHttpRequest(req.method, normalizedPath, res.statusCode, duration);
+    });
+    next();
+  });
+
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: { error: "Too many requests from this IP, please try again after 15 minutes" }
+  });
+  app.use('/api/', limiter);
+
+  const outDir = path.join(process.cwd(), 'output');
+  const frontendDist = path.join(process.cwd(), 'frontend', 'dist');
+
+  if (fs.existsSync(frontendDist)) {
+    app.use(express.static(frontendDist));
+  }
+
+  registerObservabilityRoutes(app);
+  registerSseStreamRoute(app);
+  registerDiagramRoutes(app, outDir);
+  registerKgRoutes(app);
+  registerCodebaseRoutes(app);
 
   return app;
 }

@@ -5,34 +5,18 @@ import { parseTypeScriptFile } from './ast-parser-ts.js';
 import { parseLexicalFile } from './ast-parser-lexical.js';
 
 const DEFAULT_IGNORED_DIRS = new Set([
-  'node_modules',
-  '.git',
-  '.svn',
-  '.hg',
-  'dist',
-  'build',
-  'out',
-  '.next',
-  '.nuxt',
-  '.venv',
-  'venv',
-  'env',
-  'vendor',
-  'target',
-  'bin',
-  'obj',
-  '__pycache__',
-  '.pytest_cache',
-  'coverage',
-  '.turbo',
-  '.idea',
-  '.vscode'
+  'node_modules', '.git', '.svn', '.hg', 'dist', 'build', 'out',
+  '.next', '.nuxt', '.venv', 'venv', 'env', 'vendor', 'target',
+  'bin', 'obj', '__pycache__', '.pytest_cache', 'coverage', '.turbo',
+  '.idea', '.vscode'
 ]);
 
 const SUPPORTED_EXTENSIONS = new Set([
   '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs',
   '.py', '.go', '.java', '.kt', '.rs', '.php', '.cs'
 ]);
+
+const JS_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);
 
 export interface ScanOptions {
   maxDepth?: number;
@@ -41,159 +25,219 @@ export interface ScanOptions {
   includeExtensions?: string[];
 }
 
+function checkNodeManifest(rootPath: string, frameworks: Set<string>): void {
+  const pkgPath = path.join(rootPath, 'package.json');
+  if (!fs.existsSync(pkgPath)) return;
+  try {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+    const allDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+    const frameworkMap: Record<string, string> = {
+      express: 'Express',
+      '@nestjs/core': 'NestJS',
+      next: 'Next.js',
+      fastify: 'Fastify',
+      react: 'React',
+      vue: 'Vue',
+      '@angular/core': 'Angular',
+      alpinejs: 'Alpine.js'
+    };
+    for (const [dep, name] of Object.entries(frameworkMap)) {
+      if (allDeps[dep]) frameworks.add(name);
+    }
+  } catch {
+    // Ignora erro de JSON malformado
+  }
+}
+
+function checkPythonManifest(rootPath: string, frameworks: Set<string>): void {
+  const reqPath = path.join(rootPath, 'requirements.txt');
+  if (!fs.existsSync(reqPath)) return;
+  try {
+    const reqs = fs.readFileSync(reqPath, 'utf-8');
+    if (/fastapi/i.test(reqs)) frameworks.add('FastAPI');
+    if (/django/i.test(reqs)) frameworks.add('Django');
+    if (/flask/i.test(reqs)) frameworks.add('Flask');
+  } catch {
+    // Ignora erro de leitura
+  }
+}
+
+function checkGoManifest(rootPath: string, frameworks: Set<string>): void {
+  const goModPath = path.join(rootPath, 'go.mod');
+  if (!fs.existsSync(goModPath)) return;
+  try {
+    const goMod = fs.readFileSync(goModPath, 'utf-8');
+    if (/gin-gonic\/gin/i.test(goMod)) frameworks.add('Gin');
+    if (/gofiber\/fiber/i.test(goMod)) frameworks.add('Fiber');
+    if (/labstack\/echo/i.test(goMod)) frameworks.add('Echo');
+  } catch {
+    // Ignora erro de leitura
+  }
+}
+
+function parseSourceFile(fullPath: string, entryRelPath: string, ext: string): ParsedFile {
+  const content = fs.readFileSync(fullPath, 'utf-8');
+  if (JS_EXTENSIONS.has(ext)) {
+    return parseTypeScriptFile(fullPath, entryRelPath, content);
+  }
+  return parseLexicalFile(fullPath, entryRelPath, content);
+}
+
+interface ScannerContext {
+  rootPath: string;
+  maxDepth: number;
+  maxFiles: number;
+  ignoredDirs: Set<string>;
+  allowedExtensions: Set<string>;
+  parsedFiles: ParsedFile[];
+  languageCounts: Record<string, number>;
+  totalLinesOfCode: { count: number };
+  detectedFrameworks: Set<string>;
+}
+
+function processDirectoryEntry(
+  entry: fs.Dirent,
+  currentPath: string,
+  currentDepth: number,
+  ctx: ScannerContext,
+  scanDirFn: (path: string, depth: number) => DirectoryNode
+): DirectoryNode | null {
+  const fullPath = path.join(currentPath, entry.name);
+  const entryRelPath = path.relative(ctx.rootPath, fullPath);
+
+  if (entry.isDirectory()) {
+    if (ctx.ignoredDirs.has(entry.name) || entry.name.startsWith('.')) return null;
+    return scanDirFn(fullPath, currentDepth + 1);
+  }
+
+  const ext = path.extname(entry.name).toLowerCase();
+  if (!ctx.allowedExtensions.has(ext) || ctx.parsedFiles.length >= ctx.maxFiles) return null;
+
+  try {
+    const parsed = parseSourceFile(fullPath, entryRelPath, ext);
+    ctx.parsedFiles.push(parsed);
+    ctx.totalLinesOfCode.count += parsed.linesOfCode;
+    ctx.languageCounts[parsed.language] = (ctx.languageCounts[parsed.language] || 0) + 1;
+    if (parsed.framework) ctx.detectedFrameworks.add(parsed.framework);
+
+    return {
+      name: entry.name,
+      path: fullPath,
+      relativePath: entryRelPath,
+      type: 'file',
+      fileInfo: {
+        language: parsed.language,
+        linesOfCode: parsed.linesOfCode,
+        symbolCount: parsed.symbols.length,
+        layer: parsed.layer
+      }
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function scanCodebase(targetPath: string, options: ScanOptions = {}): CodebaseTopology {
   const rootPath = path.resolve(targetPath);
   if (!fs.existsSync(rootPath)) {
     throw new Error(`Diretório não encontrado: ${targetPath}`);
   }
 
-  const maxDepth = options.maxDepth || 8;
-  const maxFiles = options.maxFiles || 500;
-  const ignoredDirs = new Set([...DEFAULT_IGNORED_DIRS, ...(options.excludeDirs || [])]);
-  const allowedExtensions = options.includeExtensions ? new Set(options.includeExtensions) : SUPPORTED_EXTENSIONS;
+  const ctx: ScannerContext = {
+    rootPath,
+    maxDepth: options.maxDepth || 8,
+    maxFiles: options.maxFiles || 500,
+    ignoredDirs: new Set([...DEFAULT_IGNORED_DIRS, ...(options.excludeDirs || [])]),
+    allowedExtensions: options.includeExtensions ? new Set(options.includeExtensions) : SUPPORTED_EXTENSIONS,
+    parsedFiles: [],
+    languageCounts: {},
+    totalLinesOfCode: { count: 0 },
+    detectedFrameworks: new Set<string>()
+  };
 
-  const parsedFiles: ParsedFile[] = [];
-  const languageCounts: { [lang: string]: number } = {};
-  let totalLinesOfCode = 0;
+  checkNodeManifest(rootPath, ctx.detectedFrameworks);
+  checkPythonManifest(rootPath, ctx.detectedFrameworks);
+  checkGoManifest(rootPath, ctx.detectedFrameworks);
 
-  const projectName = path.basename(rootPath) || 'project';
-  const detectedFrameworks = new Set<string>();
-
-  // 1. Check root package manifests for framework detection
-  detectFrameworksFromManifests(rootPath, detectedFrameworks);
-
-  // 2. Recursive scan
   function scanDir(currentPath: string, currentDepth: number): DirectoryNode {
     const dirName = path.basename(currentPath);
     const relPath = path.relative(rootPath, currentPath) || '.';
     const children: DirectoryNode[] = [];
 
-    if (currentDepth > maxDepth) {
+    if (currentDepth > ctx.maxDepth) {
       return { name: dirName, path: currentPath, relativePath: relPath, type: 'directory', children: [] };
     }
 
     try {
       const entries = fs.readdirSync(currentPath, { withFileTypes: true });
-
-      // Sort: directories first, then files
-      entries.sort((a, b) => {
-        if (a.isDirectory() === b.isDirectory()) return a.name.localeCompare(b.name);
-        return a.isDirectory() ? -1 : 1;
-      });
+      entries.sort((a, b) => (a.isDirectory() === b.isDirectory() ? a.name.localeCompare(b.name) : a.isDirectory() ? -1 : 1));
 
       for (const entry of entries) {
-        const fullPath = path.join(currentPath, entry.name);
-        const entryRelPath = path.relative(rootPath, fullPath);
-
-        if (entry.isDirectory()) {
-          if (ignoredDirs.has(entry.name) || entry.name.startsWith('.')) continue;
-          children.push(scanDir(fullPath, currentDepth + 1));
-        } else if (entry.isFile()) {
-          const ext = path.extname(entry.name).toLowerCase();
-          if (!allowedExtensions.has(ext)) continue;
-          if (parsedFiles.length >= maxFiles) continue;
-
-          try {
-            const content = fs.readFileSync(fullPath, 'utf-8');
-            let parsed: ParsedFile;
-
-            if (['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'].includes(ext)) {
-              parsed = parseTypeScriptFile(fullPath, entryRelPath, content);
-            } else {
-              parsed = parseLexicalFile(fullPath, entryRelPath, content);
-            }
-
-            parsedFiles.push(parsed);
-            totalLinesOfCode += parsed.linesOfCode;
-            languageCounts[parsed.language] = (languageCounts[parsed.language] || 0) + 1;
-            if (parsed.framework) detectedFrameworks.add(parsed.framework);
-
-            children.push({
-              name: entry.name,
-              path: fullPath,
-              relativePath: entryRelPath,
-              type: 'file',
-              fileInfo: {
-                language: parsed.language,
-                linesOfCode: parsed.linesOfCode,
-                symbolCount: parsed.symbols.length,
-                layer: parsed.layer
-              }
-            });
-          } catch {
-            // Ignore unparseable files
-          }
-        }
+        const child = processDirectoryEntry(entry, currentPath, currentDepth, ctx, scanDir);
+        if (child) children.push(child);
       }
     } catch {
-      // Permission / access issues
+      // Ignora erro de permissão
     }
 
-    return {
-      name: dirName,
-      path: currentPath,
-      relativePath: relPath,
-      type: 'directory',
-      children
-    };
+    return { name: dirName, path: currentPath, relativePath: relPath, type: 'directory', children };
   }
 
   const directoryTree = scanDir(rootPath, 0);
-
-  // 3. Resolve Cross-Module Calls
-  const crossModuleCalls = resolveCrossModuleCalls(parsedFiles);
+  const crossModuleCalls = resolveCrossModuleCalls(ctx.parsedFiles);
 
   return {
     rootPath,
-    projectName,
-    totalFiles: parsedFiles.length,
-    totalLinesOfCode,
-    languages: languageCounts,
-    frameworks: Array.from(detectedFrameworks),
-    files: parsedFiles,
+    projectName: path.basename(rootPath) || 'project',
+    totalFiles: ctx.parsedFiles.length,
+    totalLinesOfCode: ctx.totalLinesOfCode.count,
+    languages: ctx.languageCounts,
+    frameworks: Array.from(ctx.detectedFrameworks),
+    files: ctx.parsedFiles,
     directoryTree,
     crossModuleCalls
   };
 }
 
-function detectFrameworksFromManifests(rootPath: string, frameworks: Set<string>) {
-  // package.json
-  const pkgPath = path.join(rootPath, 'package.json');
-  if (fs.existsSync(pkgPath)) {
-    try {
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
-      const allDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
-      if (allDeps['express']) frameworks.add('Express');
-      if (allDeps['@nestjs/core']) frameworks.add('NestJS');
-      if (allDeps['next']) frameworks.add('Next.js');
-      if (allDeps['fastify']) frameworks.add('Fastify');
-      if (allDeps['react']) frameworks.add('React');
-      if (allDeps['vue']) frameworks.add('Vue');
-      if (allDeps['@angular/core']) frameworks.add('Angular');
-      if (allDeps['alpinejs']) frameworks.add('Alpine.js');
-    } catch {}
-  }
+function resolveImportCalls(file: ParsedFile, files: ParsedFile[], calls: CrossModuleCall[]): void {
+  for (const imp of file.imports) {
+    const normSource = imp.source.replace(/^\.\//, '').replace(/^\.\.\//, '').replace(/\.(js|ts|jsx|tsx)$/, '');
+    const targetFile = files.find(f => {
+      const normRel = f.relativePath.replace(/\.(js|ts|jsx|tsx)$/, '');
+      return normRel.endsWith(normSource) || normRel === normSource;
+    });
 
-  // requirements.txt / pyproject.toml
-  const reqPath = path.join(rootPath, 'requirements.txt');
-  if (fs.existsSync(reqPath)) {
-    try {
-      const reqs = fs.readFileSync(reqPath, 'utf-8');
-      if (/fastapi/i.test(reqs)) frameworks.add('FastAPI');
-      if (/django/i.test(reqs)) frameworks.add('Django');
-      if (/flask/i.test(reqs)) frameworks.add('Flask');
-    } catch {}
+    if (targetFile && targetFile.relativePath !== file.relativePath) {
+      for (const spec of imp.specifiers) {
+        calls.push({
+          fromFile: file.relativePath,
+          fromSymbol: file.symbols[0]?.name || 'module',
+          toFile: targetFile.relativePath,
+          toSymbol: spec,
+          callCount: 1
+        });
+      }
+    }
   }
+}
 
-  // go.mod
-  const goModPath = path.join(rootPath, 'go.mod');
-  if (fs.existsSync(goModPath)) {
-    try {
-      const goMod = fs.readFileSync(goModPath, 'utf-8');
-      if (/github\.com\/gin-gonic\/gin/i.test(goMod)) frameworks.add('Gin');
-      if (/github\.com\/gofiber\/fiber/i.test(goMod)) frameworks.add('Fiber');
-      if (/github\.com\/labstack\/echo/i.test(goMod)) frameworks.add('Echo');
-    } catch {}
+function resolveSymbolCalls(file: ParsedFile, symbolToFileMap: Map<string, string>, calls: CrossModuleCall[]): void {
+  for (const call of file.calls) {
+    const targetFilePath = symbolToFileMap.get(call.calleeName) || (call.targetModule ? symbolToFileMap.get(call.targetModule) : undefined);
+    if (targetFilePath && targetFilePath !== file.relativePath) {
+      const existing = calls.find(c => c.fromFile === file.relativePath && c.toFile === targetFilePath && c.toSymbol === call.calleeName);
+      if (existing) {
+        existing.callCount++;
+      } else {
+        calls.push({
+          fromFile: file.relativePath,
+          fromSymbol: call.callerName,
+          toFile: targetFilePath,
+          toSymbol: call.calleeName,
+          callCount: 1
+        });
+      }
+    }
   }
 }
 
@@ -201,60 +245,17 @@ function resolveCrossModuleCalls(files: ParsedFile[]): CrossModuleCall[] {
   const calls: CrossModuleCall[] = [];
   const symbolToFileMap = new Map<string, string>();
 
-  // Map exported symbols to file relative paths
-  files.forEach(f => {
-    f.exports.forEach(exp => {
-      symbolToFileMap.set(exp, f.relativePath);
-    });
-    f.symbols.filter(s => s.isExported).forEach(s => {
-      symbolToFileMap.set(s.name, f.relativePath);
-    });
-  });
+  for (const f of files) {
+    for (const exp of f.exports) symbolToFileMap.set(exp, f.relativePath);
+    for (const s of f.symbols) {
+      if (s.isExported) symbolToFileMap.set(s.name, f.relativePath);
+    }
+  }
 
-  files.forEach(file => {
-    // 1. Resolve through direct imports
-    file.imports.forEach(imp => {
-      // Find matching target file
-      const targetFile = files.find(f => {
-        const normSource = imp.source.replace(/^\.\//, '').replace(/^\.\.\//, '').replace(/\.(js|ts|jsx|tsx)$/, '');
-        const normRel = f.relativePath.replace(/\.(js|ts|jsx|tsx)$/, '');
-        return normRel.endsWith(normSource) || normRel === normSource;
-      });
-
-      if (targetFile && targetFile.relativePath !== file.relativePath) {
-        imp.specifiers.forEach(spec => {
-          // Check if this imported symbol was called in the file
-          const wasCalled = file.calls.some(c => c.calleeName === spec || c.targetModule === spec);
-          calls.push({
-            fromFile: file.relativePath,
-            fromSymbol: file.symbols[0]?.name || 'module',
-            toFile: targetFile.relativePath,
-            toSymbol: spec,
-            callCount: wasCalled ? 1 : 1
-          });
-        });
-      }
-    });
-
-    // 2. Resolve through calls matching known global exported symbols
-    file.calls.forEach(call => {
-      const targetFilePath = symbolToFileMap.get(call.calleeName) || (call.targetModule ? symbolToFileMap.get(call.targetModule) : undefined);
-      if (targetFilePath && targetFilePath !== file.relativePath) {
-        const existing = calls.find(c => c.fromFile === file.relativePath && c.toFile === targetFilePath && c.toSymbol === call.calleeName);
-        if (existing) {
-          existing.callCount++;
-        } else {
-          calls.push({
-            fromFile: file.relativePath,
-            fromSymbol: call.callerName,
-            toFile: targetFilePath,
-            toSymbol: call.calleeName,
-            callCount: 1
-          });
-        }
-      }
-    });
-  });
+  for (const file of files) {
+    resolveImportCalls(file, files, calls);
+    resolveSymbolCalls(file, symbolToFileMap, calls);
+  }
 
   return calls;
 }

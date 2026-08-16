@@ -1,4 +1,3 @@
-import { FlowchartInputSchema } from '../utils/validation.js';
 import { ToolExecutionResult } from '../types/index.js';
 import { saveDiagramWithMeta, getSemanticIcon, getDesignSystemClassDefs, getNodeClass } from '../utils/meta.js';
 
@@ -7,7 +6,7 @@ export interface FlowchartStep {
   type: 'start' | 'end' | 'process' | 'decision' | 'input' | 'output' | 'subprocess' | 'database' | 'queue' | 'document';
   label: string;
   group?: string;
-  next?: (string | { id: string, label?: string, style?: 'solid' | 'dashed' | 'dotted' | 'thick' })[];
+  next?: (string | { id: string; label?: string; style?: 'solid' | 'dashed' | 'dotted' | 'thick' })[];
   details?: string;
 }
 
@@ -23,108 +22,89 @@ export interface FlowchartInput {
   output_path?: string;
 }
 
+const FLOWCHART_SHAPES: Record<string, [string, string]> = {
+  start: ['([', '])'],
+  end: ['([', '])'],
+  decision: ['{', '}'],
+  database: ['[(', ')]'],
+  queue: ['[[', ']]'],
+  subprocess: ['[[', ']]'],
+  document: ['[\\', '\\]'],
+  input: ['([/', '/])'],
+  output: ['([/', '/])'],
+  process: ['[', ']']
+};
+
+function renderFlowchartStep(step: FlowchartStep, indent = '  '): string {
+  const [open, close] = FLOWCHART_SHAPES[step.type] || ['[', ']'];
+  const icon = getSemanticIcon(step.type, step.label);
+  return `${indent}${step.id}${open}"${icon}${step.label}"${close}\n`;
+}
+
+function renderTransitions(steps: FlowchartStep[]): string {
+  let mermaid = '';
+  for (const step of steps) {
+    if (!step.next) continue;
+    for (const n of step.next) {
+      if (typeof n === 'string') {
+        const target = steps.find(s => s.id === n);
+        const arrow = (target?.type === 'queue' || target?.type === 'subprocess') ? '-.->' : '-->';
+        mermaid += `  ${step.id} ${arrow} ${n}\n`;
+      } else {
+        const isDashed = n.style === 'dashed' || n.style === 'dotted';
+        if (n.label) {
+          const arrow = isDashed ? `-. "${n.label}" .->` : `-- "${n.label}" -->`;
+          mermaid += `  ${step.id} ${arrow} ${n.id}\n`;
+        } else {
+          const arrow = isDashed ? '-.->' : '-->';
+          mermaid += `  ${step.id} ${arrow} ${n.id}\n`;
+        }
+      }
+    }
+  }
+  return mermaid;
+}
+
 export function generateFlowchartMermaid(input: FlowchartInput): string {
-  // Direcionamento inteligente: se não especificado, fluxos com decisões usam TD e pipelines sequenciais usam LR widescreen
   const hasDecisions = input.steps.some(s => s.type === 'decision' || (s.next && s.next.length > 1));
   const direction = input.style?.direction || (hasDecisions ? 'TD' : 'LR');
   let mermaid = `flowchart ${direction}\n`;
 
-  // Group steps by subgraph if group is provided
-  const groups: { [key: string]: FlowchartStep[] } = {};
+  const groups: Record<string, FlowchartStep[]> = {};
   const ungrouped: FlowchartStep[] = [];
 
-  input.steps.forEach(step => {
+  for (const step of input.steps) {
     if (step.group) {
       if (!groups[step.group]) groups[step.group] = [];
       groups[step.group].push(step);
     } else {
       ungrouped.push(step);
     }
-  });
-
-  const renderStep = (step: FlowchartStep) => {
-    let shapeOpen = '[';
-    let shapeClose = ']';
-    const icon = getSemanticIcon(step.type, step.label);
-
-    switch (step.type) {
-      case 'start':
-      case 'end':
-        shapeOpen = '(['; shapeClose = '])';
-        break;
-      case 'decision':
-        shapeOpen = '{'; shapeClose = '}';
-        break;
-      case 'database':
-        shapeOpen = '[('; shapeClose = ')]';
-        break;
-      case 'queue':
-      case 'subprocess':
-        shapeOpen = '[['; shapeClose = ']]';
-        break;
-      case 'document':
-        shapeOpen = '[\\'; shapeClose = '\\]';
-        break;
-      case 'input':
-      case 'output':
-        shapeOpen = '([/'; shapeClose = '/])';
-        break;
-      default:
-        shapeOpen = '['; shapeClose = ']';
-        break;
-    }
-
-    return `    ${step.id}${shapeOpen}"${icon}${step.label}"${shapeClose}\n`;
-  };
+  }
 
   let groupIdx = 0;
-  Object.entries(groups).forEach(([groupName, steps]) => {
+  for (const [groupName, steps] of Object.entries(groups)) {
     groupIdx++;
     mermaid += `  subgraph sg_${groupIdx}[" ${groupName} "]\n`;
-    steps.forEach(step => {
-      mermaid += renderStep(step);
-    });
-    mermaid += `  end\n\n`;
-  });
-
-  ungrouped.forEach(step => {
-    mermaid += renderStep(step).replace(/^    /, '  ');
-  });
-
-  // Define edges with semantic connection styles
-  input.steps.forEach(step => {
-    if (step.next) {
-      step.next.forEach(n => {
-        if (typeof n === 'string') {
-          const targetStep = input.steps.find(s => s.id === n);
-          const isAsync = targetStep?.type === 'queue' || targetStep?.type === 'subprocess';
-          if (isAsync) {
-            mermaid += `  ${step.id} -.-> ${n}\n`;
-          } else {
-            mermaid += `  ${step.id} --> ${n}\n`;
-          }
-        } else if (n && n.id) {
-          const targetStep = input.steps.find(s => s.id === n.id);
-          const isAsync = n.style === 'dashed' || (!n.style && (targetStep?.type === 'queue' || targetStep?.type === 'subprocess'));
-          const labelStr = n.label ? `"${n.label}"` : '';
-          if (isAsync) {
-            mermaid += labelStr ? `  ${step.id} -. ${labelStr} .-> ${n.id}\n` : `  ${step.id} -.-> ${n.id}\n`;
-          } else {
-            mermaid += labelStr ? `  ${step.id} -- ${labelStr} --> ${n.id}\n` : `  ${step.id} --> ${n.id}\n`;
-          }
-        }
-      });
+    for (const step of steps) {
+      mermaid += renderFlowchartStep(step, '    ');
     }
-  });
+    mermaid += `  end\n\n`;
+  }
 
-  // Apply Design System ClassDefs & Node styling
+  for (const step of ungrouped) {
+    mermaid += renderFlowchartStep(step, '  ');
+  }
+
+  mermaid += renderTransitions(input.steps);
   mermaid += getDesignSystemClassDefs();
-  input.steps.forEach(step => {
+
+  for (const step of input.steps) {
     const cls = getNodeClass(step.type);
     if (cls !== 'default') {
       mermaid += `  class ${step.id} ${cls};\n`;
     }
-  });
+  }
 
   return mermaid;
 }
@@ -133,7 +113,7 @@ export function executeFlowchart(input: FlowchartInput): ToolExecutionResult {
   const startTime = Date.now();
 
   if (!input.title || !input.steps || input.steps.length === 0) {
-    throw new Error('Validação: "title" e ao menos um passo em "steps" são obrigatórios.');
+    throw new Error('Validação: "title" e ao menos um "step" são obrigatórios.');
   }
 
   const mermaidSyntax = generateFlowchartMermaid(input);
@@ -146,7 +126,7 @@ export function executeFlowchart(input: FlowchartInput): ToolExecutionResult {
     suggestedTheme: input.style?.palette || 'educational',
     nodeCount: input.steps.length,
     startTime,
-    tags: ['fluxograma', 'processo', 'algoritmo'],
+    tags: ['flowchart', 'processo', 'fluxo', 'decisao'],
     outputPath: input.output_path
   });
 }

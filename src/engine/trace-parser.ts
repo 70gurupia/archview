@@ -9,62 +9,35 @@ export interface TraceInput {
   log_file_path?: string;
 }
 
-export function parseTraceToSequence(input: TraceInput): { mermaid: string; flow: ParsedTraceFlow } {
-  const title = input.title || 'Fluxo de Execução e Tracing';
-  let spans: TraceSpan[] = [];
-
-  // 1. Process structured JSON trace_data
-  if (input.trace_data) {
-    if (Array.isArray(input.trace_data)) {
-      spans = input.trace_data.map((item, idx) => normalizeSpan(item, idx));
-    } else if (typeof input.trace_data === 'object') {
-      if (Array.isArray(input.trace_data.spans)) {
-        spans = input.trace_data.spans.map((item: any, idx: number) => normalizeSpan(item, idx));
-      } else if (Array.isArray(input.trace_data.events)) {
-        spans = input.trace_data.events.map((item: any, idx: number) => normalizeSpan(item, idx));
-      } else {
-        spans = [normalizeSpan(input.trace_data, 0)];
-      }
+function extractSpansFromTraceData(traceData: any): TraceSpan[] {
+  if (!traceData) return [];
+  if (Array.isArray(traceData)) {
+    return traceData.map((item, idx) => normalizeSpan(item, idx));
+  }
+  if (typeof traceData === 'object') {
+    if (Array.isArray(traceData.spans)) {
+      return traceData.spans.map((item: any, idx: number) => normalizeSpan(item, idx));
     }
+    if (Array.isArray(traceData.events)) {
+      return traceData.events.map((item: any, idx: number) => normalizeSpan(item, idx));
+    }
+    return [normalizeSpan(traceData, 0)];
   }
+  return [];
+}
 
-  // 2. Process raw log text or file
-  let logText = input.raw_log || '';
-  if (input.log_file_path && fs.existsSync(input.log_file_path)) {
-    try {
-      logText += '\n' + fs.readFileSync(input.log_file_path, 'utf-8');
-    } catch {}
-  }
-
-  if (logText.trim()) {
-    const extractedSpans = parseLogText(logText);
-    spans.push(...extractedSpans);
-  }
-
-  // Fallback if no spans found
-  if (spans.length === 0) {
-    spans.push({
-      from: 'Cliente',
-      to: 'API Gateway',
-      action: 'Requisição Inicial',
-      status: 'success'
-    });
-  }
-
-  // Extract unique participants
+function extractParticipants(spans: TraceSpan[]): string[] {
   const participantSet = new Set<string>();
-  spans.forEach(s => {
+  for (const s of spans) {
     if (s.from) participantSet.add(s.from);
     if (s.to) participantSet.add(s.to);
-  });
-  const participants = Array.from(participantSet);
-  const hasErrors = spans.some(s => s.status === 'error' || !!s.error);
+  }
+  return Array.from(participantSet);
+}
 
-  // Generate Mermaid sequenceDiagram
-  let mermaid = `sequenceDiagram\n  autonumber\n`;
-
-  // Declare participants with semantic roles
-  participants.forEach(p => {
+function renderParticipants(participants: string[]): string {
+  let mermaid = '';
+  for (const p of participants) {
     const isUser = /user|cliente|browser|actor|caller|dev/i.test(p);
     const isDb = /db|database|banco|postgres|mysql|mongo|redis|disk|storage/i.test(p);
     const isQueue = /queue|fila|kafka|rabbit|event|stream/i.test(p);
@@ -78,31 +51,64 @@ export function parseTraceToSequence(input: TraceInput): { mermaid: string; flow
     } else {
       mermaid += `  participant ${sanitizeId(p)} as 📦 ${p}\n`;
     }
-  });
+  }
+  return mermaid;
+}
 
-  mermaid += `\n`;
+function renderSpanStatement(span: TraceSpan): string {
+  const fromId = sanitizeId(span.from);
+  const toId = sanitizeId(span.to);
+  const duration = span.durationMs ? ` (${span.durationMs}ms)` : '';
+  let out = `  ${fromId} ->> ${toId}: ${span.action}${duration}\n`;
 
-  // Render spans
-  spans.forEach(span => {
-    const fromId = sanitizeId(span.from);
-    const toId = sanitizeId(span.to);
-    const duration = span.durationMs ? ` (${span.durationMs}ms)` : '';
+  if (span.status === 'error' || span.error) {
+    out += `  alt Erro na Execução\n`;
+    out += `    ${toId} --x ${fromId}: ❌ ${span.error || 'Falha no processamento'}\n`;
+    out += `  else Fallback / Recuperação\n`;
+    out += `    ${toId} -->> ${fromId}: Retorno alternativo\n`;
+    out += `  end\n`;
+  } else if (/query|get|fetch/i.test(span.action)) {
+    out += `  ${toId} -->> ${fromId}: Retorno de dados\n`;
+  }
+  return out;
+}
 
-    if (span.status === 'error' || span.error) {
-      mermaid += `  ${fromId} ->> ${toId}: ${span.action}${duration}\n`;
-      mermaid += `  alt Erro na Execução\n`;
-      mermaid += `    ${toId} --x ${fromId}: ❌ ${span.error || 'Falha no processamento'}\n`;
-      mermaid += `  else Fallback / Recuperação\n`;
-      mermaid += `    ${toId} -->> ${fromId}: Retorno alternativo\n`;
-      mermaid += `  end\n`;
-    } else {
-      mermaid += `  ${fromId} ->> ${toId}: ${span.action}${duration}\n`;
-      // Optional return arrow if explicitly responding
-      if (span.action.toLowerCase().includes('query') || span.action.toLowerCase().includes('get') || span.action.toLowerCase().includes('fetch')) {
-        mermaid += `  ${toId} -->> ${fromId}: Retorno de dados\n`;
-      }
+export function parseTraceToSequence(input: TraceInput): { mermaid: string; flow: ParsedTraceFlow } {
+  const title = input.title || 'Fluxo de Execução e Tracing';
+  let spans = extractSpansFromTraceData(input.trace_data);
+
+  let logText = input.raw_log || '';
+  if (input.log_file_path && fs.existsSync(input.log_file_path)) {
+    try {
+      logText += '\n' + fs.readFileSync(input.log_file_path, 'utf-8');
+    } catch {
+      // Ignora erro de leitura de log
     }
-  });
+  }
+
+  if (logText.trim()) {
+    spans.push(...parseLogText(logText));
+  }
+
+  if (spans.length === 0) {
+    spans.push({
+      from: 'Cliente',
+      to: 'API Gateway',
+      action: 'Requisição Inicial',
+      status: 'success'
+    });
+  }
+
+  const participants = extractParticipants(spans);
+  const hasErrors = spans.some(s => s.status === 'error' || Boolean(s.error));
+
+  let mermaid = `sequenceDiagram\n  autonumber\n`;
+  mermaid += renderParticipants(participants);
+  mermaid += '\n';
+
+  for (const span of spans) {
+    mermaid += renderSpanStatement(span);
+  }
 
   const flow: ParsedTraceFlow = {
     title,
@@ -115,76 +121,108 @@ export function parseTraceToSequence(input: TraceInput): { mermaid: string; flow
   return { mermaid, flow };
 }
 
+function extractSender(item: any): string {
+  if (item.from) return item.from;
+  if (item.caller) return item.caller;
+  if (item.source) return item.source;
+  if (item.client) return item.client;
+  if (item.name && item.name.includes('->')) return item.name.split('->')[0].trim();
+  return 'Client';
+}
+
+function extractReceiver(item: any): string {
+  if (item.to) return item.to;
+  if (item.target) return item.target;
+  if (item.callee) return item.callee;
+  if (item.destination) return item.destination;
+  if (item.service) return item.service;
+  if (item.name && item.name.includes('->')) return item.name.split('->')[1].trim();
+  return 'Service';
+}
+
+function extractAction(item: any, idx: number): string {
+  if (item.action) return item.action;
+  if (item.operation) return item.operation;
+  if (item.method) return item.method;
+  if (item.name) return item.name;
+  return `Operação ${idx + 1}`;
+}
+
+function extractError(item: any): string | undefined {
+  if (item.error) return item.error;
+  if (item.errorMessage) return item.errorMessage;
+  if (item.statusCode >= 400) return `HTTP ${item.statusCode}`;
+  return undefined;
+}
+
 function normalizeSpan(item: any, idx: number): TraceSpan {
-  const from = item.from || item.caller || item.source || item.client || (item.name ? item.name.split('->')[0]?.trim() : '') || 'Client';
-  const to = item.to || item.target || item.callee || item.destination || item.service || (item.name ? item.name.split('->')[1]?.trim() : '') || 'Service';
-  const action = item.action || item.operation || item.method || item.name || `Operação ${idx + 1}`;
-  const status = item.status === 'error' || item.error || item.statusCode >= 400 ? 'error' : 'success';
-  const durationMs = item.durationMs || item.duration || item.latencyMs || undefined;
-  const error = item.error || item.errorMessage || (item.statusCode >= 400 ? `HTTP ${item.statusCode}` : undefined);
+  const isErr = item.status === 'error' || Boolean(item.error) || item.statusCode >= 400;
 
   return {
-    from,
-    to,
-    action,
-    status,
-    durationMs,
-    error,
+    from: extractSender(item),
+    to: extractReceiver(item),
+    action: extractAction(item, idx),
+    status: isErr ? 'error' : 'success',
+    durationMs: item.durationMs || item.duration || item.latencyMs,
+    error: extractError(item),
     metadata: item.metadata
   };
+}
+
+function matchArrowPattern(trimmed: string): TraceSpan | null {
+  const arrowMatch = trimmed.match(/([A-Za-z0-9_\-\.]+)\s*->\s*([A-Za-z0-9_\-\.]+)\s*:\s*([^(\n]+)(?:\((\d+)ms\))?/);
+  if (!arrowMatch) return null;
+  return {
+    from: arrowMatch[1].trim(),
+    to: arrowMatch[2].trim(),
+    action: arrowMatch[3].trim(),
+    durationMs: arrowMatch[4] ? parseInt(arrowMatch[4], 10) : undefined,
+    status: /error|fail|exception|rejeitado/i.test(trimmed) ? 'error' : 'success'
+  };
+}
+
+function matchBracketPattern(trimmed: string): TraceSpan | null {
+  const bracketMatch = trimmed.match(/\[(\w+)\]\s*\[([A-Za-z0-9_\-\.]+)\]\s*(?:calling|to)\s*([A-Za-z0-9_\-\.]+)\s*[:\-]\s*(.+)/i);
+  if (!bracketMatch) return null;
+  const isErr = bracketMatch[1].toUpperCase() === 'ERROR';
+  return {
+    from: bracketMatch[2].trim(),
+    to: bracketMatch[3].trim(),
+    action: bracketMatch[4].trim(),
+    status: isErr ? 'error' : 'success',
+    error: isErr ? bracketMatch[4].trim() : undefined
+  };
+}
+
+function matchHttpPattern(trimmed: string): TraceSpan | null {
+  const httpMatch = trimmed.match(/(GET|POST|PUT|DELETE|PATCH)\s+([^\s]+)\s+(\d{3})(?:\s+\((\d+)ms\))?/i);
+  if (!httpMatch) return null;
+  const statusCode = parseInt(httpMatch[3], 10);
+  const isErr = statusCode >= 400;
+  return {
+    from: 'Client',
+    to: 'API Gateway',
+    action: `${httpMatch[1]} ${httpMatch[2]} (${httpMatch[3]})`,
+    durationMs: httpMatch[4] ? parseInt(httpMatch[4], 10) : undefined,
+    status: isErr ? 'error' : 'success',
+    error: isErr ? `Status HTTP ${statusCode}` : undefined
+  };
+}
+
+function matchLogLine(line: string): TraceSpan | null {
+  const trimmed = line.trim();
+  if (!trimmed) return null;
+  return matchArrowPattern(trimmed) || matchBracketPattern(trimmed) || matchHttpPattern(trimmed);
 }
 
 function parseLogText(logText: string): TraceSpan[] {
   const spans: TraceSpan[] = [];
   const lines = logText.split('\n');
 
-  lines.forEach((line, idx) => {
-    const trimmed = line.trim();
-    if (!trimmed) return;
-
-    // Pattern 1: ServiceA -> ServiceB: action (120ms)
-    const arrowMatch = trimmed.match(/([A-Za-z0-9_\-\.]+)\s*->\s*([A-Za-z0-9_\-\.]+)\s*:\s*([^(\n]+)(?:\((\d+)ms\))?/);
-    if (arrowMatch) {
-      spans.push({
-        from: arrowMatch[1].trim(),
-        to: arrowMatch[2].trim(),
-        action: arrowMatch[3].trim(),
-        durationMs: arrowMatch[4] ? parseInt(arrowMatch[4], 10) : undefined,
-        status: /error|fail|exception|rejeitado/i.test(trimmed) ? 'error' : 'success'
-      });
-      return;
-    }
-
-    // Pattern 2: [INFO/WARN/ERROR] [ServiceA] calling ServiceB method action
-    const bracketMatch = trimmed.match(/\[(\w+)\]\s*\[([A-Za-z0-9_\-\.]+)\]\s*(?:calling|to)\s*([A-Za-z0-9_\-\.]+)\s*[:\-]\s*(.+)/i);
-    if (bracketMatch) {
-      const isErr = bracketMatch[1].toUpperCase() === 'ERROR';
-      spans.push({
-        from: bracketMatch[2].trim(),
-        to: bracketMatch[3].trim(),
-        action: bracketMatch[4].trim(),
-        status: isErr ? 'error' : 'success',
-        error: isErr ? bracketMatch[4].trim() : undefined
-      });
-      return;
-    }
-
-    // Pattern 3: HTTP Request: GET /api/users 200 (45ms)
-    const httpMatch = trimmed.match(/(GET|POST|PUT|DELETE|PATCH)\s+([^\s]+)\s+(\d{3})(?:\s+\((\d+)ms\))?/i);
-    if (httpMatch) {
-      const statusCode = parseInt(httpMatch[3], 10);
-      const isErr = statusCode >= 400;
-      spans.push({
-        from: 'Client',
-        to: 'API Gateway',
-        action: `${httpMatch[1]} ${httpMatch[2]} (${httpMatch[3]})`,
-        durationMs: httpMatch[4] ? parseInt(httpMatch[4], 10) : undefined,
-        status: isErr ? 'error' : 'success',
-        error: isErr ? `Status HTTP ${statusCode}` : undefined
-      });
-      return;
-    }
-  });
+  for (const line of lines) {
+    const span = matchLogLine(line);
+    if (span) spans.push(span);
+  }
 
   return spans;
 }
