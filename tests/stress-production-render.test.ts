@@ -1,6 +1,7 @@
 import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
 import { executeMindmap } from '../src/tools/mindmap.js';
 import { executeOrgchart } from '../src/tools/orgchart.js';
 import { executeArchitecture } from '../src/tools/architecture.js';
@@ -48,13 +49,12 @@ async function runHeavyProductionStressTest() {
     
     // Executa em sandbox JS para garantir ausência de ReferenceError / TypeError
     const scriptBody = scriptMatch[1];
-    const testFn = new Function(`
-      const window = globalThis;
-      ${scriptBody}
-      return (typeof globalThis.mermaid !== 'undefined' && typeof globalThis.mermaid.render === 'function') 
-        || (typeof globalThis.__esbuild_esm_mermaid_nm !== 'undefined' && globalThis.__esbuild_esm_mermaid_nm.mermaid);
-    `);
-    const isMermaidAvailable = testFn();
+    const sandbox: Record<string, any> = { globalThis: {}, window: {} };
+    sandbox.globalThis = sandbox;
+    sandbox.window = sandbox;
+    vm.runInNewContext(scriptBody, sandbox);
+    const isMermaidAvailable = (typeof sandbox.mermaid !== 'undefined' && typeof sandbox.mermaid.render === 'function')
+      || (typeof sandbox.__esbuild_esm_mermaid_nm !== 'undefined' && sandbox.__esbuild_esm_mermaid_nm.mermaid);
     assert(isMermaidAvailable, `Runtime Mermaid deve ser inicializado com sucesso em ${filename}`);
     console.log(`  ✓ ${filename} (Tamanho: ${(content.length / 1024 / 1024).toFixed(2)} MB, Runtime: OK)`);
   }
