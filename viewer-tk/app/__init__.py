@@ -1,6 +1,9 @@
 """
 ArchView Tkinter App Package
 """
-from .ui import ArchViewTkWindow
 
-__all__ = ['ArchViewTkWindow']
+def get_window_class():
+    from .ui import ArchViewTkWindow
+    return ArchViewTkWindow
+
+__all__ = ['get_window_class']
