@@ -19,6 +19,8 @@ import { executeTraceExecution, TraceExecutionInput } from './tools/trace-execut
 import { executeAnalyzeOverview, AnalyzeOverviewInput } from './tools/analyze-overview.js';
 import { executeGetObservability, ObservabilityInput } from './tools/observability.js';
 import { executeExportHtmlReport, ExportHtmlInput } from './tools/export-html.js';
+import { executeCompressForLlm, CompressLlmInput } from './tools/compress-llm.js';
+import { executeCloneAndScan, CloneScanInput } from './tools/clone-scan.js';
 import { startSseServer } from './utils/sse.js';
 import { initOpenTelemetry } from './utils/otel.js';
 
@@ -38,7 +40,7 @@ class VisualServer {
     this.server = new Server(
       {
         name: "archview",
-        version: "6.0.0",
+        version: "7.0.0",
       },
       {
         capabilities: {
@@ -111,6 +113,8 @@ class VisualServer {
       analyze_codebase_overview: (args) => this.formatVisualResult(executeAnalyzeOverview(args as AnalyzeOverviewInput)),
       get_system_observability: async (args) => this.formatVisualResult(await executeGetObservability(args as ObservabilityInput)),
       export_html_report: (args) => this.formatVisualResult(executeExportHtmlReport(args as ExportHtmlInput)),
+      compress_for_llm: (args) => executeCompressForLlm(args as CompressLlmInput),
+      clone_and_scan: (args) => this.formatVisualResult(executeCloneAndScan(args as CloneScanInput)),
       add_node: (args) => handleAddNode(this.kg, args),
       upsert_node: (args) => handleUpsertNode(this.kg, args),
       add_nodes_batch: (args) => handleAddNodesBatch(this.kg, args),
@@ -278,6 +282,31 @@ class VisualServer {
             diagram_id: { type: "string" },
             mode: { type: "string", enum: ["single", "dashboard"] }
           }
+        }
+      },
+      {
+        name: "compress_for_llm",
+        description: "Gera resumo estruturado e altamente comprimido da topologia do código para economizar mais de 99% dos tokens da IA.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            path: { type: "string", description: "Caminho do repositório" },
+            max_tokens: { type: "number" }
+          }
+        }
+      },
+      {
+        name: "clone_and_scan",
+        description: "Clona temporariamente um repositório remoto do GitHub ou GitLab e executa a análise de topologia e arquitetura.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            repo_url: { type: "string", description: "URL HTTPS ou SSH do repositório GitHub/GitLab" },
+            title: { type: "string" },
+            view_mode: { type: "string", enum: ["hybrid", "layered", "folders"] },
+            direction: { type: "string", enum: ["TD", "LR"] }
+          },
+          required: ["repo_url"]
         }
       },
       // Knowledge Graph Tools

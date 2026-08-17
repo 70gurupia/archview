@@ -143,6 +143,13 @@ export function resolveOutputDir(options: SaveDiagramOptions): { outDir: string;
   return { outDir, mmdFilename };
 }
 
+export function estimateTokenCount(text: string): number {
+  if (!text) return 0;
+  const words = text.trim().split(/\s+/).length;
+  const chars = text.length;
+  return Math.ceil(Math.max(words * 1.3, chars / 3.8));
+}
+
 export function saveDiagramWithMeta(options: SaveDiagramOptions): ToolExecutionResult {
   const { outDir, mmdFilename } = resolveOutputDir(options);
   const { id } = generateId(options.type, options.title);
@@ -160,6 +167,9 @@ export function saveDiagramWithMeta(options: SaveDiagramOptions): ToolExecutionR
   // Write .mmd file (raw mermaid code)
   const sanitizedSyntax = escapeMermaidHTML(options.mermaidSyntax);
   fs.writeFileSync(mmdPath, sanitizedSyntax, 'utf-8');
+
+  // Calculate token count
+  const tokenCount = estimateTokenCount(sanitizedSyntax);
 
   // Build meta object
   const now = new Date().toISOString();
@@ -186,7 +196,8 @@ export function saveDiagramWithMeta(options: SaveDiagramOptions): ToolExecutionR
     stats: {
       node_count: options.nodeCount,
       max_depth: options.maxDepth,
-      generation_time_ms: Date.now() - options.startTime
+      generation_time_ms: Date.now() - options.startTime,
+      token_count: tokenCount
     },
     tags: options.tags || [options.type]
   };

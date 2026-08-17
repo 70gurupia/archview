@@ -20,6 +20,7 @@ export interface DiagramStats {
   node_count: number;
   max_depth?: number;
   generation_time_ms: number;
+  token_count?: number;
 }
 
 export interface DiagramMeta {
