@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { executeMindmap } from './src/tools/mindmap.js';
 import { executeOrgchart } from './src/tools/orgchart.js';
 import { executeArchitecture } from './src/tools/architecture.js';
@@ -7,71 +9,77 @@ import { executeTraceCallGraph } from './src/tools/trace-callgraph.js';
 import { executeGetObservability } from './src/tools/observability.js';
 import { executeExportHtmlReport } from './src/tools/export-html.js';
 import { KnowledgeGraphDB } from './src/kg/db.js';
-import { detectLouvainCommunities, calculateCentrality } from './src/kg/algorithms.js';
+import { detectLouvainCommunities } from './src/kg/algorithms.js';
 
-async function generateSelfDocumentationDiagrams() {
-  console.log("🚀 === [Dogfooding v6.0] Gerando Diagramas de Produção do ArchView ===\n");
+function cleanOldDiagrams(outputDir: string): void {
+  if (!fs.existsSync(outputDir)) return;
+  const files = fs.readdirSync(outputDir);
+  for (const f of files) {
+    if (f.startsWith('self-doc-') || f === 'archview-dashboard.html') {
+      try {
+        fs.unlinkSync(path.join(outputDir, f));
+      } catch {
+        // Ignora
+      }
+    }
+  }
+}
 
-  const targetDir = process.cwd();
-
-  // 1. Mapa Mental Completo do Sistema v6.0
-  console.log("1. Gerando Mapa Mental do Ecossistema v6.0...");
+function generateCoreDiagrams(targetDir: string): void {
+  console.log("1. Gerando Mapa Mental do Ecossistema v7.1...");
   const mindmapRes = executeMindmap({
-    central_topic: "ArchView v6.0 Ecosystem",
-    description: "Visão 360 graus do servidor MCP unificado: Knowledge Graph nativo, Visual Engine e Observabilidade",
+    central_topic: "ArchView v7.1 Ecosystem",
+    description: "Visão 360 graus do servidor MCP: Layout Molécula/Neurônio, Linter Arquitetural, Cache AST, Diff e Knowledge Graph",
     branches: [
       {
-        title: "Knowledge Graph Nativo (SQLite & FTS5)",
+        title: "Motor Visual e Layout Concêntrico",
+        icons: ["🧬"],
+        sub_branches: [
+          "Layout Radial de Molécula/Neurônio em 360 graus",
+          "Módulo central (entry point) no núcleo do grafo",
+          "Distribuição em anéis concêntricos sem limites rígidos",
+          "Visualizador Offline Standalone com Pan/Zoom fluido"
+        ]
+      },
+      {
+        title: "Inteligência e Linter Arquitetural",
+        icons: ["🛡️"],
+        sub_branches: [
+          "Motor de Regras Declarativas (Rule Engine)",
+          "Validação de Camadas (Clean Architecture / SOLID)",
+          "Detecção e Alerta de Dependências Circulares",
+          "Comparador e Diff Visual de Arquitetura (Drift Score)"
+        ]
+      },
+      {
+        title: "Alta Performance e Otimização para IA",
+        icons: ["⚡"],
+        sub_branches: [
+          "Cache Incremental de AST Baseado em SHA-256",
+          "Compressor de Contexto para LLM (compress_for_llm: >99% economia)",
+          "Clonagem e Varredura Remota Segura (clone_and_scan)",
+          "Estimativa Nativa de Tokens (tiktoken) nos Metadados"
+        ]
+      },
+      {
+        title: "Knowledge Graph SQLite WAL & FTS5",
         icons: ["🧠"],
         sub_branches: [
           "Banco SQLite em WAL Mode com better-sqlite3",
-          "Indexação Textual Ultrarrápida com FTS5 e Triggers",
+          "Busca Textual Ultrarrápida com FTS5 e Triggers",
           "Detecção de Comunidades com Algoritmo de Louvain",
           "Centralidade de Intermediação e PageRank Iterativo",
-          "Análise de Impacto (Blast Radius) e Simulação What-If",
-          "Busca de Múltiplos Caminhos (Multi-Path Search)"
+          "Análise de Impacto (Blast Radius) e Simulação What-If"
         ]
       },
       {
-        title: "Ferramentas MCP Nativas (27 Tools)",
-        icons: ["🛠️"],
+        title: "Observabilidade e Desktop GUI",
+        icons: ["📊"],
         sub_branches: [
-          "Visualização: Mindmap, Orgchart, C4 e Flowchart",
-          "Codebase: scan_topology, trace_call_graph, trace_execution",
-          "Observabilidade: get_system_observability & Prometheus",
-          "Knowledge Graph CRUD: add_node, upsert_node, add_edge, delete_node",
-          "Knowledge Graph Analytics: detect_communities, get_centrality, get_impact",
-          "Exportação: export_html_report, export_diagram (SVG/PNG/4K)"
-        ]
-      },
-      {
-        title: "Geração de HTML & Dashboards Offline",
-        icons: ["🌐"],
-        sub_branches: [
-          "Geração automática de .html standalone por diagrama",
-          "Dashboard executivo consolidado (All-in-One)",
-          "100% Autocontido e offline-first (Zero Servidor)",
-          "Controles fluidos de Pan/Zoom e 4 temas visuais"
-        ]
-      },
-      {
-        title: "Observabilidade e SRE",
-        icons: ["📈"],
-        sub_branches: [
-          "Endpoint /metrics no padrão texto Prometheus",
-          "Métricas de Runtime Node.js (CPU, Heap, EventLoop)",
-          "Tracing com OpenTelemetry SDK e Spans Locais",
-          "Health check enriquecido com status de degradação"
-        ]
-      },
-      {
-        title: "Live Studio Web Dual-Mode",
-        icons: ["🎨"],
-        sub_branches: [
-          "Aba Mermaid Studio com Live Preview e Edição",
-          "Aba Knowledge Graph Explorer com Busca FTS5 e Louvain",
-          "Aba Observability Hub com Telemetria em Tempo Real",
-          "Aba Codebase Explorer com Disparo de Varreduras"
+          "Desktop GUI Nativa Tkinter (archview-tk)",
+          "Métricas Prometheus (/metrics) e Spans OpenTelemetry",
+          "Dashboard Executivo Consolidado (archview-dashboard.html)",
+          "16 Suítes de Testes e 6 Quality Gates de Produção"
         ]
       }
     ],
@@ -81,148 +89,76 @@ async function generateSelfDocumentationDiagrams() {
   });
   console.log("  ✅ Mapa Mental:", mindmapRes.file_path);
 
-  // 2. Organograma Modular da Arquitetura v6.0
-  console.log("\n2. Gerando Organograma Modular do Sistema...");
+  console.log("\n2. Gerando Organograma Modular do Sistema v7.1...");
   const orgRes = executeOrgchart({
-    title: "Estrutura Modular do ArchView v6.0",
-    description: "Hierarquia de componentes do servidor, motor de Knowledge Graph, inteligência de código e estúdio web",
+    title: "Estrutura Modular do ArchView v7.1",
+    description: "Hierarquia de componentes do servidor, motor de regras, cache AST, Knowledge Graph e interfaces",
     nodes: [
-      { id: "core", label: "ArchView Core", role: "Orquestrador Central MCP (27 Tools)", level: 0, reports_to: null },
+      { id: "core", label: "ArchView Core v7.1", role: "Orquestrador Central MCP", level: 0, reports_to: null },
+      { id: "rule_engine", label: "Rule Engine & Linter", role: "Governança e Regras Arquiteturais", level: 1, reports_to: "core" },
+      { id: "ast_cache", label: "AST Cache (SHA-256)", role: "Cache Incremental de Alta Performance", level: 1, reports_to: "core" },
+      { id: "diff_engine", label: "Architecture Diff", role: "Comparador de Versões e Drift Score", level: 1, reports_to: "core" },
       { id: "kg_engine", label: "Knowledge Graph Engine", role: "SQLite WAL + FTS5 + Louvain + PageRank", level: 1, reports_to: "core" },
-      { id: "codebase_engine", label: "Codebase Engine", role: "AST & Flow Tracing Universal", level: 1, reports_to: "core" },
+      { id: "codebase_engine", label: "Codebase Engine", role: "Universal Scanner + Layout Molécula", level: 1, reports_to: "core" },
       { id: "html_gen", label: "HTML Generator Engine", role: "Geração Offline Standalone & Dashboard", level: 1, reports_to: "core" },
-      { id: "tools_layer", label: "Camada de Tools (27 MCP Tools)", role: "Handlers Especializados", level: 1, reports_to: "core" },
-      { id: "infra_layer", label: "Infra & Observability", role: "Express 5 + Prometheus + OTel + SSE (3001)", level: 1, reports_to: "core" },
-      { id: "web_studio", label: "Web Studio Dual-Mode", role: "Mermaid + KG Explorer + Vite (5173)", level: 1, reports_to: "infra_layer" },
-      
-      // Sub-modules
-      { id: "kg_crud", label: "KG CRUD & Arestas", role: "Gerenciamento de Nós e Relacionamentos", department: "Knowledge Graph", level: 2, reports_to: "kg_engine" },
-      { id: "kg_algo", label: "Algoritmos de Rede", role: "Louvain, PageRank, Blast Radius, What-If", department: "Knowledge Graph", level: 2, reports_to: "kg_engine" },
-      { id: "code_ast", label: "AST Lexical Scanner", role: "TypeScript, Python, Go, Java, Rust", department: "Codebase", level: 2, reports_to: "codebase_engine" },
-      { id: "code_trace", label: "Trace Sequence Parser", role: "Sequence Diagrams de Logs e Traces", department: "Codebase", level: 2, reports_to: "codebase_engine" }
+      { id: "desktop_gui", label: "Desktop GUI (Tkinter)", role: "Painel Nativo Desktop (archview-tk)", level: 1, reports_to: "core" },
+      { id: "infra_layer", label: "Infra & Observability", role: "Prometheus + OpenTelemetry + SSE", level: 1, reports_to: "core" }
     ],
-    style: { color_by_level: true, palette: "corporate" },
+    style: { palette: "corporate" },
     output_path: "output/self-doc-orgchart.md",
     target_dir: targetDir
   });
   console.log("  ✅ Organograma:", orgRes.file_path);
 
-  // 3. Diagrama C4 de Arquitetura de Containers (v6.0)
   console.log("\n3. Gerando Diagrama C4 de Arquitetura de Containers...");
   const archRes = executeArchitecture({
     c4_level: "C2-container",
-    system_name: "Arquitetura do ArchView v6.0",
-    description: "Visão dos containers executáveis, motor de Knowledge Graph, gerador HTML e observabilidade",
+    system_name: "ArchView v7.1 MCP Server",
+    description: "Arquitetura dos containers e subsistemas locais do ArchView",
     elements: [
-      {
-        id: "ai_client",
-        type: "person",
-        name: "IA / Desenvolvedor",
-        description: "Antigravity, Claude Desktop, Cursor ou Terminal CLI",
-        group: "Clientes e Consumidores",
-        relationships: [
-          { target: "mcp_server", description: "Comandos MCP (27 Tools)", technology: "JSON-RPC (stdio)" }
-        ]
-      },
-      {
-        id: "browser_user",
-        type: "person",
-        name: "Usuário no Navegador",
-        description: "Live Studio Dual-Mode, Knowledge Graph Explorer e Dashboards HTML",
-        group: "Clientes e Consumidores"
-      },
-      {
-        id: "mcp_server",
-        type: "container",
-        name: "ArchView MCP Server",
-        description: "Orquestrador de 27 ferramentas MCP, Knowledge Graph e HTML Generator",
-        technology: "TypeScript / Node.js 20",
-        group: "Servidores e Backend",
-        relationships: [
-          { target: "kg_db", description: "Lê e grava grafos e índices", technology: "better-sqlite3" },
-          { target: "codebase_engine", description: "Executa varreduras de código", technology: "AST / Regex" },
-          { target: "html_engine", description: "Gera páginas HTML autocontidas", technology: "TypeScript Templates" },
-          { target: "sse_server", description: "Inicia em background", technology: "In-process" }
-        ]
-      },
-      {
-        id: "kg_db",
-        type: "database",
-        name: "Knowledge Graph DB",
-        description: "Banco SQLite local com FTS5, nós, arestas e auditoria",
-        technology: "SQLite 3 / WAL Mode",
-        group: "Camada de Persistência"
-      },
-      {
-        id: "codebase_engine",
-        type: "container",
-        name: "Motor de Codebase Intelligence",
-        description: "Parsers AST TS/JS e léxico universal (Python, Go, Java, Rust)",
-        technology: "TypeScript Lexical Engine (< 200ms)",
-        group: "Servidores e Backend"
-      },
-      {
-        id: "html_engine",
-        type: "container",
-        name: "Motor Standalone HTML",
-        description: "Construtor de páginas offline interativas e dashboards",
-        technology: "HTML5 / CSS / Mermaid",
-        group: "Servidores e Backend"
-      },
-      {
-        id: "sse_server",
-        type: "container",
-        name: "Express SSE & REST Server",
-        description: "Transmissão SSE, API REST /api/kg/*, /metrics e entrega de HTML",
-        technology: "Express 5 / Porta 3001",
-        group: "Servidores e Backend",
-        relationships: [
-          { target: "web_studio", description: "Transmite eventos /events e dados de grafo", technology: "Server-Sent Events / REST" }
-        ]
-      },
-      {
-        id: "web_studio",
-        type: "container",
-        name: "Live Studio Web Dual-Mode",
-        description: "Mermaid Studio + Knowledge Graph Explorer com Louvain e PageRank",
-        technology: "Alpine.js / Vite / CSS GPU",
-        group: "Interface Gráfica Web",
-        relationships: [
-          { target: "browser_user", description: "Renderização vetorial com zero CPU em repouso", technology: "HTML5 / SVG DOM" },
-          { target: "sse_server", description: "Consulta métricas, topologia e grafos", technology: "REST JSON" }
-        ]
-      }
+      { id: "ai_client", name: "Assistente de IA", type: "external", technology: "MCP Client (stdio / SSE)", description: "Consome ferramentas de análise arquitetural", relationships: [{ target: "mcp_server", description: "Chama MCP Tools via stdio/SSE" }] },
+      { id: "desktop_ui", name: "ArchView Tk Desktop", type: "system", technology: "Python 3 / Tkinter", description: "Interface desktop leve e rápida", relationships: [{ target: "mcp_server", description: "Executa análises e linter local" }] },
+      { id: "mcp_server", name: "ArchView MCP Server", type: "container", technology: "TypeScript / Node 20", description: "Orquestrador central de ferramentas e análises", relationships: [
+        { target: "rule_engine", description: "Dispara validações arquiteturais" },
+        { target: "ast_cache", description: "Consulta e armazena ASTs" },
+        { target: "kg_db", description: "Persiste nós e executa Louvain/PageRank" },
+        { target: "html_viewer", description: "Gera relatórios HTML autocontidos" }
+      ]},
+      { id: "rule_engine", name: "Linter Arquitetural", type: "component", technology: "TypeScript Rule Engine", description: "Aplica regras de Clean Architecture e acoplamento" },
+      { id: "ast_cache", name: "Cache Incremental", type: "component", technology: "SHA-256 In-Memory / SQLite", description: "Acelera re-scans em 98%" },
+      { id: "kg_db", name: "Knowledge Graph DB", type: "database", technology: "SQLite WAL Mode / FTS5", description: "Armazena nós, arestas e métricas de centralidade" },
+      { id: "html_viewer", name: "Visualizador Offline", type: "component", technology: "HTML5 / Mermaid JS / CSS", description: "Renderização em molécula 100% offline" }
     ],
-    style: { palette: "corporate", show_technology: true, notation: "flowchart" },
     output_path: "output/self-doc-architecture.md",
     target_dir: targetDir
   });
   console.log("  ✅ Arquitetura C4:", archRes.file_path);
+}
 
-  // 4. Fluxograma do Ciclo de Vida da Requisição e Ingestão
+function generateFlowAndTopology(targetDir: string): void {
   console.log("\n4. Gerando Fluxograma do Ciclo de Vida...");
   const flowRes = executeFlowchart({
-    title: "Ciclo de Vida: MCP, Knowledge Graph, AST e HTML Generator",
-    description: "Do comando da IA até a persistência do Knowledge Graph e visualização offline",
+    title: "Ciclo de Vida do ArchView v7.1: AST Cache, Linter, KG e Visualização",
+    description: "Do comando da IA até a validação de regras, persistência e visualização concêntrica",
     steps: [
-      { id: "input_source", type: "start", label: "Entrada: IA (stdio), Web Studio ou HTTP REST", group: "1. Entrada e Segurança", next: ["sec_filter"] },
-      { id: "sec_filter", type: "process", label: "Filtro de Segurança (assertSafePath & Zod)", group: "1. Entrada e Segurança", next: ["valid_gate"] },
-      { id: "valid_gate", type: "decision", label: "Payload Válido e Seguro?", group: "1. Entrada e Segurança", next: [{ id: "select_engine", label: "Sim" }, { id: "error_block", label: "Não" }] },
+      { id: "input_source", type: "start", label: "Entrada: IA (stdio), Desktop GUI (Tk) ou HTTP REST", group: "1. Entrada e Segurança", next: ["sec_filter"] },
+      { id: "sec_filter", type: "process", label: "Filtro de Segurança (assertSafePath, Anti-Injection)", group: "1. Entrada e Segurança", next: ["valid_gate"] },
+      { id: "valid_gate", type: "decision", label: "Payload Válido e Seguro?", group: "1. Entrada e Segurança", next: [{ id: "check_cache", label: "Sim" }, { id: "error_block", label: "Não" }] },
       { id: "error_block", type: "process", label: "Retorna Erro Estruturado (McpError)", group: "1. Entrada e Segurança", next: ["end_error"] },
       { id: "end_error", type: "end", label: "Execução com Erro", group: "1. Entrada e Segurança" },
 
-      { id: "select_engine", type: "process", label: "Executa Motor (KG / AST / Diagrama) e Registra Métrica", group: "2. Motor Core & Inteligência", next: ["db_or_mermaid"] },
-      { id: "db_or_mermaid", type: "decision", label: "Operação de Knowledge Graph?", group: "2. Motor Core & Inteligência", next: [{ id: "kg_exec", label: "Sim" }, { id: "build_mermaid", label: "Não" }] },
-      { id: "kg_exec", type: "database", label: "Atualiza SQLite WAL e Tabela FTS5", group: "2. Motor Core & Inteligência", next: ["sse_emit"] },
-      { id: "build_mermaid", type: "process", label: "Gera Sintaxe Mermaid e Relatório HTML Standalone", group: "2. Motor Core & Inteligência", next: ["write_meta"] },
-      { id: "write_meta", type: "database", label: "Grava .mmd, .meta.json e .html no output/ do projeto", group: "2. Motor Core & Inteligência", next: ["sse_emit"] },
-      { id: "sse_emit", type: "queue", label: "Dispara SSE (diagram.* ou kg.*)", group: "2. Motor Core & Inteligência", next: ["resp_client"] },
-      { id: "resp_client", type: "process", label: "Retorna JSON de Sucesso para IA/UI", group: "2. Motor Core & Inteligência", next: ["fe_catch"] },
+      { id: "check_cache", type: "decision", label: "AST em Cache (SHA-256)?", group: "2. Performance & Motor Core", next: [{ id: "cache_hit", label: "Sim (Hit)" }, { id: "parse_ast", label: "Não (Miss)" }] },
+      { id: "cache_hit", type: "process", label: "Recupera AST Instantânea (<0.02ms)", group: "2. Performance & Motor Core", next: ["exec_operation"] },
+      { id: "parse_ast", type: "process", label: "Processa AST e Armazena no Cache SHA-256", group: "2. Performance & Motor Core", next: ["exec_operation"] },
 
-      { id: "fe_catch", type: "process", label: "Web Studio atualiza Live Preview e KG Explorer", group: "3. Experiência Web Reativa", next: ["apply_themes"] },
-      { id: "apply_themes", type: "process", label: "Aplica Temas, Badges Louvain e Estilização SVG", group: "3. Experiência Web Reativa", next: ["user_actions"] },
-      { id: "user_actions", type: "process", label: "Abertura Offline (.html), Pan/Zoom ou Exportação 4K", group: "3. Experiência Web Reativa", next: ["end_done"] },
-      { id: "end_done", type: "end", label: "Visualização Interativa Concluída", group: "3. Experiência Web Reativa" }
+      { id: "exec_operation", type: "process", label: "Executa Operação (Linter / Diff / Topologia / KG)", group: "3. Governança e Grafo", next: ["is_linter"] },
+      { id: "is_linter", type: "decision", label: "Executando Linter Arquitetural?", group: "3. Governança e Grafo", next: [{ id: "apply_rules", label: "Sim" }, { id: "build_diagram", label: "Não" }] },
+      { id: "apply_rules", type: "process", label: "Valida Regras de Camadas e Acoplamento (Rule Engine)", group: "3. Governança e Grafo", next: ["build_diagram"] },
+
+      { id: "build_diagram", type: "process", label: "Gera Layout Concêntrico de Molécula e Relatório HTML", group: "4. Saída e Visualização", next: ["write_meta"] },
+      { id: "write_meta", type: "database", label: "Salva .mmd, .meta.json (com contagem de tokens) e .html", group: "4. Saída e Visualização", next: ["resp_client"] },
+      { id: "resp_client", type: "process", label: "Retorna Resultado Estruturado para IA/Desktop", group: "4. Saída e Visualização", next: ["end_done"] },
+      { id: "end_done", type: "end", label: "Visualização e Análise Concluída", group: "4. Saída e Visualização" }
     ],
     style: { direction: "TB", palette: "educational" },
     output_path: "output/self-doc-flowchart.md",
@@ -230,18 +166,16 @@ async function generateSelfDocumentationDiagrams() {
   });
   console.log("  ✅ Fluxograma:", flowRes.file_path);
 
-  // 5. Topologia C4 Real do Próprio ArchView (via scan_codebase_topology)
-  console.log("\n5. Gerando Topologia C4 Real do Projeto (Dogfooding AST)...");
+  console.log("\n5. Gerando Topologia Concêntrica do Código (Dogfooding AST)...");
   const topRes = executeScanTopology({
     path: targetDir,
-    title: "Topologia Real do Código do ArchView v6.0",
+    title: "Topologia do Código do ArchView v7.1",
     view_mode: "hybrid",
     max_depth: 5,
     output_path: "output/self-doc-topology.md"
   });
   console.log("  ✅ Topologia do Código:", topRes.file_path);
 
-  // 6. Grafo de Chamadas Real (via trace_call_graph)
   console.log("\n6. Gerando Grafo de Chamadas do Motor de Scanner...");
   const callRes = executeTraceCallGraph({
     path: targetDir,
@@ -250,8 +184,9 @@ async function generateSelfDocumentationDiagrams() {
     output_path: "output/self-doc-callgraph.md"
   });
   console.log("  ✅ Grafo de Chamadas:", callRes.file_path);
+}
 
-  // 7. Telemetria e Métricas do Sistema (via get_system_observability)
+async function generateObservabilityAndKg(targetDir: string): Promise<void> {
   console.log("\n7. Gerando Gráfico de Métricas do Sistema...");
   const obsRes = await executeGetObservability({
     generate_chart: "xychart",
@@ -260,27 +195,24 @@ async function generateSelfDocumentationDiagrams() {
   });
   console.log("  ✅ Telemetria do Sistema:", obsRes.file_path);
 
-  // 8. Povoar e Inicializar Knowledge Graph Local de Demonstração
-  console.log("\n8. Inicializando Knowledge Graph nativo com componentes do ArchView...");
+  console.log("\n8. Inicializando Knowledge Graph nativo do ArchView v7.1...");
   const kg = new KnowledgeGraphDB();
-  const n1 = kg.upsertNode({ label: "service", name: "ArchView Core", qualified_name: "src/server.ts", properties: { role: "Orquestrador MCP" } });
-  const n2 = kg.upsertNode({ label: "module", name: "Knowledge Graph Engine", qualified_name: "src/kg/db.ts", properties: { db: "sqlite" } });
-  const n3 = kg.upsertNode({ label: "module", name: "Codebase Intelligence", qualified_name: "src/engine/universal-scanner.ts", properties: { lang: "ts" } });
-  const n4 = kg.upsertNode({ label: "module", name: "HTML Generator", qualified_name: "src/engine/html-generator.ts", properties: { engine: "html5" } });
-  const n5 = kg.upsertNode({ label: "ui", name: "Live Web Studio", qualified_name: "frontend/src/main.ts", properties: { framework: "alpine" } });
+  const n1 = kg.upsertNode({ label: "service", name: "ArchView Core", qualified_name: "src/server.ts", properties: { version: "7.1.0" } });
+  const n2 = kg.upsertNode({ label: "engine", name: "Rule Engine", qualified_name: "src/engine/rule-engine.ts", properties: { type: "linter" } });
+  const n3 = kg.upsertNode({ label: "cache", name: "AST Cache", qualified_name: "src/engine/ast-cache.ts", properties: { hash: "sha256" } });
+  const n4 = kg.upsertNode({ label: "diff", name: "Architecture Diff", qualified_name: "src/engine/architecture-diff.ts", properties: { output: "mermaid" } });
+  const n5 = kg.upsertNode({ label: "gui", name: "Tkinter Desktop GUI", qualified_name: "scripts/archview-tk.py", properties: { platform: "desktop" } });
 
-  if (n1.id && n2.id) kg.addEdge({ source_id: n1.id, target_id: n2.id, type: "IMPORTS" });
-  if (n1.id && n3.id) kg.addEdge({ source_id: n1.id, target_id: n3.id, type: "IMPORTS" });
-  if (n1.id && n4.id) kg.addEdge({ source_id: n1.id, target_id: n4.id, type: "IMPORTS" });
-  if (n5.id && n1.id) kg.addEdge({ source_id: n5.id, target_id: n1.id, type: "CONSUMES" });
+  if (n1.id && n2.id) kg.addEdge({ source_id: n1.id, target_id: n2.id, type: "ORCHESTRATES" });
+  if (n1.id && n3.id) kg.addEdge({ source_id: n1.id, target_id: n3.id, type: "CONSULTS" });
+  if (n1.id && n4.id) kg.addEdge({ source_id: n1.id, target_id: n4.id, type: "CALLS" });
+  if (n5.id && n1.id) kg.addEdge({ source_id: n5.id, target_id: n1.id, type: "CONNECTS" });
 
   const allNodes = kg.getAllNodes();
   const allEdges = kg.getAllEdges();
   const comms = detectLouvainCommunities(allNodes, allEdges);
-  const cents = calculateCentrality(allNodes, allEdges);
   console.log(`  ✅ KG local inicializado: ${allNodes.length} nós, ${allEdges.length} arestas, ${comms.communities_count} comunidades Louvain.`);
 
-  // 9. Dashboard Consolidado HTML (via export_html_report)
   console.log("\n9. Gerando Dashboard Executivo HTML Consolidado (All-in-One)...");
   const dashRes = executeExportHtmlReport({
     mode: "dashboard",
@@ -288,8 +220,19 @@ async function generateSelfDocumentationDiagrams() {
     target_dir: targetDir
   });
   console.log("  ✅ Dashboard Consolidado:", dashRes.file_path);
+}
 
-  console.log("\n🎉 === Todos os diagramas e páginas HTML do ArchView v6.0 foram gerados com sucesso na pasta output/! ===");
+async function generateSelfDocumentationDiagrams() {
+  console.log("🚀 === [ArchView v7.1] Limpando e Regenerando Todos os Diagramas de Produção ===\n");
+  const targetDir = process.cwd();
+  const outputDir = path.join(targetDir, 'output');
+
+  cleanOldDiagrams(outputDir);
+  generateCoreDiagrams(targetDir);
+  generateFlowAndTopology(targetDir);
+  await generateObservabilityAndKg(targetDir);
+
+  console.log("\n🎉 === Todos os diagramas e páginas HTML do ArchView v7.1 foram gerados com sucesso na pasta output/! ===");
 }
 
 generateSelfDocumentationDiagrams().catch(console.error);
