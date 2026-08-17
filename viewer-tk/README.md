@@ -15,17 +15,17 @@ Interface gráfica desktop nativa, rápida e leve desenvolvida em **Python 3 / T
 
 ## 📦 Como Executar
 
-### Via Python Direto:
-```bash
-python3 viewer-tk/main.py
-```
-
-### Via Launcher no Root:
-```bash
-./bin/archview-tk
-```
-
-### Via NPM:
+### 1. Via Script NPM (da raiz do projeto):
 ```bash
 npm run gui:tk
+```
+
+### 2. Via Script dentro de `viewer-tk/`:
+```bash
+./viewer-tk/run.sh
+```
+
+### 3. Via Python Direto:
+```bash
+python3 viewer-tk/main.py
 ```
