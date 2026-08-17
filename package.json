@@ -18,7 +18,7 @@
     "build:frontend": "npm run build --prefix frontend",
     "build": "tsc && npm run build --prefix frontend",
     "start": "node build/server.js",
-    "gui:tk": "python3 scripts/archview-tk.py",
+    "gui:tk": "python3 viewer-tk/main.py",
     "dev:frontend": "npm run dev --prefix frontend"
   },
   "keywords": [
