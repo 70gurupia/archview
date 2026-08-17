@@ -291,8 +291,31 @@ export const STANDALONE_HTML_TEMPLATE = `<!DOCTYPE html>
     .toast.show {
       transform: translateX(-50%) translateY(0);
     }
+
+    .diagram-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border-color);
+      border-top-color: var(--accent-color);
+      border-radius: 50%;
+      animation: spin 800ms linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
-  __SCRIPT_TAG__
 </head>
 <body>
   <div id="toast" class="toast">Notificação</div>
@@ -332,7 +355,10 @@ export const STANDALONE_HTML_TEMPLATE = `<!DOCTYPE html>
   <main id="mainContainer">
     <div id="viewport">
       <div id="diagramContainer">
-        <!-- Rendered Mermaid SVG injected here -->
+        <div id="loadingSpinner" class="diagram-loading">
+          <div class="spinner"></div>
+          <p>Carregando visualização...</p>
+        </div>
       </div>
     </div>
 
@@ -356,6 +382,8 @@ __JSON_META__
   <script id="diagram-code" type="text/plain">
 __CLEAN_CODE__
   </script>
+
+  __SCRIPT_TAG__
 
   <script>
     const metadata = JSON.parse(document.getElementById('diagram-metadata').textContent);
@@ -465,9 +493,27 @@ __CLEAN_CODE__
       return null;
     }
 
+    async function ensureMermaidApi() {
+      let api = getMermaidApi();
+      if (api) return api;
+
+      return new Promise((resolve) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js';
+        s.onload = () => resolve(getMermaidApi());
+        s.onerror = () => resolve(null);
+        document.body.appendChild(s);
+      });
+    }
+
     async function reRender() {
-      const mermaidApi = getMermaidApi();
       const diagEl = document.getElementById('diagramContainer');
+      let mermaidApi = getMermaidApi();
+
+      if (!mermaidApi) {
+        mermaidApi = await ensureMermaidApi();
+      }
+
       if (!mermaidApi) {
         console.error('Mermaid runtime não encontrado');
         if (diagEl) {
@@ -785,8 +831,31 @@ export const DASHBOARD_HTML_TEMPLATE = `<!DOCTYPE html>
       max-width: none !important;
       height: auto;
     }
+
+    .diagram-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border-color);
+      border-top-color: var(--accent-color);
+      border-radius: 50%;
+      animation: spin 800ms linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
-  __SCRIPT_TAG__
 </head>
 <body>
   <aside>
@@ -813,10 +882,17 @@ export const DASHBOARD_HTML_TEMPLATE = `<!DOCTYPE html>
 
     <div class="canvas-container" id="canvasContainer">
       <div id="viewport">
-        <div id="diagramContainer"></div>
+        <div id="diagramContainer">
+          <div id="loadingSpinner" class="diagram-loading">
+            <div class="spinner"></div>
+            <p>Carregando diagrama...</p>
+          </div>
+        </div>
       </div>
     </div>
   </main>
+
+  __SCRIPT_TAG__
 
   <script>
     const diagrams = __JSON_DIAGRAMS__;
@@ -864,6 +940,19 @@ export const DASHBOARD_HTML_TEMPLATE = `<!DOCTYPE html>
       if (typeof globalThis.mermaid !== 'undefined' && typeof globalThis.mermaid.render === 'function') return globalThis.mermaid;
       if (typeof globalThis.mermaid !== 'undefined' && globalThis.mermaid.default && typeof globalThis.mermaid.default.render === 'function') return globalThis.mermaid.default;
       return null;
+    }
+
+    async function ensureMermaidApi() {
+      let api = getMermaidApi();
+      if (api) return api;
+
+      return new Promise((resolve) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js';
+        s.onload = () => resolve(getMermaidApi());
+        s.onerror = () => resolve(null);
+        document.body.appendChild(s);
+      });
     }
 
     function renderList(filtered = diagrams) {
@@ -914,7 +1003,11 @@ export const DASHBOARD_HTML_TEMPLATE = `<!DOCTYPE html>
       const diagEl = document.getElementById('diagramContainer');
       zoom = 1.0; panX = 0; panY = 0; updateTransform();
 
-      const mermaidApi = getMermaidApi();
+      let mermaidApi = getMermaidApi();
+      if (!mermaidApi) {
+        mermaidApi = await ensureMermaidApi();
+      }
+
       if (!mermaidApi) {
         console.error('Mermaid runtime não disponível no dashboard.');
         if (diagEl) {
