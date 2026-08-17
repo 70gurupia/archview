@@ -12,6 +12,19 @@ frontend/dist/
 output/*
 !output/.gitkeep
 *.log
+*.db-shm
+*.db-wal
+
+# Agent Context & Local Memory
+AGENTS.md
+.gate-history.json
+docs/gate-*-historico.json
+
+# Local Tests & Suites (Not needed in production GitHub repo)
+tests/
+
+# Prototypes & Local Artifacts
+prototype/
 
 # Scratch, Temporary & Office Files
 *.docx
@@ -32,4 +45,3 @@ Thumbs.db
 __pycache__/
 *.py[cod]
 *$py.class
-
