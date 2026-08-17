@@ -189,6 +189,13 @@ export const STANDALONE_HTML_TEMPLATE = `<!DOCTYPE html>
       display: flex;
       justify-content: center;
       align-items: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    #diagramContainer svg {
+      max-width: none !important;
+      height: auto;
     }
 
     .floating-controls {
@@ -450,24 +457,45 @@ __CLEAN_CODE__
       });
     }
 
+    function getMermaidApi() {
+      if (typeof mermaid !== 'undefined' && typeof mermaid.render === 'function') return mermaid;
+      if (typeof mermaid !== 'undefined' && mermaid.default && typeof mermaid.default.render === 'function') return mermaid.default;
+      if (typeof globalThis.mermaid !== 'undefined' && typeof globalThis.mermaid.render === 'function') return globalThis.mermaid;
+      if (typeof globalThis.mermaid !== 'undefined' && globalThis.mermaid.default && typeof globalThis.mermaid.default.render === 'function') return globalThis.mermaid.default;
+      return null;
+    }
+
     async function reRender() {
+      const mermaidApi = getMermaidApi();
+      const diagEl = document.getElementById('diagramContainer');
+      if (!mermaidApi) {
+        console.error('Mermaid runtime não encontrado');
+        if (diagEl) {
+          diagEl.replaceChildren();
+          const errBox = document.createElement('div');
+          errBox.style.cssText = 'color: #EF4444; padding: 1.5rem; background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-color); font-family: monospace;';
+          errBox.textContent = '⚠️ Biblioteca Mermaid não carregada corretamente no navegador.';
+          diagEl.appendChild(errBox);
+        }
+        return;
+      }
+
       const currentTheme = document.documentElement.getAttribute('data-theme') || 'educational';
       let mermaidTheme = 'default';
       if (currentTheme === 'dark') mermaidTheme = 'dark';
       else if (currentTheme === 'corporate') mermaidTheme = 'neutral';
       else if (currentTheme === 'minimal') mermaidTheme = 'base';
 
-      mermaid.initialize({
+      mermaidApi.initialize({
         startOnLoad: false,
         securityLevel: 'loose',
         theme: mermaidTheme,
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
       });
 
-      const diagEl = document.getElementById('diagramContainer');
       try {
         const id = 'mermaidSvg_' + Math.random().toString(36).substring(2, 9);
-        const { svg } = await mermaid.render(id, rawMermaidCode);
+        const { svg } = await mermaidApi.render(id, rawMermaidCode);
         const parser = new DOMParser();
         const doc = parser.parseFromString(svg, 'image/svg+xml');
         diagEl.replaceChildren(doc.documentElement);
@@ -537,9 +565,7 @@ __CLEAN_CODE__
     }
 
     function init() {
-      if (typeof mermaid !== 'undefined') {
-        reRender();
-      }
+      reRender();
     }
 
     if (document.readyState === 'loading') {
@@ -746,6 +772,19 @@ export const DASHBOARD_HTML_TEMPLATE = `<!DOCTYPE html>
       transform-origin: center center;
       transition: transform 50ms ease-out;
     }
+
+    #diagramContainer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    #diagramContainer svg {
+      max-width: none !important;
+      height: auto;
+    }
   </style>
   __SCRIPT_TAG__
 </head>
@@ -819,13 +858,22 @@ export const DASHBOARD_HTML_TEMPLATE = `<!DOCTYPE html>
 
     window.addEventListener('mouseup', () => { isPanning = false; });
 
+    function getMermaidApi() {
+      if (typeof mermaid !== 'undefined' && typeof mermaid.render === 'function') return mermaid;
+      if (typeof mermaid !== 'undefined' && mermaid.default && typeof mermaid.default.render === 'function') return mermaid.default;
+      if (typeof globalThis.mermaid !== 'undefined' && typeof globalThis.mermaid.render === 'function') return globalThis.mermaid;
+      if (typeof globalThis.mermaid !== 'undefined' && globalThis.mermaid.default && typeof globalThis.mermaid.default.render === 'function') return globalThis.mermaid.default;
+      return null;
+    }
+
     function renderList(filtered = diagrams) {
       const listEl = document.getElementById('diagramList');
       listEl.replaceChildren();
-      filtered.forEach((d, idx) => {
+      filtered.forEach((d) => {
+        const realIdx = diagrams.indexOf(d);
         const item = document.createElement('div');
-        item.className = 'diagram-item ' + (idx === activeIndex ? 'active' : '');
-        item.onclick = () => selectDiagram(idx);
+        item.className = 'diagram-item ' + (realIdx === activeIndex ? 'active' : '');
+        item.onclick = () => selectDiagram(realIdx);
 
         const titleEl = document.createElement('div');
         titleEl.className = 'diagram-item-title';
@@ -866,8 +914,21 @@ export const DASHBOARD_HTML_TEMPLATE = `<!DOCTYPE html>
       const diagEl = document.getElementById('diagramContainer');
       zoom = 1.0; panX = 0; panY = 0; updateTransform();
 
+      const mermaidApi = getMermaidApi();
+      if (!mermaidApi) {
+        console.error('Mermaid runtime não disponível no dashboard.');
+        if (diagEl) {
+          diagEl.replaceChildren();
+          const errBox = document.createElement('div');
+          errBox.style.cssText = 'color: #EF4444; padding: 1.5rem; background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-color); font-family: monospace;';
+          errBox.textContent = '⚠️ Biblioteca Mermaid não carregada corretamente no navegador.';
+          diagEl.appendChild(errBox);
+        }
+        return;
+      }
+
       const currentTheme = document.documentElement.getAttribute('data-theme') || 'corporate';
-      mermaid.initialize({
+      mermaidApi.initialize({
         startOnLoad: false,
         securityLevel: 'loose',
         theme: currentTheme === 'dark' ? 'dark' : (currentTheme === 'educational' ? 'default' : 'neutral')
@@ -875,7 +936,7 @@ export const DASHBOARD_HTML_TEMPLATE = `<!DOCTYPE html>
 
       try {
         const id = 'dashMermaidSvg_' + Math.random().toString(36).substring(2, 9);
-        const { svg } = await mermaid.render(id, selected.code);
+        const { svg } = await mermaidApi.render(id, selected.code);
         const parser = new DOMParser();
         const doc = parser.parseFromString(svg, 'image/svg+xml');
         diagEl.replaceChildren(doc.documentElement);
@@ -926,11 +987,9 @@ export const DASHBOARD_HTML_TEMPLATE = `<!DOCTYPE html>
     }
 
     function init() {
-      if (typeof mermaid !== 'undefined') {
-        renderList();
-        if (diagrams.length > 0) {
-          selectDiagram(0);
-        }
+      renderList();
+      if (diagrams.length > 0) {
+        selectDiagram(0);
       }
     }
 
