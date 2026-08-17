@@ -21,6 +21,8 @@ import { executeGetObservability, ObservabilityInput } from './tools/observabili
 import { executeExportHtmlReport, ExportHtmlInput } from './tools/export-html.js';
 import { executeCompressForLlm, CompressLlmInput } from './tools/compress-llm.js';
 import { executeCloneAndScan, CloneScanInput } from './tools/clone-scan.js';
+import { executeLintArchitecture, LintArchitectureInput } from './tools/lint-architecture.js';
+import { executeDiffArchitecture, DiffArchitectureInput } from './tools/diff-architecture.js';
 import { startSseServer } from './utils/sse.js';
 import { initOpenTelemetry } from './utils/otel.js';
 
@@ -40,7 +42,7 @@ class VisualServer {
     this.server = new Server(
       {
         name: "archview",
-        version: "7.0.0",
+        version: "7.1.0",
       },
       {
         capabilities: {
@@ -115,6 +117,8 @@ class VisualServer {
       export_html_report: (args) => this.formatVisualResult(executeExportHtmlReport(args as ExportHtmlInput)),
       compress_for_llm: (args) => executeCompressForLlm(args as CompressLlmInput),
       clone_and_scan: (args) => this.formatVisualResult(executeCloneAndScan(args as CloneScanInput)),
+      lint_architecture: (args) => executeLintArchitecture(args as LintArchitectureInput),
+      diff_architecture: (args) => this.formatVisualResult(executeDiffArchitecture(args as DiffArchitectureInput)),
       add_node: (args) => handleAddNode(this.kg, args),
       upsert_node: (args) => handleUpsertNode(this.kg, args),
       add_nodes_batch: (args) => handleAddNodesBatch(this.kg, args),
@@ -307,6 +311,43 @@ class VisualServer {
             direction: { type: "string", enum: ["TD", "LR"] }
           },
           required: ["repo_url"]
+        }
+      },
+      {
+        name: "lint_architecture",
+        description: "Executa linter arquitetural para validar fronteiras de camadas, acoplamento e proibir dependências circulares.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            path: { type: "string", description: "Caminho do repositório a auditar" },
+            rules: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  id: { type: "string" },
+                  name: { type: "string" },
+                  type: { type: "string" },
+                  severity: { type: "string", enum: ["error", "warning"] },
+                  params: { type: "object" }
+                },
+                required: ["id", "name", "type", "severity"]
+              }
+            }
+          }
+        }
+      },
+      {
+        name: "diff_architecture",
+        description: "Compara duas versões ou pastas da arquitetura e gera visualização gráfica destacando nós adicionados, removidos e modificados.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            before_path: { type: "string", description: "Caminho do estado base/anterior" },
+            after_path: { type: "string", description: "Caminho do estado atual/novo (padrão: raiz atual)" },
+            title: { type: "string" }
+          },
+          required: ["before_path"]
         }
       },
       // Knowledge Graph Tools

@@ -3,6 +3,7 @@ import path from 'path';
 import { CodebaseTopology, ParsedFile, DirectoryNode, CrossModuleCall } from './types.js';
 import { parseTypeScriptFile } from './ast-parser-ts.js';
 import { parseLexicalFile } from './ast-parser-lexical.js';
+import { globalAstCache } from './ast-cache.js';
 
 const DEFAULT_IGNORED_DIRS = new Set([
   'node_modules', '.git', '.svn', '.hg', 'dist', 'build', 'out',
@@ -77,10 +78,17 @@ function checkGoManifest(rootPath: string, frameworks: Set<string>): void {
 
 function parseSourceFile(fullPath: string, entryRelPath: string, ext: string): ParsedFile {
   const content = fs.readFileSync(fullPath, 'utf-8');
-  if (JS_EXTENSIONS.has(ext)) {
-    return parseTypeScriptFile(fullPath, entryRelPath, content);
+  const cached = globalAstCache.get(fullPath, content);
+  if (cached) {
+    return cached;
   }
-  return parseLexicalFile(fullPath, entryRelPath, content);
+
+  const parsed = JS_EXTENSIONS.has(ext)
+    ? parseTypeScriptFile(fullPath, entryRelPath, content)
+    : parseLexicalFile(fullPath, entryRelPath, content);
+
+  globalAstCache.set(fullPath, content, parsed);
+  return parsed;
 }
 
 interface ScannerContext {
