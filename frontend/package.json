@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "alpinejs": "3.14.8",
+    "alpinejs": "3.16.2",
     "mermaid": "11.4.1"
   },
   "devDependencies": {
